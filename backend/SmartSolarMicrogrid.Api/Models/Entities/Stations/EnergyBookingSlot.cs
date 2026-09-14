@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using SmartSolarMicrogrid.Api.Models.Enums;
 using System;
 
-namespace SmartSolarMicrogrid.Api.Models.Entities;
+namespace SmartSolarMicrogrid.Api.Models.Entities.Stations;
 
 public class EnergyBookingSlot
 {
