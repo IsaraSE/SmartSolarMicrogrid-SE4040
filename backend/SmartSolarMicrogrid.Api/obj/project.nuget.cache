@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "dgSpecHash": "GBlWfrmQWxc=",
+  "success": true,
+  "projectFilePath": "/Users/isara/4Y 2S/EAD/SmartSolarMicrogrid-SE4040/backend/SmartSolarMicrogrid.Api/SmartSolarMicrogrid.Api.csproj",
+  "expectedPackageFiles": [
+    "/Users/isara/.nuget/packages/dnsclient/1.6.1/dnsclient.1.6.1.nupkg.sha512",
+    "/Users/isara/.nuget/packages/microsoft.aspnetcore.openapi/10.0.10/microsoft.aspnetcore.openapi.10.0.10.nupkg.sha512",
+    "/Users/isara/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512",
+    "/Users/isara/.nuget/packages/mongodb.bson/3.11.2/mongodb.bson.3.11.2.nupkg.sha512",
+    "/Users/isara/.nuget/packages/mongodb.driver/3.11.2/mongodb.driver.3.11.2.nupkg.sha512",
+    "/Users/isara/.nuget/packages/sharpcompress/0.48.1/sharpcompress.0.48.1.nupkg.sha512",
+    "/Users/isara/.nuget/packages/snappier/1.3.1/snappier.1.3.1.nupkg.sha512",
+    "/Users/isara/.nuget/packages/zstdsharp.port/0.7.3/zstdsharp.port.0.7.3.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Microsoft.OpenApi' 2.0.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-v5pm-xwqc-g5wc",
+      "projectPath": "/Users/isara/4Y 2S/EAD/SmartSolarMicrogrid-SE4040/backend/SmartSolarMicrogrid.Api/SmartSolarMicrogrid.Api.csproj",
+      "warningLevel": 1,
+      "filePath": "/Users/isara/4Y 2S/EAD/SmartSolarMicrogrid-SE4040/backend/SmartSolarMicrogrid.Api/SmartSolarMicrogrid.Api.csproj",
+      "libraryId": "Microsoft.OpenApi",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}
