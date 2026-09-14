@@ -132,12 +132,12 @@ const Login = () => {
 
         {/* Hero Footer */}
         <div className="hero-footer">
-          <p>
+          <div className="hero-footer-text">
             SUSTAINABLE ENERGY
             <br />
             BRIGHTER LIVES
             <div className="hero-footer-line"></div>
-          </p>
+          </div>
         </div>
       </div>
 

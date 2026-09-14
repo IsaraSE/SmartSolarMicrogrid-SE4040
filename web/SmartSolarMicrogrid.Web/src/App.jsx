@@ -44,39 +44,8 @@ const PublicRoute = ({ children }) => {
   return user ? <Navigate to="/dashboard" replace /> : children;
 };
 
-/* Placeholder Dashboard */
-const Dashboard = () => {
-  const { user, logout } = useAuth();
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      fontFamily: 'Inter, sans-serif',
-      gap: '16px',
-    }}>
-      <h1 style={{ color: '#0f2b46' }}>Welcome, {user?.fullName}!</h1>
-      <p style={{ color: '#64748b' }}>Role: {user?.role}</p>
-      <button
-        onClick={() => { logout(); window.location.href = '/login'; }}
-        style={{
-          padding: '12px 24px',
-          background: '#ef4444',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontSize: '0.9rem',
-          fontWeight: '600',
-        }}
-      >
-        Logout
-      </button>
-    </div>
-  );
-};
+import MainLayout from './components/layout/MainLayout';
+import Dashboard from './pages/Dashboard/Dashboard';
 
 function App() {
   return (
@@ -95,7 +64,9 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
               </ProtectedRoute>
             }
           />

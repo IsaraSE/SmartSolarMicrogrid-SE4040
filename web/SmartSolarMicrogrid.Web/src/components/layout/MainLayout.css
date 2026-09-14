@@ -1,0 +1,22 @@
+/* MainLayout.css */
+.main-layout {
+  display: flex;
+  height: 100vh;
+  background-color: #f8fafc;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px; /* Width of the sidebar */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page-content {
+  flex: 1;
+  padding: 32px 40px;
+  overflow-y: auto;
+}
