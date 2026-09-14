@@ -1,4 +1,4 @@
-namespace SmartSolarMicrogrid.Api.Models.Enums;
+namespace SmartSolarMicrogrid.Api.Models.Enums.Users;
 
 public enum AccountStatus
 {

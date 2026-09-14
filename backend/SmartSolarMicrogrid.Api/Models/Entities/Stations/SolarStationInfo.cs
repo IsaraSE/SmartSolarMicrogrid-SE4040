@@ -2,7 +2,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using SmartSolarMicrogrid.Api.Models.Enums;
 
-namespace SmartSolarMicrogrid.Api.Models.Entities;
+namespace SmartSolarMicrogrid.Api.Models.Entities.Stations;
 
 public class SolarStationInfo
 {
