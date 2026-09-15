@@ -14,6 +14,7 @@ import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Users from './pages/Users/Users';
 import UserForm from './pages/Users/UserForm';
+import Prosumers from './pages/Prosumers/Prosumers';
 
 /* Protected Route Component */
 const ProtectedRoute = ({ children }) => {
@@ -82,6 +83,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Users />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/prosumers"
+            element={
+              <ProtectedRoute>
+                <Prosumers />
               </ProtectedRoute>
             }
           />
