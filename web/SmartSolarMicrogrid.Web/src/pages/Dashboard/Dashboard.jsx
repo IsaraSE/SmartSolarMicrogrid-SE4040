@@ -74,7 +74,7 @@ const Dashboard = () => {
         setPendingActivations(allPending.length);
 
         // 3. Grid Operators
-        setGridOperators(allUsers.filter(u => u.role === 'BACKOFFICE').length);
+        setGridOperators(allUsers.filter(u => u.role === 'GRID_OPERATOR').length);
 
         // 4. Active Stations
         setActiveStations(allStations.filter(s => s.status === 'ACTIVE').length);
