@@ -19,6 +19,7 @@ import Stations from './pages/Stations/Stations';
 import AddStation from './pages/Stations/AddStation';
 import Slots from './pages/Slots/Slots';
 import Reservations from './pages/Reservations/Reservations';
+import Settings from './pages/Settings/Settings';
 
 /* Protected Route Component */
 const ProtectedRoute = ({ children }) => {
@@ -132,6 +133,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Reservations />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />
