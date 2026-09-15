@@ -15,6 +15,8 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Users from './pages/Users/Users';
 import UserForm from './pages/Users/UserForm';
 import Prosumers from './pages/Prosumers/Prosumers';
+import Stations from './pages/Stations/Stations';
+import AddStation from './pages/Stations/AddStation';
 
 /* Protected Route Component */
 const ProtectedRoute = ({ children }) => {
@@ -92,6 +94,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <Prosumers />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stations"
+            element={
+              <ProtectedRoute>
+                <Stations />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/stations/add"
+            element={
+              <ProtectedRoute>
+                <AddStation />
               </ProtectedRoute>
             }
           />
