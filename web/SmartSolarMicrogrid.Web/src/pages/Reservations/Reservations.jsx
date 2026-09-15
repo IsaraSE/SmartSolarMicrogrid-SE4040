@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight, FiCheck } from 'react-icons/fi';
 import { BiSortAlt2 } from 'react-icons/bi';
 import { reservationService } from '../../services/reservationService';
 import { stationService } from '../../services/stationService';
@@ -9,6 +9,8 @@ const Reservations = () => {
   const [reservations, setReservations] = useState([]);
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [newStatus, setNewStatus] = useState(null);
 
   useEffect(() => {
     fetchReservations();
@@ -25,6 +27,20 @@ const Reservations = () => {
       setStations(statResponse.data || []);
     } catch (error) {
       console.error("Failed to load data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveStatus = async (id) => {
+    try {
+      setLoading(true);
+      await reservationService.updateReservationStatus(id, { status: newStatus });
+      await fetchReservations();
+      setEditingId(null);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("Failed to update reservation status.");
     } finally {
       setLoading(false);
     }
@@ -358,12 +374,37 @@ const Reservations = () => {
                         <span className="time-text">{formatTime(res.scheduledEndDateTime)}</span>
                       </div>
                     </td>
-                    <td>{mapStatusToBadge(res.status)}</td>
+                    <td>
+                      {editingId === res.reservationId ? (
+                        <select 
+                          className="status-select" 
+                          value={newStatus} 
+                          onChange={(e) => setNewStatus(Number(e.target.value))}
+                          style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', outline: 'none' }}
+                        >
+                          <option value={0}>Pending</option>
+                          <option value={1}>Approved</option>
+                          <option value={2}>Cancelled</option>
+                          <option value={3}>Completed</option>
+                        </select>
+                      ) : (
+                        mapStatusToBadge(res.status)
+                      )}
+                    </td>
                     <td>
                       <div className="table-actions">
-                        <button className="action-btn view"><FiEye /></button>
-                        <button className="action-btn edit"><FiEdit2 /></button>
-                        <button className="action-btn delete"><FiTrash2 /></button>
+                        {editingId === res.reservationId ? (
+                          <>
+                            <button className="action-btn" style={{ color: '#10b981', background: '#f0fdf4' }} onClick={() => handleSaveStatus(res.reservationId)} title="Save"><FiCheck /></button>
+                            <button className="action-btn" style={{ color: '#ef4444', background: '#fef2f2' }} onClick={() => setEditingId(null)} title="Cancel"><FiX /></button>
+                          </>
+                        ) : (
+                          <>
+                            <button className="action-btn view" title="View Details"><FiEye /></button>
+                            <button className="action-btn edit" title="Change Status" onClick={() => { setEditingId(res.reservationId); setNewStatus(res.status); }}><FiEdit2 /></button>
+                            <button className="action-btn delete" title="Cancel Reservation"><FiTrash2 /></button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
