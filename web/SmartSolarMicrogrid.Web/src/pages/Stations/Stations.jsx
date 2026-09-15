@@ -88,15 +88,39 @@ const Stations = () => {
         await stationService.deactivateStation(id);
         fetchStations();
       } catch (error) {
-        alert('Failed to deactivate station.');
+        const msg = error.response?.data?.message || 'Failed to deactivate station.';
+        alert(`Error: ${msg}`);
+      }
+    }
+  };
+
+  const handleActivate = async (station) => {
+    if (window.confirm('Are you sure you want to reactivate this station?')) {
+      try {
+        const updateData = {
+          stationName: station.stationName,
+          address: station.address,
+          latitude: station.latitude,
+          longitude: station.longitude,
+          capacity: station.capacity,
+          batterySlotCount: station.batterySlotCount,
+          operatingStartTime: station.operatingStartTime,
+          operatingEndTime: station.operatingEndTime,
+          status: 1 // ACTIVE
+        };
+        await stationService.updateStation(station.stationId, updateData);
+        fetchStations();
+      } catch (error) {
+        const msg = error.response?.data?.message || 'Failed to reactivate station.';
+        alert(`Error: ${msg}`);
       }
     }
   };
 
   // Calculate statistics
   const totalStations = stations.length;
-  const activeStations = stations.filter(s => s.status === 'Active' || s.status === 1).length;
-  const deactivatedStations = stations.filter(s => s.status === 'Deactivated' || s.status === 2).length;
+  const activeStations = stations.filter(s => s.status === 'ACTIVE' || s.status === 1).length;
+  const deactivatedStations = stations.filter(s => s.status === 'DEACTIVATED' || s.status === 2).length;
   const totalCapacity = stations.reduce((sum, s) => sum + (s.capacity || 0), 0);
 
   // Chart data
@@ -229,7 +253,7 @@ const Stations = () => {
                 <Marker 
                   key={station.stationId} 
                   position={[station.latitude, station.longitude]}
-                  icon={station.status === 'Active' || station.status === 1 ? activeIcon : inactiveIcon}
+                  icon={station.status === 'ACTIVE' || station.status === 1 ? activeIcon : inactiveIcon}
                 >
                   <Popup>
                     <strong>{station.stationName}</strong>
@@ -337,8 +361,8 @@ const Stations = () => {
           <div className="filter-group">
             <select className="filter-select">
               <option>All Statuses</option>
-              <option>Active</option>
-              <option>Deactivated</option>
+              <option value="ACTIVE">Active</option>
+              <option value="DEACTIVATED">Deactivated</option>
             </select>
             <select className="filter-select">
               <option>All Regions</option>
@@ -359,8 +383,6 @@ const Stations = () => {
                 <th>Station ID</th>
                 <th>Station Name</th>
                 <th>Address</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
                 <th>Capacity</th>
                 <th>Battery Slots</th>
                 <th>Operating Hours</th>
@@ -376,28 +398,34 @@ const Stations = () => {
               ) : (
                 filteredStations.map(station => (
                   <tr key={station.stationId}>
-                    <td className="font-semibold text-dark">{station.stationId || 'N/A'}</td>
+                    <td className="font-semibold text-dark" style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
+                      {station.stationId ? (
+                        <>
+                          {station.stationId.substring(0, 12).toUpperCase()}
+                          <br />
+                          {station.stationId.substring(12).toUpperCase()}
+                        </>
+                      ) : 'N/A'}
+                    </td>
                     <td className="font-semibold">{station.stationName}</td>
                     <td className="address-col" title={station.address}>{station.address}</td>
-                    <td>{station.latitude?.toFixed(4) || '-'}</td>
-                    <td>{station.longitude?.toFixed(4) || '-'}</td>
                     <td>{station.capacity} MW</td>
                     <td>{station.batterySlotCount}</td>
                     <td>{station.operatingStartTime} - {station.operatingEndTime}</td>
                     <td>
-                      <span className={`status-badge ${(station.status === 'Active' || station.status === 1) ? 'active' : 'deactivated'}`}>
-                        {(station.status === 'Active' || station.status === 1) ? 'Active' : 'Deactivated'}
+                      <span className={`status-badge ${(station.status === 'ACTIVE' || station.status === 1) ? 'active' : 'deactivated'}`}>
+                        {(station.status === 'ACTIVE' || station.status === 1) ? 'Active' : 'Deactivated'}
                       </span>
                     </td>
-                    <td className="actions-cell">
-                      <button className="action-btn text-blue" title="View"><FiEye /> View</button>
-                      <button className="action-btn text-blue" title="Edit"><FiEdit2 /> Edit</button>
-                      {(station.status === 'Active' || station.status === 1) ? (
-                        <button className="action-btn text-red" title="Deactivate" onClick={() => handleDeactivate(station.stationId)}>
+                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button className="pill-btn btn-view" title="View" onClick={() => navigate(`/stations/edit/${station.stationId}`)}><FiEye /> View</button>
+                      <button className="pill-btn btn-edit" title="Edit" onClick={() => navigate(`/stations/edit/${station.stationId}`)}><FiEdit2 /> Edit</button>
+                      {(station.status === 'ACTIVE' || station.status === 1) ? (
+                        <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => handleDeactivate(station.stationId)}>
                           <FiSlash /> Deactivate
                         </button>
                       ) : (
-                        <button className="action-btn text-green" title="Activate">
+                        <button className="pill-btn btn-activate" title="Activate" onClick={() => handleActivate(station)}>
                           <FiPlay /> Activate
                         </button>
                       )}
