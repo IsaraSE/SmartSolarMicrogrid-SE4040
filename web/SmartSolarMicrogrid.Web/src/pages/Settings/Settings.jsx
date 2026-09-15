@@ -6,8 +6,11 @@ import {
   FiLogOut, FiAlertCircle
 } from 'react-icons/fi';
 import './Settings.css';
+import { useAuth } from '../../context/AuthContext';
 
 const Settings = () => {
+  const { logout } = useAuth();
+
   // Form State
   const [profileData, setProfileData] = useState({
     fullName: 'Tharindu Perera',
@@ -287,7 +290,7 @@ const Settings = () => {
               </div>
             </div>
             
-            <button className="btn-logout">
+            <button className="btn-logout" onClick={logout}>
               <FiLogOut style={{ transform: 'rotate(180deg)' }} /> Logout
             </button>
           </div>
