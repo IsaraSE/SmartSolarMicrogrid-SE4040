@@ -10,6 +10,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login/Login';
+import MainLayout from './components/layout/MainLayout';
+import Dashboard from './pages/Dashboard/Dashboard';
+import Users from './pages/Users/Users';
+import UserForm from './pages/Users/UserForm';
 
 /* Protected Route Component */
 const ProtectedRoute = ({ children }) => {
@@ -30,7 +34,11 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <MainLayout>{children}</MainLayout>;
 };
 
 /* Public Route - redirects to dashboard if already logged in */
@@ -44,14 +52,12 @@ const PublicRoute = ({ children }) => {
   return user ? <Navigate to="/dashboard" replace /> : children;
 };
 
-import MainLayout from './components/layout/MainLayout';
-import Dashboard from './pages/Dashboard/Dashboard';
-
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Public Route */}
           <Route
             path="/login"
             element={
@@ -60,17 +66,46 @@ function App() {
               </PublicRoute>
             }
           />
+
+          {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
+                <Dashboard />
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/users/new"
+            element={
+              <ProtectedRoute>
+                <UserForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/users/edit/:id"
+            element={
+              <ProtectedRoute>
+                <UserForm />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Default Redirect */}
+          <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Router>
     </AuthProvider>

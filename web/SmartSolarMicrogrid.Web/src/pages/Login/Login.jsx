@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import {
   FiUser,
   FiLock,
@@ -12,10 +13,10 @@ import {
   FiShield,
 } from 'react-icons/fi';
 import { PiLeafLight, PiUsersLight, PiChartBarLight } from 'react-icons/pi';
-import solarHeroBg from '../assets/images/solar-hero-bg.jpg';
+import solarHeroBg from '../../assets/images/solar-hero-bg.jpg';
 import './Login.css';
 
-import leafLogo from '../assets/images/leaf-logo.png';
+import leafLogo from '../../assets/images/leaf-logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
