@@ -18,6 +18,7 @@ import Prosumers from './pages/Prosumers/Prosumers';
 import Stations from './pages/Stations/Stations';
 import AddStation from './pages/Stations/AddStation';
 import Slots from './pages/Slots/Slots';
+import Reservations from './pages/Reservations/Reservations';
 
 /* Protected Route Component */
 const ProtectedRoute = ({ children }) => {
@@ -122,6 +123,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Slots />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reservations"
+            element={
+              <ProtectedRoute>
+                <Reservations />
               </ProtectedRoute>
             }
           />
