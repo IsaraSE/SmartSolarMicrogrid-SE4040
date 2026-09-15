@@ -92,7 +92,7 @@ const Dashboard = () => {
             const now = new Date();
             const isActiveNow = allReservations.some(r => 
               r.stationId === station.stationId && 
-              r.status === 'CONFIRMED' &&
+              (r.status === 1 || r.status === 'APPROVED') &&
               new Date(r.scheduledStartDateTime) <= now &&
               new Date(r.scheduledEndDateTime) >= now
             );
@@ -127,9 +127,9 @@ const Dashboard = () => {
           const rDate = new Date(r.createdAt);
           const dayMatch = last7Days.find(d => d.date.getDate() === rDate.getDate() && d.date.getMonth() === rDate.getMonth());
           if (dayMatch) {
-            if (r.status === 'CONFIRMED') dayMatch.Confirmed++;
-            else if (r.status === 'PENDING') dayMatch.Pending++;
-            else if (r.status === 'CANCELLED') dayMatch.Cancelled++;
+            if (r.status === 1 || r.status === 'APPROVED') dayMatch.Confirmed++;
+            else if (r.status === 0 || r.status === 'PENDING') dayMatch.Pending++;
+            else if (r.status === 2 || r.status === 'CANCELLED') dayMatch.Cancelled++;
           }
         });
         setReservationsData(last7Days);
@@ -173,14 +173,18 @@ const Dashboard = () => {
   }, []);
 
   const getStatusBadgeClass = (status) => {
-    if (status === 'CONFIRMED') return 'badge confirmed';
-    if (status === 'PENDING') return 'badge pending';
-    if (status === 'CANCELLED') return 'badge cancelled'; // we might need to add css for this
+    if (status === 1 || status === 'APPROVED') return 'badge confirmed';
+    if (status === 0 || status === 'PENDING') return 'badge pending';
+    if (status === 2 || status === 'CANCELLED') return 'badge cancelled'; 
     return 'badge scheduled';
   };
 
   const getStatusText = (status) => {
-    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    if (status === 0) return 'Pending';
+    if (status === 1) return 'Approved';
+    if (status === 2) return 'Cancelled';
+    if (status === 3) return 'Completed';
+    return String(status).charAt(0).toUpperCase() + String(status).slice(1).toLowerCase();
   };
 
   return (

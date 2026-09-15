@@ -40,7 +40,22 @@ const Reservations = () => {
       setEditingId(null);
     } catch (error) {
       console.error("Failed to update status:", error);
-      alert("Failed to update reservation status.");
+      alert("Failed to update reservation status: Backend rejected this status change.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelReservation = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this reservation? This action cannot be undone.")) return;
+    
+    try {
+      setLoading(true);
+      await reservationService.cancelReservation(id);
+      await fetchReservations();
+    } catch (error) {
+      console.error("Failed to cancel reservation:", error);
+      alert("Failed to cancel reservation. Remember, it requires at least 12 hours notice.");
     } finally {
       setLoading(false);
     }
@@ -384,8 +399,6 @@ const Reservations = () => {
                         >
                           <option value={0}>Pending</option>
                           <option value={1}>Approved</option>
-                          <option value={2}>Cancelled</option>
-                          <option value={3}>Completed</option>
                         </select>
                       ) : (
                         mapStatusToBadge(res.status)
@@ -401,8 +414,12 @@ const Reservations = () => {
                         ) : (
                           <>
                             <button className="action-btn view" title="View Details"><FiEye /></button>
-                            <button className="action-btn edit" title="Change Status" onClick={() => { setEditingId(res.reservationId); setNewStatus(res.status); }}><FiEdit2 /></button>
-                            <button className="action-btn delete" title="Cancel Reservation"><FiTrash2 /></button>
+                            {res.status !== 2 && res.status !== 3 && res.status !== 'CANCELLED' && res.status !== 'COMPLETED' && (
+                              <button className="action-btn edit" title="Change Status" onClick={() => { setEditingId(res.reservationId); setNewStatus(res.status); }}><FiEdit2 /></button>
+                            )}
+                            {res.status !== 2 && res.status !== 'CANCELLED' && res.status !== 3 && res.status !== 'COMPLETED' && (
+                              <button className="action-btn delete" title="Cancel Reservation" onClick={() => handleCancelReservation(res.reservationId)}><FiTrash2 /></button>
+                            )}
                           </>
                         )}
                       </div>
