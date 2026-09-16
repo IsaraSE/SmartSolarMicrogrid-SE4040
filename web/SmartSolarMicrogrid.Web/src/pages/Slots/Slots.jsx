@@ -11,6 +11,17 @@ const Slots = () => {
   const [selectedStation, setSelectedStation] = useState(null);
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('add');
+  const [editingSlot, setEditingSlot] = useState(null);
+  const [formData, setFormData] = useState({
+    startDateTime: '',
+    endDateTime: '',
+    status: 0
+  });
+  const [modalLoading, setModalLoading] = useState(false);
 
   const today = new Date();
   const formattedToday = today.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
@@ -28,7 +39,7 @@ const Slots = () => {
       
       if (stationList.length > 0) {
         setSelectedStation(stationList[0]);
-        await fetchSlotsForStation(stationList[0].id);
+        await fetchSlotsForStation(stationList[0].stationId);
       }
     } catch (error) {
       console.error("Failed to load initial data:", error);
@@ -48,7 +59,7 @@ const Slots = () => {
 
   const handleStationChange = (e) => {
     const stationId = e.target.value;
-    const station = stations.find(s => s.id === stationId);
+    const station = stations.find(s => s.stationId === stationId);
     setSelectedStation(station);
     if (stationId) {
       fetchSlotsForStation(stationId);
@@ -59,6 +70,76 @@ const Slots = () => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
+  const handleAddClick = () => {
+    setModalMode('add');
+    setFormData({ startDateTime: '', endDateTime: '', status: 0 });
+    setShowModal(true);
+  };
+
+  const handleEditSlot = (slot) => {
+    setModalMode('edit');
+    setEditingSlot(slot);
+    
+    // Format for datetime-local input (YYYY-MM-DDThh:mm)
+    const formatForInput = (dateStr) => {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+    };
+
+    setFormData({
+      startDateTime: formatForInput(slot.startDateTime),
+      endDateTime: formatForInput(slot.endDateTime),
+      status: slot.status
+    });
+    setShowModal(true);
+  };
+
+  const handleDeleteSlot = async (slotId) => {
+    if (window.confirm("Are you sure you want to delete this slot?")) {
+      try {
+        await slotService.deleteSlot(slotId);
+        fetchSlotsForStation(selectedStation.stationId);
+      } catch (error) {
+        console.error("Failed to delete slot:", error);
+        alert("Failed to delete slot");
+      }
+    }
+  };
+
+  const handleModalSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.startDateTime || !formData.endDateTime) {
+      alert("Please select both a start and end date/time.");
+      return;
+    }
+
+    setModalLoading(true);
+    try {
+      if (modalMode === 'add') {
+        await slotService.createSlot({
+          stationId: selectedStation.stationId,
+          startDateTime: new Date(formData.startDateTime).toISOString(),
+          endDateTime: new Date(formData.endDateTime).toISOString()
+        });
+      } else {
+        await slotService.updateSlot(editingSlot.slotId, {
+          startDateTime: new Date(formData.startDateTime).toISOString(),
+          endDateTime: new Date(formData.endDateTime).toISOString(),
+          status: parseInt(formData.status)
+        });
+      }
+      setShowModal(false);
+      fetchSlotsForStation(selectedStation.stationId);
+    } catch (error) {
+      console.error(`Failed to ${modalMode} slot:`, error);
+      alert(`Failed to ${modalMode} slot`);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
   // SVG Sparkline component for stats
@@ -75,7 +156,7 @@ const Slots = () => {
         <div className="header-left">
           <div className="breadcrumbs">
             <span>Stations</span> &gt; 
-            <span>{selectedStation?.name || 'Loading...'}</span> &gt; 
+            <span>{selectedStation?.stationName || 'Loading...'}</span> &gt; 
             <span>Slot Management</span>
           </div>
           <h1>Slot Management</h1>
@@ -104,12 +185,12 @@ const Slots = () => {
         <img src={stationHeroBg} alt="Station" className="station-hero-image" />
         <div className="station-details">
           <div className="station-title-row">
-            <h2>{selectedStation?.name || 'Select a Station'}</h2>
+            <h2>{selectedStation?.stationName || 'Select a Station'}</h2>
             <span className="status-badge operational">Operational</span>
           </div>
           <div className="station-location">
             <FiMapPin />
-            {selectedStation?.location || 'Location unavailable'}
+            {selectedStation?.address || 'Location unavailable'}
           </div>
           <div className="station-stats-row">
             <div className="info-stat">
@@ -207,9 +288,9 @@ const Slots = () => {
         <div className="filters-group">
           <div className="filter-item">
             <label>Station</label>
-            <select className="filter-select" value={selectedStation?.id || ''} onChange={handleStationChange}>
+            <select className="filter-select" value={selectedStation?.stationId || ''} onChange={handleStationChange}>
               {stations.map(station => (
-                <option key={station.id} value={station.id}>{station.name}</option>
+                <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
               ))}
             </select>
           </div>
@@ -234,7 +315,7 @@ const Slots = () => {
           <button className="btn-reset">
             <FiRefreshCcw /> Reset
           </button>
-          <button className="btn-add-slot">
+          <button className="btn-add-slot" onClick={handleAddClick} disabled={!selectedStation}>
             <FiPlus /> Add Slot
           </button>
         </div>
@@ -269,107 +350,97 @@ const Slots = () => {
             {loading ? (
               <tr><td colSpan="6" style={{textAlign: 'center'}}>Loading slots...</td></tr>
             ) : slots.length === 0 ? (
-              <>
-                {/* Mock Data for visual fidelity if API returns empty */}
                 <tr>
-                  <td className="slot-id">SLOT-001</td>
-                  <td>Apr 22, 2025 08:00 AM</td>
-                  <td>Apr 22, 2025 10:00 AM</td>
-                  <td><span className="slot-status-badge available">Available</span></td>
-                  <td className="reserved-by">-</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
+                  <td colSpan="6" style={{textAlign: 'center', color: '#64748b', padding: '20px'}}>
+                    No slots available. Click "Add Slot" to create one.
                   </td>
                 </tr>
-                <tr>
-                  <td className="slot-id">SLOT-002</td>
-                  <td>Apr 22, 2025 10:00 AM</td>
-                  <td>Apr 22, 2025 12:00 PM</td>
-                  <td><span className="slot-status-badge reserved">Reserved</span></td>
-                  <td className="reserved-by active">SunPower (Pvt) Ltd</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="slot-id">SLOT-003</td>
-                  <td>Apr 22, 2025 12:00 PM</td>
-                  <td>Apr 22, 2025 02:00 PM</td>
-                  <td><span className="slot-status-badge available">Available</span></td>
-                  <td className="reserved-by">-</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="slot-id">SLOT-004</td>
-                  <td>Apr 22, 2025 02:00 PM</td>
-                  <td>Apr 22, 2025 04:00 PM</td>
-                  <td><span className="slot-status-badge unavailable">Unavailable</span></td>
-                  <td className="reserved-by active">Maintenance</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="slot-id">SLOT-005</td>
-                  <td>Apr 22, 2025 04:00 PM</td>
-                  <td>Apr 22, 2025 06:00 PM</td>
-                  <td><span className="slot-status-badge reserved">Reserved</span></td>
-                  <td className="reserved-by active">Nimal Perera</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-              </>
-            ) : (
-              slots.map(slot => (
-                <tr key={slot.id}>
-                  <td className="slot-id">{slot.id.substring(0,8).toUpperCase()}</td>
-                  <td>{formatSlotTime(slot.startTime)}</td>
-                  <td>{formatSlotTime(slot.endTime)}</td>
-                  <td>
-                    <span className={`slot-status-badge ${slot.status === 0 ? 'available' : slot.status === 1 ? 'reserved' : 'unavailable'}`}>
-                      {slot.status === 0 ? 'Available' : slot.status === 1 ? 'Reserved' : 'Unavailable'}
-                    </span>
-                  </td>
-                  <td className={`reserved-by ${slot.reservedBy ? 'active' : ''}`}>
-                    {slot.reservedBy || '-'}
-                  </td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-              ))
-            )}
+              ) : (
+                slots.map(slot => (
+                  <tr key={slot.slotId}>
+                    <td className="slot-id">{slot.slotId ? slot.slotId.substring(0,8).toUpperCase() : 'N/A'}</td>
+                    <td>{formatSlotTime(slot.startDateTime)}</td>
+                    <td>{formatSlotTime(slot.endDateTime)}</td>
+                    <td>
+                      <span className={`slot-status-badge ${slot.status === 0 ? 'available' : slot.status === 1 ? 'reserved' : 'unavailable'}`}>
+                        {slot.status === 0 ? 'Available' : slot.status === 1 ? 'Reserved' : 'Unavailable'}
+                      </span>
+                    </td>
+                    <td className={`reserved-by ${slot.reservedBy ? 'active' : ''}`}>
+                      {slot.reservedBy || '-'}
+                    </td>
+                    <td className="table-actions">
+                      <FiEdit2 className="action-icon" onClick={() => handleEditSlot(slot)} title="Edit Slot" />
+                      <FiSlash className="action-icon" style={{color: '#ef4444', marginLeft: '12px'}} onClick={() => handleDeleteSlot(slot.slotId)} title="Delete Slot" />
+                    </td>
+                  </tr>
+                ))
+              )}
           </tbody>
         </table>
 
         <div className="table-footer">
-          <span className="showing-text">Showing 1 - 8 of 48 slots</span>
+          <span className="showing-text">Showing 1 - {slots.length} of {slots.length} slots</span>
           <div className="pagination">
             <button className="page-btn"><FiChevronsLeft /></button>
             <button className="page-btn active">1</button>
-            <button className="page-btn">2</button>
-            <button className="page-btn">3</button>
-            <button className="page-btn">4</button>
-            <button className="page-btn">5</button>
             <button className="page-btn"><FiChevronsRight /></button>
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="slots-modal-overlay">
+          <div className="slots-modal fade-in">
+            <div className="slots-modal-header">
+              <h3>{modalMode === 'add' ? 'Add New Slot' : 'Edit Slot'}</h3>
+              <button className="slots-modal-close" onClick={() => setShowModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={handleModalSubmit}>
+              <div className="slots-modal-body">
+                <div className="slots-form-group">
+                  <label>Start Date & Time</label>
+                  <input 
+                    type="datetime-local" 
+                    required 
+                    value={formData.startDateTime}
+                    onChange={(e) => setFormData({...formData, startDateTime: e.target.value})}
+                  />
+                </div>
+                <div className="slots-form-group">
+                  <label>End Date & Time</label>
+                  <input 
+                    type="datetime-local" 
+                    required 
+                    value={formData.endDateTime}
+                    onChange={(e) => setFormData({...formData, endDateTime: e.target.value})}
+                  />
+                </div>
+                {modalMode === 'edit' && (
+                  <div className="slots-form-group">
+                    <label>Status</label>
+                    <select 
+                      value={formData.status}
+                      onChange={(e) => setFormData({...formData, status: parseInt(e.target.value)})}
+                    >
+                      <option value={0}>Available</option>
+                      <option value={1}>Reserved</option>
+                      <option value={2}>Unavailable</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+              <div className="slots-modal-footer">
+                <button type="button" className="slots-btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="slots-btn-save" disabled={modalLoading}>
+                  {modalLoading ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
