@@ -30,7 +30,8 @@ const UserForm = () => {
     accountStatus: 'ACTIVE',
     password: '',
     confirmPassword: '',
-    address: '' // Mapped from "Notes"
+    address: '',
+    additionalInfo: ''
   });
 
   useEffect(() => {
@@ -52,6 +53,7 @@ const UserForm = () => {
           role: user.role || 'BACKOFFICE',
           accountStatus: user.accountStatus || 'ACTIVE',
           address: user.address || '',
+          additionalInfo: user.additionalInfo || '',
           password: '',
           confirmPassword: ''
         });
@@ -81,14 +83,15 @@ const UserForm = () => {
         accountStatus: 'ACTIVE',
         password: '',
         confirmPassword: '',
-        address: ''
+        address: '',
+        additionalInfo: ''
       });
       setError(null);
     }
   };
 
   const validateForm = () => {
-    if (!formData.fullName || !formData.phone || (!isEditMode && !formData.role)) {
+    if (!formData.fullName || !formData.phone || !formData.address || (!isEditMode && !formData.role)) {
       setError('Please fill in all required fields.');
       return false;
     }
@@ -134,7 +137,8 @@ const UserForm = () => {
         const updatePayload = {
           fullName: formData.fullName,
           phone: formData.phone,
-          address: formData.address || 'N/A', // Notes mapped to address
+          address: formData.address,
+          additionalInfo: formData.additionalInfo,
           accountStatus: formData.accountStatus
         };
         await userService.updateUser(id, updatePayload);
@@ -146,7 +150,8 @@ const UserForm = () => {
           phone: formData.phone,
           password: formData.password,
           role: formData.role,
-          address: formData.address || 'N/A' // Notes mapped to address
+          address: formData.address,
+          additionalInfo: formData.additionalInfo
         };
         await userService.createUser(createPayload);
       }
@@ -237,6 +242,21 @@ const UserForm = () => {
                   required
                   pattern="^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$"
                   title="Please enter a valid phone number, e.g. +94 77 123 4567 or 0771234567"
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Address <span className="required">*</span></label>
+              <div className="input-wrapper">
+                <FiFileText className="input-icon" />
+                <input 
+                  type="text" 
+                  name="address"
+                  placeholder="Enter home/office address" 
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  required
                 />
               </div>
             </div>
@@ -349,18 +369,18 @@ const UserForm = () => {
           </div>
           
           <div className="form-group">
-            <label>Notes</label>
+            <label>Additional Information (Optional)</label>
             <div className="textarea-wrapper">
               <FiFileText className="textarea-icon" />
               <textarea 
-                name="address"
+                name="additionalInfo"
                 placeholder="Enter any additional notes (optional)..."
                 rows="4"
-                value={formData.address}
+                value={formData.additionalInfo}
                 onChange={handleInputChange}
                 maxLength="500"
               ></textarea>
-              <div className="char-count">{formData.address.length}/500</div>
+              <div className="char-count">{formData.additionalInfo.length}/500</div>
             </div>
           </div>
         </div>

@@ -333,8 +333,12 @@ const Users = () => {
                 <div className="detail-value">{viewUser.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</div>
               </div>
               <div className="detail-group">
-                <label>Additional Information</label>
+                <label>Address</label>
                 <div className="detail-value">{viewUser.address || 'None'}</div>
+              </div>
+              <div className="detail-group">
+                <label>Additional Information</label>
+                <div className="detail-value">{viewUser.additionalInfo || 'None'}</div>
               </div>
               <div className="detail-group">
                 <label>Created At</label>
