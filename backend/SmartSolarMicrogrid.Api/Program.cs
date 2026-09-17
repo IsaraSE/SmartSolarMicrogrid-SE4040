@@ -128,6 +128,50 @@ using (var scope = app.Services.CreateScope())
         await userRepository.CreateAsync(prosumerUser);
         Console.WriteLine("✅ Default prosumer created! (Email: john@example.com, Password: password123)");
     }
+
+    // Seed 5 Pending Prosumers
+    for (int i = 1; i <= 5; i++)
+    {
+        string email = $"pending{i}@example.com";
+        if (!users.Any(u => u.Email == email))
+        {
+            var pendingUser = new SmartSolarMicrogrid.Api.Models.Entities.Users.UserDetail
+            {
+                Nic = $"80000000{i}V",
+                FullName = $"Pending User {i}",
+                Email = email,
+                Phone = $"071000000{i}",
+                Address = $"City {i}",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"),
+                Role = SmartSolarMicrogrid.Api.Models.Enums.Users.UserRole.PROSUMER,
+                AccountStatus = SmartSolarMicrogrid.Api.Models.Enums.Users.AccountStatus.PENDING,
+                CreatedAt = DateTime.UtcNow.AddDays(-i)
+            };
+            await userRepository.CreateAsync(pendingUser);
+        }
+    }
+
+    // Seed 5 Deactivated Prosumers
+    for (int i = 1; i <= 5; i++)
+    {
+        string email = $"deactivated{i}@example.com";
+        if (!users.Any(u => u.Email == email))
+        {
+            var deactivatedUser = new SmartSolarMicrogrid.Api.Models.Entities.Users.UserDetail
+            {
+                Nic = $"90000000{i}V",
+                FullName = $"Deactivated User {i}",
+                Email = email,
+                Phone = $"072000000{i}",
+                Address = $"Town {i}",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"),
+                Role = SmartSolarMicrogrid.Api.Models.Enums.Users.UserRole.PROSUMER,
+                AccountStatus = SmartSolarMicrogrid.Api.Models.Enums.Users.AccountStatus.DEACTIVATED,
+                CreatedAt = DateTime.UtcNow.AddDays(-(i + 10))
+            };
+            await userRepository.CreateAsync(deactivatedUser);
+        }
+    }
 }
 // -------------------------------
 
