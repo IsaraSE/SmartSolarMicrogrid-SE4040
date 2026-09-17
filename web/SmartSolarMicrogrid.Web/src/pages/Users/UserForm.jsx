@@ -88,8 +88,14 @@ const UserForm = () => {
   };
 
   const validateForm = () => {
-    if (!formData.fullName || !formData.phone || !formData.role) {
+    if (!formData.fullName || !formData.phone || (!isEditMode && !formData.role)) {
       setError('Please fill in all required fields.');
+      return false;
+    }
+
+    const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setError('Please enter a valid phone number format (e.g. +94 77 123 4567 or 0771234567).');
       return false;
     }
     
@@ -97,6 +103,11 @@ const UserForm = () => {
     if (!isEditMode) {
       if (!formData.email) {
         setError('Email address is required.');
+        return false;
+      }
+      const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address (e.g., user@example.com).');
         return false;
       }
       if (!formData.password || formData.password.length < 6) {
@@ -206,6 +217,8 @@ const UserForm = () => {
                   onChange={handleInputChange}
                   disabled={isEditMode}
                   required={!isEditMode}
+                  pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
+                  title="Please enter a valid email address (e.g., user@example.com)"
                 />
               </div>
               <span className="input-help">This email will be used for system login and notifications.</span>
@@ -222,6 +235,8 @@ const UserForm = () => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   required
+                  pattern="^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$"
+                  title="Please enter a valid phone number, e.g. +94 77 123 4567 or 0771234567"
                 />
               </div>
             </div>
@@ -246,7 +261,6 @@ const UserForm = () => {
                 <select name="role" value={formData.role} onChange={handleInputChange} disabled={isEditMode}>
                   <option value="BACKOFFICE">BACKOFFICE</option>
                   <option value="GRID_OPERATOR">GRID_OPERATOR</option>
-                  <option value="ADMIN">ADMIN</option>
                 </select>
               </div>
               <span className="input-help">Select the appropriate role for this user.</span>
@@ -263,8 +277,7 @@ const UserForm = () => {
                   className="status-select"
                 >
                   <option value="ACTIVE">Active</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="INACTIVE">Inactive</option>
+                  <option value="DEACTIVATED">Deactivated</option>
                 </select>
               </div>
               <span className="input-help">

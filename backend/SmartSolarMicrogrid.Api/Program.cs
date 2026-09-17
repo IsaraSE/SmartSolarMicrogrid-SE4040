@@ -87,19 +87,19 @@ var app = builder.Build();
 
 app.UseGlobalExceptionHandling();
 
-// --- SEED DEFAULT ADMIN & PROSUMER ---
+// --- SEED DEFAULT BACKOFFICE & PROSUMER ---
 using (var scope = app.Services.CreateScope())
 {
     var userRepository = scope.ServiceProvider.GetRequiredService<SmartSolarMicrogrid.Api.Repositories.Users.IUserDetailsRepository>();
     var users = await userRepository.GetAllAsync();
     
-    if (!users.Any(u => u.Email == "admin@smartsolar.com"))
+    if (!users.Any(u => u.Email == "backoffice@smartsolar.com"))
     {
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword("admin123");
-        var adminUser = new SmartSolarMicrogrid.Api.Models.Entities.Users.UserDetail
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword("backoffice123");
+        var backofficeUser = new SmartSolarMicrogrid.Api.Models.Entities.Users.UserDetail
         {
-            FullName = "Admin",
-            Email = "admin@smartsolar.com",
+            FullName = "Backoffice User",
+            Email = "backoffice@smartsolar.com",
             Phone = "0000000000",
             Address = "System",
             PasswordHash = passwordHash,
@@ -107,8 +107,8 @@ using (var scope = app.Services.CreateScope())
             AccountStatus = SmartSolarMicrogrid.Api.Models.Enums.Users.AccountStatus.ACTIVE,
             CreatedAt = DateTime.UtcNow
         };
-        await userRepository.CreateAsync(adminUser);
-        Console.WriteLine("✅ Default admin user created! (Email: admin@smartsolar.com, Password: admin123)");
+        await userRepository.CreateAsync(backofficeUser);
+        Console.WriteLine("✅ Default backoffice user created! (Email: backoffice@smartsolar.com, Password: backoffice123)");
     }
 
     if (!users.Any(u => u.Email == "john@example.com"))
