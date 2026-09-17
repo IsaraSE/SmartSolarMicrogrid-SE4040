@@ -297,44 +297,49 @@
   gap: 8px;
 }
 
-.action-btn {
-  padding: 6px 12px;
-  border-radius: 6px;
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 20px; /* Pill shape */
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.btn-view-text {
   background: transparent;
-}
-
-.btn-view {
   color: #3b82f6;
   border: 1px solid #bfdbfe;
 }
-.btn-view:hover {
+.btn-view-text:hover {
   background: #eff6ff;
   border-color: #3b82f6;
 }
 
-.btn-activate {
-  color: #10b981;
-  border: 1px solid #a7f3d0;
+.btn-activate, .btn-reactivate {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
-.btn-activate:hover {
-  background: #ecfdf5;
-  border-color: #10b981;
-}
-
-.btn-reactivate {
-  color: #3b82f6;
-  border: 1px solid #bfdbfe;
-}
-.btn-reactivate:hover {
-  background: #eff6ff;
-  border-color: #3b82f6;
+.btn-activate:hover, .btn-reactivate:hover {
+  background: #dcfce7;
+  border-color: #86efac;
 }
 
-/* Inherit badge styles from Users.css */
+.btn-deactivate {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+}
+.btn-deactivate:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
 /* Inherit footer styles from Users.css (assumes they are somewhat global or we need to duplicate them) */
 .table-footer {
   display: flex;
@@ -455,6 +460,20 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Fixed Width Status Badge Override for Prosumers */
+.static-badge {
+  display: inline-flex !important;
+  width: 130px !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+.status-badge-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .rows-per-page {
   display: flex;
   align-items: center;

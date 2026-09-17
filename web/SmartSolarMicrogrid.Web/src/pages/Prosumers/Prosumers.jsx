@@ -3,17 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FiSearch, 
   FiFilter, 
-  FiMoreVertical,
   FiUsers,
   FiClock,
   FiUserCheck,
   FiUserX,
   FiTrendingUp,
-  FiTrendingDown
+  FiTrendingDown,
+  FiPlay,
+  FiSlash,
+  FiEye,
+  FiX
 } from 'react-icons/fi';
 import { PiSunLight } from 'react-icons/pi';
 import { prosumerService } from '../../services/prosumerService';
-import ProsumerDetailsDrawer from './ProsumerDetailsDrawer';
 import './Prosumers.css';
 
 const Prosumers = () => {
@@ -24,8 +26,24 @@ const Prosumers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All'); // 'All', 'Pending', 'Active', 'Deactivated'
   const [selectedProsumer, setSelectedProsumer] = useState(null);
+  const [statusConfirm, setStatusConfirm] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  const getAvatarColor = (name) => {
+    if (!name) return '#94a3b8';
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
 
   const today = new Date();
   const formattedToday = today.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
@@ -76,13 +94,40 @@ const Prosumers = () => {
     }
   };
 
+  const handleDeactivate = async (nic) => {
+    try {
+      const response = await prosumerService.deactivateProsumer(nic);
+      if (response.success) {
+        fetchProsumers();
+      }
+    } catch (err) {
+      console.error('Failed to deactivate prosumer:', err);
+      alert('Failed to deactivate prosumer');
+    }
+  };
+
+  const confirmStatusChange = async () => {
+    if (!statusConfirm) return;
+    const { action, nic } = statusConfirm;
+    
+    if (action === 'ACTIVATE') {
+      await handleActivate(nic);
+    } else if (action === 'DEACTIVATE') {
+      await handleDeactivate(nic);
+    } else if (action === 'REACTIVATE') {
+      await handleReactivate(nic);
+    }
+    
+    setStatusConfirm(null);
+  };
+
   const totalProsumers = prosumers.length;
   const pendingCount = prosumers.filter(p => p.accountStatus === 'PENDING').length;
   const activeCount = prosumers.filter(p => p.accountStatus === 'ACTIVE').length;
-  const deactivatedCount = prosumers.filter(p => p.accountStatus === 'INACTIVE').length;
+  const deactivatedCount = prosumers.filter(p => p.accountStatus === 'DEACTIVATED').length;
 
   const filteredProsumers = useMemo(() => {
-    return prosumers.filter(prosumer => {
+    const result = prosumers.filter(prosumer => {
       const matchesSearch = 
         (prosumer.nic || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (prosumer.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,9 +137,16 @@ const Prosumers = () => {
         activeTab === 'All' ? true :
         activeTab === 'Pending' ? prosumer.accountStatus === 'PENDING' :
         activeTab === 'Active' ? prosumer.accountStatus === 'ACTIVE' :
-        activeTab === 'Deactivated' ? prosumer.accountStatus === 'INACTIVE' : true;
+        activeTab === 'Deactivated' ? prosumer.accountStatus === 'DEACTIVATED' : true;
         
       return matchesSearch && matchesTab;
+    });
+
+    // Sort to ensure DEACTIVATED prosumers always appear at the bottom
+    return result.sort((a, b) => {
+      if (a.accountStatus === 'DEACTIVATED' && b.accountStatus !== 'DEACTIVATED') return 1;
+      if (a.accountStatus !== 'DEACTIVATED' && b.accountStatus === 'DEACTIVATED') return -1;
+      return 0;
     });
   }, [prosumers, searchTerm, activeTab]);
 
@@ -235,17 +287,14 @@ const Prosumers = () => {
         </div>
 
         <div className="table-responsive">
-          <table className="prosumers-table">
+          <table className="prosumers-table users-table">
             <thead>
               <tr>
                 <th>NIC</th>
-                <th>Full Name</th>
+                <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Address</th>
                 <th>Account Status</th>
-                <th>Created At</th>
-                <th>Last Reservation</th>
                 <th className="th-actions">Actions</th>
               </tr>
             </thead>
@@ -260,31 +309,50 @@ const Prosumers = () => {
                 currentProsumers.map(prosumer => (
                   <tr key={prosumer.nic || prosumer.userId}>
                     <td className="cell-nic">{prosumer.nic || '-'}</td>
-                    <td className="cell-name">{prosumer.fullName}</td>
+                    <td>
+                      <div className="cell-user">
+                        <div 
+                          className="user-avatar" 
+                          style={{ backgroundColor: `${getAvatarColor(prosumer.fullName)}20`, color: getAvatarColor(prosumer.fullName) }}
+                        >
+                          {getInitials(prosumer.fullName)}
+                        </div>
+                        <span className="user-name">
+                          {prosumer.fullName ? prosumer.fullName.split(' ').slice(0, 2).join(' ') : 'Unknown'}
+                        </span>
+                      </div>
+                    </td>
                     <td className="cell-email">
                       <div className="email-text" title={prosumer.email}>{prosumer.email}</div>
                     </td>
                     <td className="cell-phone">{prosumer.phone}</td>
-                    <td className="cell-address">
-                      <div className="address-text" title={prosumer.address}>{prosumer.address || '-'}</div>
-                    </td>
                     <td>
-                      <span className={`status-badge status-${prosumer.accountStatus?.toLowerCase() || 'unknown'}`}>
-                        <span className="status-dot"></span>
-                        {prosumer.accountStatus === 'ACTIVE' ? 'Active' : prosumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}
+                      <span className={`status-badge-btn static-badge status-${prosumer.accountStatus?.toLowerCase() || 'unknown'}`}>
+                        <div className="status-badge-content">
+                          <span className="status-dot"></span>
+                          <span>{prosumer.accountStatus === 'ACTIVE' ? 'Active' : prosumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}</span>
+                        </div>
                       </span>
                     </td>
-                    <td>{formatDate(prosumer.createdAt)}</td>
-                    <td>{'-'}</td>
                     <td className="cell-actions">
-                      {prosumer.accountStatus === 'PENDING' ? (
-                        <button className="action-btn btn-activate" onClick={() => handleActivate(prosumer.nic)}>Activate</button>
-                      ) : prosumer.accountStatus === 'INACTIVE' ? (
-                        <button className="action-btn btn-reactivate" onClick={() => handleReactivate(prosumer.nic)}>Reactivate</button>
-                      ) : (
-                        <button className="action-btn btn-view" onClick={() => setSelectedProsumer(prosumer)}>View</button>
+                      <button className="btn-action btn-view-text" onClick={() => setSelectedProsumer(prosumer)}>
+                        <FiEye style={{ marginRight: '4px' }} /> View
+                      </button>
+                      {activeTab === 'Pending' && (
+                        <button className="btn-action btn-activate" onClick={() => setStatusConfirm({ action: 'ACTIVATE', actionText: 'Activate', nic: prosumer.nic, name: prosumer.fullName })}>
+                          <FiPlay style={{ marginRight: '4px' }} /> Activate
+                        </button>
                       )}
-                      <button className="btn-icon"><FiMoreVertical /></button>
+                      {activeTab === 'Active' && (
+                        <button className="btn-action btn-deactivate" onClick={() => setStatusConfirm({ action: 'DEACTIVATE', actionText: 'Deactivate', nic: prosumer.nic, name: prosumer.fullName })}>
+                          <FiSlash style={{ marginRight: '4px' }} /> Deactivate
+                        </button>
+                      )}
+                      {activeTab === 'Deactivated' && (
+                        <button className="btn-action btn-reactivate" onClick={() => setStatusConfirm({ action: 'REACTIVATE', actionText: 'Reactivate', nic: prosumer.nic, name: prosumer.fullName })}>
+                          <FiPlay style={{ marginRight: '4px' }} /> Reactivate
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -314,6 +382,7 @@ const Prosumers = () => {
               <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
+                <option value={15}>15</option>
                 <option value={20}>20</option>
               </select>
               <span>per page</span>
@@ -322,13 +391,73 @@ const Prosumers = () => {
         </div>
       </div>
 
-      <ProsumerDetailsDrawer 
-        isOpen={!!selectedProsumer} 
-        onClose={() => setSelectedProsumer(null)} 
-        prosumer={selectedProsumer}
-        onActivate={handleActivate}
-        onReactivate={handleReactivate}
-      />
+      {/* View Prosumer Modal */}
+      {selectedProsumer && (
+        <div className="user-modal-overlay">
+          <div className="user-modal-content fade-in">
+            <div className="user-modal-header">
+              <h2>Prosumer Details</h2>
+              <button className="user-modal-close" onClick={() => setSelectedProsumer(null)}>&times;</button>
+            </div>
+            <div className="user-modal-body">
+              <div className="detail-group">
+                <label>Full Name</label>
+                <div className="detail-value">{selectedProsumer.fullName}</div>
+              </div>
+              <div className="detail-group">
+                <label>Email Address</label>
+                <div className="detail-value">{selectedProsumer.email}</div>
+              </div>
+              <div className="detail-group">
+                <label>Phone Number</label>
+                <div className="detail-value">{selectedProsumer.phone}</div>
+              </div>
+              <div className="detail-group">
+                <label>NIC Number</label>
+                <div className="detail-value">{selectedProsumer.nic}</div>
+              </div>
+              <div className="detail-group">
+                <label>Account Status</label>
+                <div className="detail-value">{selectedProsumer.accountStatus === 'ACTIVE' ? 'Active' : selectedProsumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}</div>
+              </div>
+              <div className="detail-group">
+                <label>Address</label>
+                <div className="detail-value">{selectedProsumer.address || 'None'}</div>
+              </div>
+              <div className="detail-group">
+                <label>Created At</label>
+                <div className="detail-value">
+                  {selectedProsumer.createdAt ? new Date(selectedProsumer.createdAt).toLocaleString() : 'N/A'}
+                </div>
+              </div>
+            </div>
+            <div className="user-modal-footer">
+              <button className="btn-modal-close" onClick={() => setSelectedProsumer(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Confirmation Modal */}
+      {statusConfirm && (
+        <div className="user-modal-overlay">
+          <div className="user-modal-content status-confirm-modal fade-in">
+            <div className="user-modal-header">
+              <h2>Confirm Status Change</h2>
+              <button className="user-modal-close" onClick={() => setStatusConfirm(null)}>&times;</button>
+            </div>
+            <div className="user-modal-body">
+              <p>
+                Are you sure you want to <strong>{statusConfirm.actionText.toLowerCase()}</strong> the prosumer account for <strong>{statusConfirm.name}</strong>?
+              </p>
+            </div>
+            <div className="user-modal-footer">
+              <button className="btn-modal-cancel" onClick={() => setStatusConfirm(null)}>Cancel</button>
+              <button className="btn-modal-confirm" onClick={confirmStatusChange}>{statusConfirm.actionText}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
