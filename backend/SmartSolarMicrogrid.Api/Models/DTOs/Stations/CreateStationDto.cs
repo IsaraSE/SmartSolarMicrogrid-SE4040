@@ -37,4 +37,7 @@ public class CreateStationDto
 
     [Required]
     public string OperatingEndTime { get; set; } = null!;
+    
+    [MaxLength(500)]
+    public string? Description { get; set; }
 }

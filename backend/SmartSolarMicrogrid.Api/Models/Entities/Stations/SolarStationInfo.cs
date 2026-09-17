@@ -18,6 +18,9 @@ public class SolarStationInfo
     public string OperatingStartTime { get; set; } = null!;
     public string OperatingEndTime { get; set; } = null!;
     
+    [BsonIgnoreIfNull]
+    public string? Description { get; set; }
+    
     [BsonRepresentation(BsonType.String)]
     public StationStatus Status { get; set; }
 }

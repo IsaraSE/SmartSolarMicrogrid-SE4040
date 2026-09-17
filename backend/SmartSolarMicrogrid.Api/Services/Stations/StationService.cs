@@ -50,6 +50,7 @@ public class StationService : IStationService
             BatterySlotCount = request.BatterySlotCount,
             OperatingStartTime = request.OperatingStartTime,
             OperatingEndTime = request.OperatingEndTime,
+            Description = request.Description,
             Status = StationStatus.ACTIVE
         };
 
@@ -81,6 +82,7 @@ public class StationService : IStationService
         station.BatterySlotCount = request.BatterySlotCount;
         station.OperatingStartTime = request.OperatingStartTime;
         station.OperatingEndTime = request.OperatingEndTime;
+        station.Description = request.Description;
         station.Status = request.Status;
 
         await _stationRepository.UpdateAsync(id, station);
@@ -137,6 +139,7 @@ public class StationService : IStationService
             BatterySlotCount = station.BatterySlotCount,
             OperatingStartTime = station.OperatingStartTime,
             OperatingEndTime = station.OperatingEndTime,
+            Description = station.Description,
             Status = station.Status
         };
     }
