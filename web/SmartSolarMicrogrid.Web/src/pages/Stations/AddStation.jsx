@@ -49,14 +49,14 @@ const AddStation = () => {
 
   // Form State
   const [formData, setFormData] = useState({
-    stationName: 'Galle Coastal Hub',
-    status: 'Active',
-    description: 'Coastal solar charging station with battery storage and grid support. Serves nearby community and tourists with clean energy.',
-    address: 'No. 245, Matara Road, Galle, Sri Lanka',
-    latitude: 6.0535, 
-    longitude: 80.2210,
-    capacity: '120',
-    batterySlotCount: '14',
+    stationName: '',
+    status: 'ACTIVE',
+    description: '',
+    address: '',
+    latitude: 6.9200, 
+    longitude: 79.8600,
+    capacity: '',
+    batterySlotCount: '',
     operatingStartTime: '06:00',
     operatingEndTime: '22:00'
   });
@@ -100,11 +100,11 @@ const AddStation = () => {
         capacity: parseFloat(formData.capacity),
         batterySlotCount: parseInt(formData.batterySlotCount),
         operatingStartTime: formData.operatingStartTime,
-        operatingEndTime: formData.operatingEndTime
+        operatingEndTime: formData.operatingEndTime,
+        description: formData.description
       };
 
       await stationService.createStation(stationDto);
-      alert('Station created successfully!');
       navigate('/stations');
     } catch (err) {
       setError('Failed to create station. Please check your inputs.');
@@ -166,7 +166,7 @@ const AddStation = () => {
               </div>
 
               <div className="input-group">
-                <label>Description / Notes</label>
+                <label>Description (Optional)</label>
                 <textarea 
                   name="description"
                   value={formData.description}

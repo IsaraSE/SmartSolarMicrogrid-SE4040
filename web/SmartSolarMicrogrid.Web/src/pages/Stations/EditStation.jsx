@@ -76,8 +76,8 @@ const EditStation = () => {
       if (station) {
         setFormData({
           stationName: station.stationName || '',
-          status: station.status === 1 || station.status === 'ACTIVE' ? 'ACTIVE' : 'DEACTIVATED',
-          description: '',
+          status: station.status === 0 || station.status === 'ACTIVE' ? 'ACTIVE' : 'DEACTIVATED',
+          description: station.description || '',
           address: station.address || '',
           latitude: station.latitude || 6.9200,
           longitude: station.longitude || 79.8600,
@@ -134,11 +134,11 @@ const EditStation = () => {
         batterySlotCount: parseInt(formData.batterySlotCount),
         operatingStartTime: formData.operatingStartTime,
         operatingEndTime: formData.operatingEndTime,
-        status: formData.status === 'ACTIVE' ? 1 : 2
+        description: formData.description,
+        status: formData.status === 'ACTIVE' ? 0 : 1
       };
 
       await stationService.updateStation(id, stationDto);
-      alert('Station updated successfully!');
       navigate('/stations');
     } catch (err) {
       setError('Failed to update station. Please check your inputs.');
@@ -192,15 +192,15 @@ const EditStation = () => {
                   <div className="status-select-wrapper">
                     <span className="status-dot green"></span>
                     <select name="status" value={formData.status} onChange={handleChange}>
-                      <option value="Active">Active</option>
-                      <option value="Deactivated">Deactivated</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="DEACTIVATED">Deactivated</option>
                     </select>
                   </div>
                 </div>
               </div>
 
               <div className="input-group">
-                <label>Description / Notes</label>
+                <label>Description (Optional)</label>
                 <textarea 
                   name="description"
                   value={formData.description}
