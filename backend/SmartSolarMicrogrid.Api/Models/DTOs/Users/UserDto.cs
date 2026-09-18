@@ -21,5 +21,6 @@ public class UserDto
     public UserRole Role { get; set; }
     public AccountStatus AccountStatus { get; set; }
     public string Address { get; set; } = null!;
+    public string? AdditionalInfo { get; set; }
     public DateTime CreatedAt { get; set; }
 }

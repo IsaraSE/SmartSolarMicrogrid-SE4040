@@ -30,7 +30,8 @@ const UserForm = () => {
     accountStatus: 'ACTIVE',
     password: '',
     confirmPassword: '',
-    address: '' // Mapped from "Notes"
+    address: '',
+    additionalInfo: ''
   });
 
   useEffect(() => {
@@ -52,6 +53,7 @@ const UserForm = () => {
           role: user.role || 'BACKOFFICE',
           accountStatus: user.accountStatus || 'ACTIVE',
           address: user.address || '',
+          additionalInfo: user.additionalInfo || '',
           password: '',
           confirmPassword: ''
         });
@@ -81,15 +83,22 @@ const UserForm = () => {
         accountStatus: 'ACTIVE',
         password: '',
         confirmPassword: '',
-        address: ''
+        address: '',
+        additionalInfo: ''
       });
       setError(null);
     }
   };
 
   const validateForm = () => {
-    if (!formData.fullName || !formData.phone || !formData.role) {
+    if (!formData.fullName || !formData.phone || !formData.address || (!isEditMode && !formData.role)) {
       setError('Please fill in all required fields.');
+      return false;
+    }
+
+    const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setError('Please enter a valid phone number format (e.g. +94 77 123 4567 or 0771234567).');
       return false;
     }
     
@@ -97,6 +106,11 @@ const UserForm = () => {
     if (!isEditMode) {
       if (!formData.email) {
         setError('Email address is required.');
+        return false;
+      }
+      const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address (e.g., user@example.com).');
         return false;
       }
       if (!formData.password || formData.password.length < 6) {
@@ -123,7 +137,8 @@ const UserForm = () => {
         const updatePayload = {
           fullName: formData.fullName,
           phone: formData.phone,
-          address: formData.address || 'N/A', // Notes mapped to address
+          address: formData.address,
+          additionalInfo: formData.additionalInfo,
           accountStatus: formData.accountStatus
         };
         await userService.updateUser(id, updatePayload);
@@ -135,7 +150,8 @@ const UserForm = () => {
           phone: formData.phone,
           password: formData.password,
           role: formData.role,
-          address: formData.address || 'N/A' // Notes mapped to address
+          address: formData.address,
+          additionalInfo: formData.additionalInfo
         };
         await userService.createUser(createPayload);
       }
@@ -206,6 +222,8 @@ const UserForm = () => {
                   onChange={handleInputChange}
                   disabled={isEditMode}
                   required={!isEditMode}
+                  pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
+                  title="Please enter a valid email address (e.g., user@example.com)"
                 />
               </div>
               <span className="input-help">This email will be used for system login and notifications.</span>
@@ -220,6 +238,23 @@ const UserForm = () => {
                   name="phone"
                   placeholder="Enter phone number (e.g. +94 77 123 4567)" 
                   value={formData.phone}
+                  onChange={handleInputChange}
+                  required
+                  pattern="^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$"
+                  title="Please enter a valid phone number, e.g. +94 77 123 4567 or 0771234567"
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Address <span className="required">*</span></label>
+              <div className="input-wrapper">
+                <FiFileText className="input-icon" />
+                <input 
+                  type="text" 
+                  name="address"
+                  placeholder="Enter home/office address" 
+                  value={formData.address}
                   onChange={handleInputChange}
                   required
                 />
@@ -246,7 +281,6 @@ const UserForm = () => {
                 <select name="role" value={formData.role} onChange={handleInputChange} disabled={isEditMode}>
                   <option value="BACKOFFICE">BACKOFFICE</option>
                   <option value="GRID_OPERATOR">GRID_OPERATOR</option>
-                  <option value="ADMIN">ADMIN</option>
                 </select>
               </div>
               <span className="input-help">Select the appropriate role for this user.</span>
@@ -263,8 +297,7 @@ const UserForm = () => {
                   className="status-select"
                 >
                   <option value="ACTIVE">Active</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="INACTIVE">Inactive</option>
+                  <option value="DEACTIVATED">Deactivated</option>
                 </select>
               </div>
               <span className="input-help">
@@ -336,18 +369,18 @@ const UserForm = () => {
           </div>
           
           <div className="form-group">
-            <label>Notes</label>
+            <label>Additional Information (Optional)</label>
             <div className="textarea-wrapper">
               <FiFileText className="textarea-icon" />
               <textarea 
-                name="address"
+                name="additionalInfo"
                 placeholder="Enter any additional notes (optional)..."
                 rows="4"
-                value={formData.address}
+                value={formData.additionalInfo}
                 onChange={handleInputChange}
                 maxLength="500"
               ></textarea>
-              <div className="char-count">{formData.address.length}/500</div>
+              <div className="char-count">{formData.additionalInfo.length}/500</div>
             </div>
           </div>
         </div>

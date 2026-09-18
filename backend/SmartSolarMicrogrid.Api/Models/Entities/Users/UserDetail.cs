@@ -26,5 +26,9 @@ public class UserDetail
     public AccountStatus AccountStatus { get; set; }
     
     public string Address { get; set; } = null!;
+    
+    [BsonIgnoreIfNull]
+    public string? AdditionalInfo { get; set; }
+    
     public DateTime CreatedAt { get; set; }
 }

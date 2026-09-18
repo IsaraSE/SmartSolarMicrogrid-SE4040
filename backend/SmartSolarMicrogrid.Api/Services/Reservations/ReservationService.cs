@@ -43,13 +43,28 @@ public class ReservationService : IReservationService
         if (date.HasValue)
             filtered = filtered.Where(r => r.ScheduledStartDateTime.Date == date.Value.Date);
 
-        return filtered.Select(MapToDto);
+        var dtos = filtered.Select(MapToDto).ToList();
+        
+        var allSlots = await _slotRepository.GetAllAsync();
+        foreach(var dto in dtos)
+        {
+            var slot = allSlots.FirstOrDefault(s => s.SlotId == dto.SlotId);
+            dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        }
+        
+        return dtos;
     }
 
     public async Task<ReservationDto?> GetReservationByIdAsync(string id)
     {
         var reservation = await _reservationRepository.GetByIdAsync(id);
-        return reservation != null ? MapToDto(reservation) : null;
+        if (reservation == null) return null;
+        
+        var dto = MapToDto(reservation);
+        var slot = await _slotRepository.GetByIdAsync(dto.SlotId);
+        dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        
+        return dto;
     }
 
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> CreateReservationAsync(string prosumerNic, CreateReservationDto request)
@@ -76,9 +91,13 @@ public class ReservationService : IReservationService
         slot.Status = SlotStatus.RESERVED;
         await _slotRepository.UpdateAsync(slot.SlotId!, slot);
 
+        var reservationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var resNumber = "RES-" + new Random().Next(10000, 99999);
+
         var reservation = new EnergyReservation
         {
-            ReservationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            ReservationId = reservationId,
+            ReservationNumber = resNumber,
             ProsumerNic = prosumerNic,
             StationId = request.StationId,
             SlotId = request.SlotId,
@@ -91,7 +110,11 @@ public class ReservationService : IReservationService
         };
 
         await _reservationRepository.CreateAsync(reservation);
-        return (true, "Reservation created successfully.", MapToDto(reservation));
+        
+        var dto = MapToDto(reservation);
+        dto.SlotName = slot.SlotName;
+        
+        return (true, "Reservation created successfully.", dto);
     }
 
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationAsync(string id, string prosumerNic, string role, UpdateReservationDto request)
@@ -149,8 +172,11 @@ public class ReservationService : IReservationService
         reservation.UpdatedAt = DateTime.UtcNow;
         
         await _reservationRepository.UpdateAsync(id, reservation);
+        
+        var dto = MapToDto(reservation);
+        dto.SlotName = newSlot.SlotName;
 
-        return (true, "Reservation updated successfully.", MapToDto(reservation));
+        return (true, "Reservation updated successfully.", dto);
     }
 
     public async Task<(bool Success, string Message)> CancelReservationAsync(string id, string prosumerNic, string role)
@@ -215,8 +241,12 @@ public class ReservationService : IReservationService
         }
 
         await _reservationRepository.UpdateAsync(id, reservation);
+        
+        var dto = MapToDto(reservation);
+        var slot = await _slotRepository.GetByIdAsync(reservation.SlotId);
+        dto.SlotName = slot?.SlotName ?? "Unknown Slot";
 
-        return (true, "Reservation status updated successfully.", MapToDto(reservation));
+        return (true, "Reservation status updated successfully.", dto);
     }
 
     private static ReservationDto MapToDto(EnergyReservation reservation)
@@ -224,6 +254,7 @@ public class ReservationService : IReservationService
         return new ReservationDto
         {
             ReservationId = reservation.ReservationId!,
+            ReservationNumber = reservation.ReservationNumber,
             ProsumerNic = reservation.ProsumerNic,
             StationId = reservation.StationId,
             SlotId = reservation.SlotId,

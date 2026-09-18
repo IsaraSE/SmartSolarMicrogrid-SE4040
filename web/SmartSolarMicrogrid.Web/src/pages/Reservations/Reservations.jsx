@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { BiSortAlt2 } from 'react-icons/bi';
+import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight, FiCheck } from 'react-icons/fi';
 import { reservationService } from '../../services/reservationService';
 import { stationService } from '../../services/stationService';
 import './Reservations.css';
@@ -9,6 +8,13 @@ const Reservations = () => {
   const [reservations, setReservations] = useState([]);
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('ALL');
+  
+  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', reservationId: null });
+  const [messageModal, setMessageModal] = useState({ isOpen: false, title: '', message: '', type: 'success' });
 
   useEffect(() => {
     fetchReservations();
@@ -25,6 +31,58 @@ const Reservations = () => {
       setStations(statResponse.data || []);
     } catch (error) {
       console.error("Failed to load data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executeApprove = async () => {
+    try {
+      setLoading(true);
+      setConfirmModal({ ...confirmModal, isOpen: false });
+      await reservationService.updateReservationStatus(confirmModal.reservationId, { status: 1 }); // 1 is APPROVED
+      await fetchReservations();
+      setMessageModal({
+        isOpen: true,
+        title: 'Success',
+        message: 'Reservation approved successfully!',
+        type: 'success'
+      });
+    } catch (error) {
+      if (error.response?.status === 401) return;
+      console.error("Failed to approve reservation:", error);
+      setMessageModal({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || "Failed to approve reservation.",
+        type: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executeCancel = async () => {
+    try {
+      setLoading(true);
+      setConfirmModal({ ...confirmModal, isOpen: false });
+      await reservationService.cancelReservation(confirmModal.reservationId);
+      await fetchReservations();
+      setMessageModal({
+        isOpen: true,
+        title: 'Success',
+        message: 'Reservation cancelled successfully!',
+        type: 'success'
+      });
+    } catch (error) {
+      if (error.response?.status === 401) return;
+      console.error("Failed to cancel reservation:", error);
+      setMessageModal({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || "Failed to cancel reservation.",
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -59,6 +117,15 @@ const Reservations = () => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
+
+  const filteredReservations = reservations.filter(res => {
+    if (activeTab === 'ALL') return true;
+    if (activeTab === 'PENDING' && (res.status === 0 || res.status === 'PENDING')) return true;
+    if (activeTab === 'APPROVED' && (res.status === 1 || res.status === 'APPROVED')) return true;
+    if (activeTab === 'CANCELLED' && (res.status === 2 || res.status === 'CANCELLED')) return true;
+    if (activeTab === 'COMPLETED' && (res.status === 3 || res.status === 'COMPLETED')) return true;
+    return false;
+  });
 
   return (
     <div className="reservations-container fade-in">
@@ -118,17 +185,7 @@ const Reservations = () => {
             </div>
           </div>
           
-          <div className="filter-item">
-            <label>Status</label>
-            <div className="filter-select">
-              <select defaultValue="All Statuses">
-                <option value="All Statuses">All Statuses</option>
-                <option value="Confirmed">Confirmed</option>
-                <option value="Pending">Pending</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
+          {/* Status filter removed, replaced by tabs below */}
 
           <div className="filter-item">
             <label>Date Range</label>
@@ -163,16 +220,25 @@ const Reservations = () => {
 
       {/* Table Card */}
       <div className="reservations-table-card">
-        <div className="table-header-controls">
-          <span className="showing-text">Showing 1 - 10 of 24 reservations</span>
-          <div className="per-page-control">
-            Show 
-            <select className="per-page-select">
-              <option>10</option>
-              <option>25</option>
-              <option>50</option>
-            </select>
-            per page
+        <div className="table-header-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div className="table-tabs" style={{ display: 'flex', gap: '8px' }}>
+            <button className={`tab-btn ${activeTab === 'ALL' ? 'active' : ''}`} onClick={() => setActiveTab('ALL')}>All</button>
+            <button className={`tab-btn ${activeTab === 'PENDING' ? 'active' : ''}`} onClick={() => setActiveTab('PENDING')}>Pending</button>
+            <button className={`tab-btn ${activeTab === 'APPROVED' ? 'active' : ''}`} onClick={() => setActiveTab('APPROVED')}>Approved</button>
+            <button className={`tab-btn ${activeTab === 'CANCELLED' ? 'active' : ''}`} onClick={() => setActiveTab('CANCELLED')}>Cancelled</button>
+            <button className={`tab-btn ${activeTab === 'COMPLETED' ? 'active' : ''}`} onClick={() => setActiveTab('COMPLETED')}>Completed</button>
+          </div>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <span className="showing-text">Showing 1 - {filteredReservations.length} reservations</span>
+            <div className="per-page-control">
+              Show 
+              <select className="per-page-select">
+                <option>10</option>
+                <option>25</option>
+                <option>50</option>
+              </select>
+              per page
+            </div>
           </div>
         </div>
 
@@ -180,24 +246,23 @@ const Reservations = () => {
           <table className="res-table">
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
                 <th>
-                  <div className="th-content">Reservation ID <BiSortAlt2 className="sort-icon" /></div>
+                  <div className="th-content">Reservation ID</div>
                 </th>
                 <th>
-                  <div className="th-content">Prosumer NIC <BiSortAlt2 className="sort-icon" /></div>
+                  <div className="th-content">Prosumer</div>
                 </th>
                 <th>
-                  <div className="th-content">Station <BiSortAlt2 className="sort-icon" /></div>
+                  <div className="th-content">Station / Slot</div>
                 </th>
                 <th>
-                  <div className="th-content">Scheduled Start <BiSortAlt2 className="sort-icon" /></div>
+                  <div className="th-content">Start Date & Time</div>
                 </th>
                 <th>
-                  <div className="th-content">Scheduled End <BiSortAlt2 className="sort-icon" /></div>
+                  <div className="th-content">End Date & Time</div>
                 </th>
                 <th>
-                  <div className="th-content">Status <BiSortAlt2 className="sort-icon" /></div>
+                  <div className="th-content">Status</div>
                 </th>
                 <th>Actions</th>
               </tr>
@@ -205,147 +270,24 @@ const Reservations = () => {
             <tbody>
               {loading ? (
                 <tr><td colSpan="8" style={{textAlign: 'center', padding: '24px'}}>Loading reservations...</td></tr>
-              ) : reservations.length === 0 ? (
-                <>
-                  {/* Visual UI mockup matching reference design if empty API */}
-                  <tr>
-                    <td><input type="checkbox" /></td>
-                    <td className="res-id">RES-20250422-001</td>
-                    <td className="res-nic">199012345678</td>
-                    <td>Kandy Green Station</td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 22, 2025</span>
-                        <span className="time-text">11:30 AM</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 22, 2025</span>
-                        <span className="time-text">01:30 PM</span>
-                      </div>
-                    </td>
-                    <td><span className="status-badge confirmed">Confirmed</span></td>
-                    <td>
-                      <div className="table-actions">
-                        <button className="action-btn view"><FiEye /></button>
-                        <button className="action-btn edit"><FiEdit2 /></button>
-                        <button className="action-btn delete"><FiTrash2 /></button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><input type="checkbox" /></td>
-                    <td className="res-id">RES-20250422-002</td>
-                    <td className="res-nic">198765432109</td>
-                    <td>Galle Coastal Hub</td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 22, 2025</span>
-                        <span className="time-text">02:00 PM</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 22, 2025</span>
-                        <span className="time-text">04:00 PM</span>
-                      </div>
-                    </td>
-                    <td><span className="status-badge confirmed">Confirmed</span></td>
-                    <td>
-                      <div className="table-actions">
-                        <button className="action-btn view"><FiEye /></button>
-                        <button className="action-btn edit"><FiEdit2 /></button>
-                        <button className="action-btn delete"><FiTrash2 /></button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><input type="checkbox" /></td>
-                    <td className="res-id">RES-20250422-003</td>
-                    <td className="res-nic">199283746512</td>
-                    <td>Colombo Central Node</td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 22, 2025</span>
-                        <span className="time-text">04:30 PM</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 22, 2025</span>
-                        <span className="time-text">06:00 PM</span>
-                      </div>
-                    </td>
-                    <td><span className="status-badge pending">Pending</span></td>
-                    <td>
-                      <div className="table-actions">
-                        <button className="action-btn view"><FiEye /></button>
-                        <button className="action-btn edit"><FiEdit2 /></button>
-                        <button className="action-btn delete"><FiTrash2 /></button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><input type="checkbox" /></td>
-                    <td className="res-id">RES-20250421-004</td>
-                    <td className="res-nic">198912345678</td>
-                    <td>Ratnapura Solar Hub</td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 23, 2025</span>
-                        <span className="time-text">09:00 AM</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 23, 2025</span>
-                        <span className="time-text">11:00 AM</span>
-                      </div>
-                    </td>
-                    <td><span className="status-badge confirmed">Confirmed</span></td>
-                    <td>
-                      <div className="table-actions">
-                        <button className="action-btn view"><FiEye /></button>
-                        <button className="action-btn edit"><FiEdit2 /></button>
-                        <button className="action-btn delete"><FiTrash2 /></button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><input type="checkbox" /></td>
-                    <td className="res-id">RES-20250420-006</td>
-                    <td className="res-nic">198723456789</td>
-                    <td>Kandy Green Station</td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 24, 2025</span>
-                        <span className="time-text">10:00 AM</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="date-time-cell">
-                        <span>Apr 24, 2025</span>
-                        <span className="time-text">12:00 PM</span>
-                      </div>
-                    </td>
-                    <td><span className="status-badge cancelled">Cancelled</span></td>
-                    <td>
-                      <div className="table-actions">
-                        <button className="action-btn view"><FiEye /></button>
-                        <button className="action-btn edit"><FiEdit2 /></button>
-                        <button className="action-btn delete"><FiTrash2 /></button>
-                      </div>
-                    </td>
-                  </tr>
-                </>
+              ) : filteredReservations.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{textAlign: 'center', padding: '40px', color: '#64748b'}}>
+                    No reservations found for the selected filters.
+                  </td>
+                </tr>
               ) : (
-                reservations.map(res => (
+                filteredReservations.map(res => (
                   <tr key={res.reservationId}>
-                    <td><input type="checkbox" /></td>
-                    <td className="res-id">{res.reservationId?.substring(0,8).toUpperCase() || 'RES-####'}</td>
+                    
+                    <td className="res-id">{res.reservationNumber || res.reservationId?.substring(0,8).toUpperCase() || 'RES-####'}</td>
                     <td className="res-nic">{res.prosumerNic || 'N/A'}</td>
-                    <td>{getStationName(res.stationId)}</td>
+                    <td>
+                      <div className="date-time-cell">
+                        <span>{getStationName(res.stationId)}</span>
+                        <span className="time-text">{res.slotName || 'Unknown Slot'}</span>
+                      </div>
+                    </td>
                     <td>
                       <div className="date-time-cell">
                         <span>{formatDate(res.scheduledStartDateTime)}</span>
@@ -358,12 +300,18 @@ const Reservations = () => {
                         <span className="time-text">{formatTime(res.scheduledEndDateTime)}</span>
                       </div>
                     </td>
-                    <td>{mapStatusToBadge(res.status)}</td>
+                    <td>
+                      {mapStatusToBadge(res.status)}
+                    </td>
                     <td>
                       <div className="table-actions">
-                        <button className="action-btn view"><FiEye /></button>
-                        <button className="action-btn edit"><FiEdit2 /></button>
-                        <button className="action-btn delete"><FiTrash2 /></button>
+                        {(res.status === 0 || res.status === 'PENDING') && (
+                          <button className="pill-btn btn-view" style={{ backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} title="Approve Reservation" onClick={() => setConfirmModal({ isOpen: true, type: 'APPROVE', reservationId: res.reservationId })}><FiCheck /> Approve</button>
+                        )}
+                        <button className="pill-btn btn-view" title="View Details" onClick={() => { setSelectedReservation(res); setShowViewModal(true); }}><FiEye /> View</button>
+                        {res.status !== 2 && res.status !== 'CANCELLED' && res.status !== 3 && res.status !== 'COMPLETED' && (
+                          <button className="action-btn delete" title="Cancel Reservation" onClick={() => setConfirmModal({ isOpen: true, type: 'CANCEL', reservationId: res.reservationId })}><FiTrash2 /></button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -384,6 +332,138 @@ const Reservations = () => {
           </div>
         </div>
       </div>
+
+      {/* View Modal */}
+      {showViewModal && selectedReservation && (
+        <div className="modal-overlay">
+          <div className="modal-content view-modal">
+            <div className="modal-header">
+              <h2>Reservation Details</h2>
+              <button className="close-btn" onClick={() => setShowViewModal(false)}><FiX /></button>
+            </div>
+            <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="detail-group">
+                <label>Reservation ID</label>
+                <div className="detail-value">{selectedReservation.reservationNumber || selectedReservation.reservationId}</div>
+              </div>
+              <div className="detail-group">
+                <label>Prosumer NIC</label>
+                <div className="detail-value">{selectedReservation.prosumerNic}</div>
+              </div>
+              <div className="detail-group">
+                <label>Station / Slot</label>
+                <div className="detail-value">
+                  {getStationName(selectedReservation.stationId)}<br/>
+                  <span style={{color: '#64748b', fontSize: '13px'}}>{selectedReservation.slotName || 'Unknown Slot'}</span>
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>Status</label>
+                <div className="detail-value">
+                  {mapStatusToBadge(selectedReservation.status)}
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>Start Date & Time</label>
+                <div className="detail-value">
+                  {formatDate(selectedReservation.scheduledStartDateTime)} at {formatTime(selectedReservation.scheduledStartDateTime)}
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>End Date & Time</label>
+                <div className="detail-value">
+                  {formatDate(selectedReservation.scheduledEndDateTime)} at {formatTime(selectedReservation.scheduledEndDateTime)}
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>Created At</label>
+                <div className="detail-value">
+                  {formatDate(selectedReservation.createdAt)} {formatTime(selectedReservation.createdAt)}
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>Updated At</label>
+                <div className="detail-value">
+                  {formatDate(selectedReservation.updatedAt)} {formatTime(selectedReservation.updatedAt)}
+                </div>
+              </div>
+              {selectedReservation.completedAt && (
+                <div className="detail-group">
+                  <label>Completed At</label>
+                  <div className="detail-value">
+                    {formatDate(selectedReservation.completedAt)} {formatTime(selectedReservation.completedAt)}
+                  </div>
+                </div>
+              )}
+              <div className="detail-group" style={{ gridColumn: '1 / -1' }}>
+                <label>QR Reference (Mobile Verification Code)</label>
+                <div className="detail-value" style={{ fontFamily: 'monospace', background: '#f8fafc', padding: '8px', borderRadius: '4px', border: '1px dashed #cbd5e1' }}>
+                  {selectedReservation.qrReference || selectedReservation.reservationId}
+                </div>
+              </div>
+            </div>
+            <div className="modal-actions" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setShowViewModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModal.isOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h2>{confirmModal.type === 'APPROVE' ? 'Approve Reservation' : 'Cancel Reservation'}</h2>
+              <button className="close-btn" onClick={() => setConfirmModal({ isOpen: false, type: '', reservationId: null })}><FiX /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ margin: '0 0 16px 0', color: '#475569', lineHeight: '1.5' }}>
+                {confirmModal.type === 'APPROVE' 
+                  ? "Are you sure you want to approve this reservation? The Prosumer will be able to proceed with energy exchange." 
+                  : "Are you sure you want to cancel this reservation? This action cannot be undone."}
+              </p>
+            </div>
+            <div className="modal-actions" style={{ padding: '0 24px 24px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="btn-secondary" onClick={() => setConfirmModal({ isOpen: false, type: '', reservationId: null })}>Close</button>
+              <button 
+                className="btn-primary" 
+                style={{ background: confirmModal.type === 'CANCEL' ? '#ef4444' : '#10b981', border: 'none', padding: '8px 16px', borderRadius: '6px', color: 'white', fontWeight: '500', cursor: 'pointer' }}
+                onClick={confirmModal.type === 'APPROVE' ? executeApprove : executeCancel}
+              >
+                {confirmModal.type === 'APPROVE' ? 'Approve' : 'Cancel Reservation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Message Modal */}
+      {messageModal.isOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h2>{messageModal.title}</h2>
+              <button className="close-btn" onClick={() => setMessageModal({ isOpen: false, title: '', message: '', type: 'success' })}><FiX /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ margin: '0 0 16px 0', color: '#475569', lineHeight: '1.5' }}>
+                {messageModal.message}
+              </p>
+            </div>
+            <div className="modal-actions" style={{ padding: '0 24px 24px 24px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn-primary" 
+                style={{ background: messageModal.type === 'error' ? '#ef4444' : '#10b981', border: 'none', padding: '8px 16px', borderRadius: '6px', color: 'white', fontWeight: '500', cursor: 'pointer' }}
+                onClick={() => setMessageModal({ isOpen: false, title: '', message: '', type: 'success' })}
+              >
+                Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -22,5 +22,6 @@ public class StationDto
     public int BatterySlotCount { get; set; }
     public string OperatingStartTime { get; set; } = null!;
     public string OperatingEndTime { get; set; } = null!;
+    public string? Description { get; set; }
     public StationStatus Status { get; set; }
 }

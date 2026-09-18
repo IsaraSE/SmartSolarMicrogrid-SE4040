@@ -563,3 +563,33 @@
   color: #3b82f6;
   border-color: #3b82f6;
 }
+
+/* Pill Button Styles for Action Column */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pill-btn:hover {
+  opacity: 0.85;
+}
+.pill-btn.btn-view, .pill-btn.btn-edit {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+.pill-btn.btn-deactivate {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+.pill-btn.btn-activate {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}

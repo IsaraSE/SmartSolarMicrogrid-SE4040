@@ -25,4 +25,6 @@ public class UpdateUserDto
 
     [Required]
     public AccountStatus AccountStatus { get; set; }
+    
+    public string? AdditionalInfo { get; set; }
 }

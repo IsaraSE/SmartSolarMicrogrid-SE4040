@@ -74,6 +74,19 @@ public class ProsumerService : IProsumerService
         return MapToDto(user);
     }
 
+    public async Task<UserDto?> DeactivateProsumerAsync(string nic)
+    {
+        var user = await _userRepository.GetByNicAsync(nic);
+        if (user == null || user.Role != UserRole.PROSUMER || user.AccountStatus != AccountStatus.ACTIVE)
+        {
+            return null;
+        }
+
+        user.AccountStatus = AccountStatus.DEACTIVATED;
+        await _userRepository.UpdateAsync(user.UserId!, user);
+        return MapToDto(user);
+    }
+
     private static UserDto MapToDto(UserDetail user)
     {
         return new UserDto

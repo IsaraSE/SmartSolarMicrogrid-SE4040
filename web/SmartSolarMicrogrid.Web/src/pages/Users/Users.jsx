@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiRefreshCw, FiPlus, FiEdit2, FiMoreHorizontal } from 'react-icons/fi';
+import { FiSearch, FiRefreshCw, FiPlus, FiEdit2, FiChevronDown } from 'react-icons/fi';
 import userService from '../../services/userService';
 import './Users.css';
 
@@ -18,6 +18,10 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Modals state
+  const [viewUser, setViewUser] = useState(null);
+  const [statusConfirm, setStatusConfirm] = useState(null); // { user, newStatus }
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,6 +55,26 @@ const Users = () => {
     setRoleFilter('All Roles');
     setStatusFilter('All Status');
     setCurrentPage(1);
+  };
+
+  const handleStatusClick = (user) => {
+    const newStatus = user.accountStatus === 'ACTIVE' ? 'DEACTIVATED' : 'ACTIVE';
+    setStatusConfirm({ user, newStatus });
+  };
+
+  const confirmStatusChange = async () => {
+    if (!statusConfirm) return;
+    try {
+      const { user, newStatus } = statusConfirm;
+      await userService.updateUser(user.userId, {
+        ...user,
+        accountStatus: newStatus
+      });
+      setStatusConfirm(null);
+      fetchUsers(); // Refresh the list
+    } catch (err) {
+      alert("Failed to update status");
+    }
   };
 
   // Helper to get initials
@@ -135,7 +159,6 @@ const Users = () => {
           <div className="filter-dropdown">
             <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
               <option value="All Roles">All Roles</option>
-              <option value="ADMIN">ADMIN</option>
               <option value="BACKOFFICE">BACKOFFICE</option>
               <option value="GRID_OPERATOR">GRID_OPERATOR</option>
             </select>
@@ -171,31 +194,26 @@ const Users = () => {
           <table className="users-table">
             <thead>
               <tr>
-                <th>User ID</th>
-                <th>Full Name</th>
+                <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Role</th>
                 <th>Account Status</th>
-                <th>Created At</th>
                 <th className="th-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="loading-cell">Loading users...</td>
+                  <td colSpan="6" className="loading-cell">Loading users...</td>
                 </tr>
               ) : currentUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="empty-cell">No users found.</td>
+                  <td colSpan="6" className="empty-cell">No users found.</td>
                 </tr>
               ) : (
                 currentUsers.map((user) => (
                   <tr key={user.userId}>
-                    <td className="cell-id">
-                      {user.userId ? `USR-${user.userId.substring(18, 24).toUpperCase()}` : 'N/A'}
-                    </td>
                     <td>
                       <div className="cell-user">
                         <div 
@@ -204,10 +222,14 @@ const Users = () => {
                         >
                           {getInitials(user.fullName)}
                         </div>
-                        <span className="user-name">{user.fullName}</span>
+                        <span className="user-name">
+                          {user.fullName ? user.fullName.split(' ').slice(0, 2).join(' ') : 'Unknown'}
+                        </span>
                       </div>
                     </td>
-                    <td className="cell-email">{user.email}</td>
+                    <td>
+                      <div className="cell-email" title={user.email}>{user.email}</div>
+                    </td>
                     <td className="cell-phone">{user.phone}</td>
                     <td>
                       <span className={`role-badge role-${user.role?.toLowerCase() || 'unknown'}`}>
@@ -215,15 +237,20 @@ const Users = () => {
                       </span>
                     </td>
                     <td>
-                      <span className={`status-badge status-${user.accountStatus?.toLowerCase() || 'unknown'}`}>
-                        <span className="status-dot"></span>
-                        {user.accountStatus === 'ACTIVE' ? 'Active' : user.accountStatus === 'PENDING' ? 'Pending' : 'Inactive'}
-                      </span>
+                      <button 
+                        className={`status-badge-btn status-${user.accountStatus?.toLowerCase() || 'unknown'}`}
+                        onClick={() => handleStatusClick(user)}
+                      >
+                        <div className="status-badge-content">
+                          <span className="status-dot"></span>
+                          <span>{user.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</span>
+                        </div>
+                        <FiChevronDown className="status-chevron" />
+                      </button>
                     </td>
-                    <td>{formatDate(user.createdAt)}</td>
                     <td className="cell-actions">
-                      <button className="btn-icon" onClick={() => navigate(`/users/edit/${user.userId}`)}><FiEdit2 /></button>
-                      <button className="btn-icon"><FiMoreHorizontal /></button>
+                      <button className="btn-action btn-view-text" onClick={() => setViewUser(user)}>View</button>
+                      <button className="btn-action btn-edit-text" onClick={() => navigate(`/users/edit/${user.userId}`)}>Edit</button>
                     </td>
                   </tr>
                 ))
@@ -275,6 +302,81 @@ const Users = () => {
           </div>
         </div>
       </div>
+
+      {/* View User Modal */}
+      {viewUser && (
+        <div className="user-modal-overlay">
+          <div className="user-modal-content fade-in">
+            <div className="user-modal-header">
+              <h2>User Details</h2>
+              <button className="user-modal-close" onClick={() => setViewUser(null)}>&times;</button>
+            </div>
+            <div className="user-modal-body">
+              <div className="detail-group">
+                <label>Full Name</label>
+                <div className="detail-value">{viewUser.fullName}</div>
+              </div>
+              <div className="detail-group">
+                <label>Email Address</label>
+                <div className="detail-value">{viewUser.email}</div>
+              </div>
+              <div className="detail-group">
+                <label>Phone Number</label>
+                <div className="detail-value">{viewUser.phone}</div>
+              </div>
+              <div className="detail-group">
+                <label>Role</label>
+                <div className="detail-value">{viewUser.role}</div>
+              </div>
+              <div className="detail-group">
+                <label>Account Status</label>
+                <div className="detail-value">{viewUser.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</div>
+              </div>
+              <div className="detail-group">
+                <label>Address</label>
+                <div className="detail-value">{viewUser.address || 'None'}</div>
+              </div>
+              <div className="detail-group">
+                <label>Additional Information</label>
+                <div className="detail-value">{viewUser.additionalInfo || 'None'}</div>
+              </div>
+              <div className="detail-group">
+                <label>Created At</label>
+                <div className="detail-value">
+                  {viewUser.createdAt ? new Date(viewUser.createdAt).toLocaleString() : 'N/A'}
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>User ID</label>
+                <div className="detail-value text-muted">{viewUser.userId}</div>
+              </div>
+            </div>
+            <div className="user-modal-footer">
+              <button className="btn-modal-close" onClick={() => setViewUser(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Confirmation Modal */}
+      {statusConfirm && (
+        <div className="user-modal-overlay">
+          <div className="user-modal-content status-confirm-modal fade-in">
+            <div className="user-modal-header">
+              <h2>Confirm Status Change</h2>
+              <button className="user-modal-close" onClick={() => setStatusConfirm(null)}>&times;</button>
+            </div>
+            <div className="user-modal-body">
+              <p>Are you sure you want to change the status of <strong>{statusConfirm.user.fullName}</strong> from <strong className={`text-${statusConfirm.user.accountStatus.toLowerCase()}`}>{statusConfirm.user.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</strong> to <strong className={`text-${statusConfirm.newStatus.toLowerCase()}`}>{statusConfirm.newStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</strong>?</p>
+            </div>
+            <div className="user-modal-footer">
+              <button className="btn-modal-cancel" onClick={() => setStatusConfirm(null)}>Cancel</button>
+              <button className="btn-modal-confirm" onClick={confirmStatusChange}>Confirm Change</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

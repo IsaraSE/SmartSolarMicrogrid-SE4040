@@ -53,6 +53,7 @@ public class UserService : IUserService
             Role = request.Role,
             AccountStatus = AccountStatus.ACTIVE,
             Address = request.Address,
+            AdditionalInfo = request.AdditionalInfo,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -71,6 +72,7 @@ public class UserService : IUserService
         user.FullName = request.FullName;
         user.Phone = request.Phone;
         user.Address = request.Address;
+        user.AdditionalInfo = request.AdditionalInfo;
         user.AccountStatus = request.AccountStatus;
 
         await _userRepository.UpdateAsync(userId, user);
@@ -89,6 +91,7 @@ public class UserService : IUserService
             Role = user.Role,
             AccountStatus = user.AccountStatus,
             Address = user.Address,
+            AdditionalInfo = user.AdditionalInfo,
             CreatedAt = user.CreatedAt
         };
     }

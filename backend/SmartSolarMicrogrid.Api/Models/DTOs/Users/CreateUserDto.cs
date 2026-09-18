@@ -33,4 +33,6 @@ public class CreateUserDto
 
     [Required]
     public string Address { get; set; } = null!;
+    
+    public string? AdditionalInfo { get; set; }
 }

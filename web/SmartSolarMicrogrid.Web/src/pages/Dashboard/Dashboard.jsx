@@ -30,7 +30,7 @@ const Dashboard = () => {
   
   // KPIs
   const [activeProsumers, setActiveProsumers] = useState(0);
-  const [pendingActivations, setPendingActivations] = useState(0);
+  const [approvedFutureCount, setApprovedFutureCount] = useState(0);
   const [gridOperators, setGridOperators] = useState(0);
   const [activeStations, setActiveStations] = useState(0);
   
@@ -41,7 +41,7 @@ const Dashboard = () => {
     { name: 'Available', value: 0 },
     { name: 'Maintenance', value: 0 },
   ]);
-  const [upcomingReservations, setUpcomingReservations] = useState([]);
+  const [pendingReservationsList, setPendingReservationsList] = useState([]);
 
   useEffect(() => {
     // Set dynamic date
@@ -70,11 +70,15 @@ const Dashboard = () => {
         // 1. Active Prosumers
         setActiveProsumers(allProsumers.filter(p => p.accountStatus === 'ACTIVE').length);
 
-        // 2. Pending Activations
-        setPendingActivations(allPending.length);
+        // 2. Approved Future Bookings Count
+        const futureApproved = allReservations.filter(r => 
+          (r.status === 1 || r.status === 'APPROVED') && 
+          new Date(r.scheduledStartDateTime) > new Date()
+        ).length;
+        setApprovedFutureCount(futureApproved);
 
         // 3. Grid Operators
-        setGridOperators(allUsers.filter(u => u.role === 'BACKOFFICE').length);
+        setGridOperators(allUsers.filter(u => u.role === 'GRID_OPERATOR').length);
 
         // 4. Active Stations
         setActiveStations(allStations.filter(s => s.status === 'ACTIVE').length);
@@ -92,7 +96,7 @@ const Dashboard = () => {
             const now = new Date();
             const isActiveNow = allReservations.some(r => 
               r.stationId === station.stationId && 
-              r.status === 'CONFIRMED' &&
+              (r.status === 1 || r.status === 'APPROVED') &&
               new Date(r.scheduledStartDateTime) <= now &&
               new Date(r.scheduledEndDateTime) >= now
             );
@@ -127,17 +131,16 @@ const Dashboard = () => {
           const rDate = new Date(r.createdAt);
           const dayMatch = last7Days.find(d => d.date.getDate() === rDate.getDate() && d.date.getMonth() === rDate.getMonth());
           if (dayMatch) {
-            if (r.status === 'CONFIRMED') dayMatch.Confirmed++;
-            else if (r.status === 'PENDING') dayMatch.Pending++;
-            else if (r.status === 'CANCELLED') dayMatch.Cancelled++;
+            if (r.status === 1 || r.status === 'APPROVED') dayMatch.Confirmed++;
+            else if (r.status === 0 || r.status === 'PENDING') dayMatch.Pending++;
+            else if (r.status === 2 || r.status === 'CANCELLED') dayMatch.Cancelled++;
           }
         });
         setReservationsData(last7Days);
 
-        // Process Upcoming Station Activity (Table)
-        const now = new Date();
-        const upcoming = allReservations
-          .filter(r => new Date(r.scheduledStartDateTime) > now)
+        // Process Pending Reservations (Table)
+        const pendingList = allReservations
+          .filter(r => r.status === 0 || r.status === 'PENDING')
           .sort((a, b) => new Date(a.scheduledStartDateTime) - new Date(b.scheduledStartDateTime))
           .slice(0, 5)
           .map(r => {
@@ -154,13 +157,12 @@ const Dashboard = () => {
               dateStr,
               timeStr,
               stationName: station ? station.stationName : 'Unknown Station',
-              type: 'Charging', // Default since entity doesn't explicitly store this
               prosumerNic: r.prosumerNic,
               status: r.status
             };
           });
           
-        setUpcomingReservations(upcoming);
+        setPendingReservationsList(pendingList);
 
       } catch (error) {
         console.error("Failed to load dashboard data", error);
@@ -173,14 +175,18 @@ const Dashboard = () => {
   }, []);
 
   const getStatusBadgeClass = (status) => {
-    if (status === 'CONFIRMED') return 'badge confirmed';
-    if (status === 'PENDING') return 'badge pending';
-    if (status === 'CANCELLED') return 'badge cancelled'; // we might need to add css for this
+    if (status === 1 || status === 'APPROVED') return 'badge confirmed';
+    if (status === 0 || status === 'PENDING') return 'badge pending';
+    if (status === 2 || status === 'CANCELLED') return 'badge cancelled'; 
     return 'badge scheduled';
   };
 
   const getStatusText = (status) => {
-    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    if (status === 0) return 'Pending';
+    if (status === 1) return 'Approved';
+    if (status === 2) return 'Cancelled';
+    if (status === 3) return 'Completed';
+    return String(status).charAt(0).toUpperCase() + String(status).slice(1).toLowerCase();
   };
 
   return (
@@ -225,12 +231,12 @@ const Dashboard = () => {
         <div className="stat-card" style={{ background: '#fefce8', borderColor: '#fef08a' }}>
           <div className="stat-card-header">
             <div className="stat-icon" style={{ background: '#fef08a', color: '#ca8a04' }}><LuClock /></div>
-            <h3>Pending Activations</h3>
+            <h3>Approved Future Bookings</h3>
           </div>
           <div className="stat-value-row">
-            <span className="stat-value">{loading ? '...' : pendingActivations}</span>
+            <span className="stat-value">{loading ? '...' : approvedFutureCount}</span>
             <div className="stat-trend">
-              <span className="trend-val neutral"><LuArrowDown /> Live</span>
+              <span className="trend-val neutral"><LuArrowUp /> Live</span>
               <span className="trend-desc">Real-time data</span>
             </div>
           </div>
@@ -363,20 +369,20 @@ const Dashboard = () => {
 
       {/* Tables - Single Table Now */}
       <div className="tables-grid">
-        <div className="card">
-          <div className="card-header" style={{ marginBottom: '16px' }}>
+        {/* Pending Reservations Table */}
+        <div className="card full-width">
+          <div className="card-header">
             <div className="card-title">
               <LuCalendar />
-              <h3>Upcoming Station Activity</h3>
+              <h3>Pending Reservations</h3>
             </div>
-            <a href="#" className="view-all">View All</a>
+            <a href="/reservations" className="view-all">View All</a>
           </div>
           <table className="dashboard-table">
             <thead>
               <tr>
                 <th>Date & Time</th>
                 <th>Station</th>
-                <th>Type</th>
                 <th>Prosumer NIC</th>
                 <th>Status</th>
               </tr>
@@ -384,17 +390,16 @@ const Dashboard = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', color: '#64748b', padding: '20px' }}>Loading activities...</td>
+                  <td colSpan="4" style={{ textAlign: 'center', color: '#64748b', padding: '20px' }}>Loading activities...</td>
                 </tr>
-              ) : upcomingReservations.length === 0 ? (
+              ) : pendingReservationsList.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', color: '#64748b', padding: '20px' }}>No upcoming reservations.</td>
+                  <td colSpan="4" style={{ textAlign: 'center', color: '#64748b', padding: '20px' }}>No pending reservations.</td>
                 </tr>
-              ) : upcomingReservations.map((res, index) => (
+              ) : pendingReservationsList.map((res, index) => (
                 <tr key={index}>
                   <td>{res.dateStr}<span className="text-sub">{res.timeStr}</span></td>
                   <td>{res.stationName}</td>
-                  <td>{res.type}</td>
                   <td>{res.prosumerNic}</td>
                   <td><span className={getStatusBadgeClass(res.status)}>{getStatusText(res.status)}</span></td>
                 </tr>

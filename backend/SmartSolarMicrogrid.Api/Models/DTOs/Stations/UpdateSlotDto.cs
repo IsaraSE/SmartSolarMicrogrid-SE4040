@@ -22,4 +22,7 @@ public class UpdateSlotDto
 
     [Required]
     public SlotStatus Status { get; set; }
+
+    [MaxLength(500)]
+    public string? Notes { get; set; }
 }

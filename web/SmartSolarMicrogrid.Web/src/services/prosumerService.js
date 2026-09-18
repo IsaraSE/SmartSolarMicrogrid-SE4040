@@ -35,5 +35,11 @@ export const prosumerService = {
   reactivateProsumer: async (nic) => {
     const response = await api.put(`/Prosumers/${nic}/reactivate`);
     return response.data;
+  },
+
+  // Deactivate prosumer
+  deactivateProsumer: async (nic) => {
+    const response = await api.put(`/Prosumers/${nic}/deactivate`);
+    return response.data;
   }
 };

@@ -5,11 +5,14 @@ using System;
 
 namespace SmartSolarMicrogrid.Api.Models.Entities.Stations;
 
+[BsonIgnoreExtraElements]
 public class EnergyBookingSlot
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string? SlotId { get; set; }
+
+    public string SlotName { get; set; } = null!;
     
     [BsonRepresentation(BsonType.ObjectId)]
     public string StationId { get; set; } = null!;
@@ -19,4 +22,10 @@ public class EnergyBookingSlot
     
     [BsonRepresentation(BsonType.String)]
     public SlotStatus Status { get; set; }
+    
+    [BsonIgnoreIfNull]
+    public string? ReservedBy { get; set; }
+    
+    [BsonIgnoreIfNull]
+    public string? Notes { get; set; }
 }
