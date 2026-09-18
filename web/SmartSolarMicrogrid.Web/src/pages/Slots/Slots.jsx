@@ -6,7 +6,7 @@ import {
   FiPlus, FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
   FiEye, FiTrash2, FiList, FiPlay
 } from 'react-icons/fi';
-import { PiSunLight } from 'react-icons/pi';
+
 import { stationService } from '../../services/stationService';
 import { slotService } from '../../services/slotService';
 import stationHeroBg from '../../assets/images/solar-hero-bg.jpg';
@@ -24,6 +24,10 @@ const Slots = () => {
   
   // Tab State
   const [activeTab, setActiveTab] = useState('ALL');
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal and Dropdown State
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -197,95 +201,32 @@ const Slots = () => {
     return true; // ALL
   });
 
-  // SVG Sparkline component for stats
-  const Sparkline = ({ color }) => (
-    <svg className="slots-stat-chart" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M5 30C15 30 20 15 30 20C40 25 45 10 55 15C65 20 70 5 75 5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
+  // Pagination Calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredSlots.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredSlots.length / itemsPerPage);
+
+
 
   return (
     <div className="slots-container fade-in">
       {/* Header */}
       <div className="slots-header">
-        <div className="header-left">
-          <div className="breadcrumbs">
-            <span>Stations</span> &gt; 
-            <span>{selectedStation?.stationName || 'Loading...'}</span> &gt; 
-            <span>Slot Management</span>
-          </div>
+        <div className="slots-title">
           <h1>Slot Management</h1>
           <p>Manage time slots for station operations, reservations and maintenance.</p>
         </div>
-        <div className="header-right">
-          <div className="date-widget">
-            <FiClock className="widget-icon" />
-            <div className="widget-content">
-              <span className="widget-title">{formattedToday}</span>
-              <span className="widget-subtitle">Good to see you today.</span>
-            </div>
-          </div>
-          <div className="weather-widget">
-            <PiSunLight className="widget-icon text-yellow" />
-            <div className="widget-content">
-              <span className="widget-title">A cleaner</span>
-              <span className="widget-subtitle">tomorrow is possible.</span>
-            </div>
-          </div>
+        <div className="slots-breadcrumbs">
+          <span>Stations</span>
+          <span className="separator">›</span>
+          <span>{selectedStation?.stationName || 'Loading...'}</span>
+          <span className="separator">›</span>
+          <span className="current">Slot Management</span>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="slots-stats-grid">
-        <div className="slots-stat-card">
-          <div className="slots-stat-left">
-            <div className="slots-stat-icon-wrapper total">
-              <FiCalendar />
-            </div>
-            <div className="slots-stat-info">
-              <span className="slots-stat-title">Total Slots</span>
-              <span className="slots-stat-value">{slots.length}</span>
-              <span className="slots-stat-sub">For selected station</span>
-            </div>
-          </div>
-        </div>
-        <div className="slots-stat-card">
-          <div className="slots-stat-left">
-            <div className="slots-stat-icon-wrapper available">
-              <FiCheckCircle />
-            </div>
-            <div className="slots-stat-info">
-              <span className="slots-stat-title">Available Slots</span>
-              <span className="slots-stat-value">{slots.filter(s => { const st = typeof s.status === 'string' ? s.status.toUpperCase() : s.status; return st === 0 || st === 'AVAILABLE'; }).length}</span>
-            </div>
-          </div>
-          <Sparkline color="#3b82f6" />
-        </div>
-        <div className="slots-stat-card">
-          <div className="slots-stat-left">
-            <div className="slots-stat-icon-wrapper reserved">
-              <FiClock />
-            </div>
-            <div className="slots-stat-info">
-              <span className="slots-stat-title">Reserved Slots</span>
-              <span className="slots-stat-value">{slots.filter(s => { const st = typeof s.status === 'string' ? s.status.toUpperCase() : s.status; return st === 1 || st === 'RESERVED'; }).length}</span>
-            </div>
-          </div>
-          <Sparkline color="#eab308" />
-        </div>
-        <div className="slots-stat-card">
-          <div className="slots-stat-left">
-            <div className="slots-stat-icon-wrapper upcoming">
-              <FiSlash />
-            </div>
-            <div className="slots-stat-info">
-              <span className="slots-stat-title">Unavailable</span>
-              <span className="slots-stat-value">{slots.filter(s => { const st = typeof s.status === 'string' ? s.status.toUpperCase() : s.status; return st === 2 || st === 'UNAVAILABLE'; }).length}</span>
-            </div>
-          </div>
-          <Sparkline color="#ef4444" />
-        </div>
-      </div>
+
 
       {/* Main Content Area */}
       <div className="table-wrapper">
@@ -304,13 +245,16 @@ const Slots = () => {
               Reserved
             </button>
           </div>
-          <div className="table-actions-right" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <select className="filter-select" value={selectedStation?.stationId || ''} onChange={handleStationChange} style={{minWidth: '220px', height: '42px', padding: '0 12px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#f8fafc', color: '#334155', fontWeight: '500', cursor: 'pointer', appearance: 'auto'}}>
-              <option value="" disabled>Select Station</option>
-              {stations.map(station => (
-                <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
-              ))}
-            </select>
+          <div className="table-actions-right">
+            <div className="station-selector-wrapper">
+              <FiMapPin className="station-selector-icon" />
+              <select className="station-selector-select" value={selectedStation?.stationId || ''} onChange={handleStationChange}>
+                <option value="" disabled>Select Station</option>
+                {stations.map(station => (
+                  <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
+                ))}
+              </select>
+            </div>
             {user?.role === 'GRID_OPERATOR' && (
               <button className="btn-add" onClick={handleAddClick} disabled={!selectedStation} style={{ height: '42px', display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', whiteSpace: 'nowrap', borderRadius: '8px' }}>
                 <FiPlus /> Add Slot
@@ -319,106 +263,138 @@ const Slots = () => {
           </div>
         </div>
 
-        <table className="slots-table" ref={dropdownRef}>
-          <thead>
-            <tr>
-              <th>Slot Name</th>
-              <th>Start Date & Time</th>
-              <th>End Date & Time</th>
-              <th>Status</th>
-              <th>Reserved By</th>
-              <th className="actions-column">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="6" style={{textAlign: 'center', padding: '40px'}}>Loading slots...</td></tr>
-            ) : filteredSlots.length === 0 ? (
-                <tr>
-                  <td colSpan="6" style={{textAlign: 'center', color: '#64748b', padding: '40px'}}>
-                    No slots found for this category.
-                  </td>
-                </tr>
-            ) : (
-              filteredSlots.map(slot => {
-                const st = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
-                return (
-                <tr key={slot.slotId}>
-                  <td className="font-semibold">{slot.slotName || 'Unknown'}</td>
-                  <td>{formatSlotTime(slot.startDateTime)}</td>
-                  <td>{formatSlotTime(slot.endDateTime)}</td>
-                  <td>
-                    <div className={`status-badge-btn status-${st === 0 || st === 'AVAILABLE' ? 'active' : st === 1 || st === 'RESERVED' ? 'reserved' : 'deactivated'}`} style={{ cursor: 'default' }}>
-                      <div className="status-badge-content">
-                        <span className="status-dot"></span>
-                        <span>{getStatusText(slot.status)}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-secondary">
-                    {slot.reservedBy || '-'}
-                  </td>
-                  <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button className="review-btn" onClick={() => setSelectedSlot(slot)}>
-                      Review
-                    </button>
-                    
-                    {user?.role === 'GRID_OPERATOR' && (
-                      <>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          {(st === 0 || st === 'AVAILABLE') && (
-                            <button className="deactivate-btn" onClick={() => requestStatusChange(slot, 2)}>
-                              Deactivate
-                            </button>
-                          )}
-
-                          {(st === 2 || st === 'UNAVAILABLE') && (
-                            <button className="activate-btn" onClick={() => requestStatusChange(slot, 0)}>
-                              Activate
-                            </button>
-                          )}
-
-                          {(st === 1 || st === 'RESERVED') && (
-                            <button className="review-btn" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
-                              View Reservation
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="dropdown-container" style={{ position: 'relative' }}>
-                          <button 
-                            className="pill-btn" 
-                            style={{ padding: '6px 8px', backgroundColor: 'transparent', border: 'none', color: '#64748b' }} 
-                            onClick={(e) => toggleDropdown(slot.slotId, e)}
-                          >
-                            <FiMoreVertical size={18} />
-                          </button>
-                          {activeDropdown === slot.slotId && (
-                            <div className="dropdown-menu fade-in" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: '150px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                              <button className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#334155' }} onClick={() => handleEditSlot(slot)}>
-                                <FiEdit2 /> Edit Slot
+        <div className="table-scroll-container">
+          <table className="slots-table" ref={dropdownRef}>
+            <thead>
+              <tr>
+                <th>Slot Name</th>
+                <th>Start Date & Time</th>
+                <th>End Date & Time</th>
+                <th>Status</th>
+                <th>Reserved By</th>
+                <th className="actions-column">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan="6" style={{textAlign: 'center', padding: '40px'}}>Loading slots...</td></tr>
+              ) : currentItems.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{textAlign: 'center', color: '#64748b', padding: '40px'}}>
+                      No slots found for this category.
+                    </td>
+                  </tr>
+              ) : (
+                currentItems.map(slot => {
+                  const st = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
+                  return (
+                  <tr key={slot.slotId}>
+                    <td className="font-semibold">{slot.slotName || 'Unknown'}</td>
+                    <td>{formatSlotTime(slot.startDateTime)}</td>
+                    <td>{formatSlotTime(slot.endDateTime)}</td>
+                    <td>
+                      <span 
+                        style={{ 
+                          display: 'inline-flex', 
+                          width: '130px',
+                          justifyContent: 'center',
+                          padding: '6px 16px', 
+                          borderRadius: '20px', 
+                          fontSize: '0.85rem', 
+                          fontWeight: '500', 
+                          border: 'none', 
+                          cursor: 'default', 
+                          backgroundColor: (st === 0 || st === 'AVAILABLE') ? '#dcfce7' : (st === 1 || st === 'RESERVED') ? '#fef3c7' : '#fee2e2', 
+                          color: (st === 0 || st === 'AVAILABLE') ? '#166534' : (st === 1 || st === 'RESERVED') ? '#b45309' : '#991b1b' 
+                        }}
+                      >
+                        {getStatusText(slot.status)}
+                      </span>
+                    </td>
+                    <td className="text-secondary">
+                      {slot.reservedBy || '-'}
+                    </td>
+                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button className="review-btn" onClick={() => setSelectedSlot(slot)}>
+                        Review
+                      </button>
+                      
+                      {user?.role === 'GRID_OPERATOR' && (
+                        <>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            {(st === 0 || st === 'AVAILABLE') && (
+                              <button className="deactivate-btn" onClick={() => requestStatusChange(slot, 2)}>
+                                Deactivate
                               </button>
-                              <button className="dropdown-item text-danger" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#ef4444' }} onClick={() => requestDeleteSlot(slot)}>
-                                <FiTrash2 /> Delete Slot
+                            )}
+
+                            {(st === 2 || st === 'UNAVAILABLE') && (
+                              <button className="activate-btn" onClick={() => requestStatusChange(slot, 0)}>
+                                Activate
                               </button>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              )})
-            )}
-          </tbody>
-        </table>
+                            )}
+
+                            {(st === 1 || st === 'RESERVED') && (
+                              <button className="review-btn" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
+                                View Reservation
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="dropdown-container" style={{ position: 'relative' }}>
+                            <button 
+                              className="pill-btn" 
+                              style={{ padding: '6px 8px', backgroundColor: 'transparent', border: 'none', color: '#64748b' }} 
+                              onClick={(e) => toggleDropdown(slot.slotId, e)}
+                            >
+                              <FiMoreVertical size={18} />
+                            </button>
+                            {activeDropdown === slot.slotId && (
+                              <div className="dropdown-menu fade-in" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: '150px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                                <button className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#334155' }} onClick={() => handleEditSlot(slot)}>
+                                  <FiEdit2 /> Edit Slot
+                                </button>
+                                <button className="dropdown-item text-danger" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#ef4444' }} onClick={() => requestDeleteSlot(slot)}>
+                                  <FiTrash2 /> Delete Slot
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                )})
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <div className="table-footer">
-          <span className="showing-text">Showing {filteredSlots.length} slot(s)</span>
-          <div className="pagination">
-            <button className="page-btn"><FiChevronsLeft /></button>
-            <button className="page-btn active">1</button>
-            <button className="page-btn"><FiChevronsRight /></button>
+          <div className="footer-info">
+            Showing {filteredSlots.length === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredSlots.length)} of {filteredSlots.length} slots
+          </div>
+          <div className="footer-controls">
+            <div className="pagination">
+              <button className="page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>‹</button>
+              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
+                <button 
+                  key={page} 
+                  className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >{page}</button>
+              ))}
+              <button className="page-btn" disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>›</button>
+            </div>
+            <div className="rows-per-page">
+              <span>Show</span>
+              <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
