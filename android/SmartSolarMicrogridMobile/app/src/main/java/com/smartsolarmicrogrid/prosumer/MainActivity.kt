@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.smartsolarmicrogrid.prosumer.ui.auth.LoginScreen
+import com.smartsolarmicrogrid.prosumer.ui.navigation.NavGraph
 import com.smartsolarmicrogrid.prosumer.ui.theme.SmartSolarMicrogridMobileTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,14 +20,7 @@ class MainActivity : ComponentActivity() {
             SmartSolarMicrogridMobileTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        LoginScreen(
-                            onLoginSuccess = { role ->
-                                // TODO: navigate to Home once NavGraph is set up
-                            },
-                            onNavigateToRegister = {
-                                // TODO: navigate to Register once NavGraph is set up
-                            }
-                        )
+                        NavGraph()
                     }
                 }
             }
