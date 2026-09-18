@@ -359,28 +359,28 @@ const Slots = () => {
                     {slot.reservedBy || '-'}
                   </td>
                   <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button className="pill-btn btn-view" title="View Details" onClick={() => setSelectedSlot(slot)}>
-                      <FiEye /> View
+                    <button className="review-btn" onClick={() => setSelectedSlot(slot)}>
+                      Review
                     </button>
                     
                     {user?.role === 'GRID_OPERATOR' && (
                       <>
-                        <div style={{ width: '160px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
                           {(st === 0 || st === 'AVAILABLE') && (
-                            <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => requestStatusChange(slot, 2)} style={{ width: '100%', justifyContent: 'center' }}>
-                              <FiSlash /> Deactivate
+                            <button className="deactivate-btn" onClick={() => requestStatusChange(slot, 2)}>
+                              Deactivate
                             </button>
                           )}
 
                           {(st === 2 || st === 'UNAVAILABLE') && (
-                            <button className="pill-btn btn-activate" title="Activate" onClick={() => requestStatusChange(slot, 0)} style={{ width: '100%', justifyContent: 'center' }}>
-                              <FiPlay /> Activate
+                            <button className="activate-btn" onClick={() => requestStatusChange(slot, 0)}>
+                              Activate
                             </button>
                           )}
 
                           {(st === 1 || st === 'RESERVED') && (
-                            <button className="pill-btn btn-view" style={{backgroundColor: '#f3f4f6', color: '#4b5563', border: '1px solid #e5e7eb', width: '100%', justifyContent: 'center'}} title="View Reservation" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
-                              <FiList /> View Reservation
+                            <button className="review-btn" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
+                              View Reservation
                             </button>
                           )}
                         </div>
@@ -434,51 +434,67 @@ const Slots = () => {
               <button className="user-modal-close" onClick={() => setSelectedSlot(null)}>&times;</button>
             </div>
             <div className="user-modal-body">
-              <div className="detail-group">
-                <label>Slot Name</label>
-                <div className="detail-value">{selectedSlot.slotName || 'Unknown'}</div>
-              </div>
-              <div className="detail-group">
-                <label>Station</label>
-                <div className="detail-value">{selectedStation?.stationName}</div>
-              </div>
-              <div className="detail-group">
-                <label>Start Date & Time</label>
-                <div className="detail-value">{formatSlotTime(selectedSlot.startDateTime)}</div>
-              </div>
-              <div className="detail-group">
-                <label>End Date & Time</label>
-                <div className="detail-value">{formatSlotTime(selectedSlot.endDateTime)}</div>
-              </div>
-              <div className="detail-group">
-                <label>Duration</label>
-                <div className="detail-value">
-                  {Math.round((new Date(selectedSlot.endDateTime) - new Date(selectedSlot.startDateTime)) / (1000 * 60 * 60))} hour(s)
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiGrid /></div>
+                  <div className="detail-info">
+                    <span className="label">Slot Name</span>
+                    <span className="value">{selectedSlot.slotName || 'Unknown'}</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiMapPin /></div>
+                  <div className="detail-info">
+                    <span className="label">Station</span>
+                    <span className="value">{selectedStation?.stationName}</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiCalendar /></div>
+                  <div className="detail-info">
+                    <span className="label">Start Date & Time</span>
+                    <span className="value">{formatSlotTime(selectedSlot.startDateTime)}</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiCalendar /></div>
+                  <div className="detail-info">
+                    <span className="label">End Date & Time</span>
+                    <span className="value">{formatSlotTime(selectedSlot.endDateTime)}</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiClock /></div>
+                  <div className="detail-info">
+                    <span className="label">Duration</span>
+                    <span className="value">{Math.round((new Date(selectedSlot.endDateTime) - new Date(selectedSlot.startDateTime)) / (1000 * 60 * 60))} hour(s)</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiCheckCircle /></div>
+                  <div className="detail-info">
+                    <span className="label">Status</span>
+                    <span className="value">{getStatusText(selectedSlot.status)}</span>
+                  </div>
+                </div>
+                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
+                  <div className="detail-icon"><FiUsers /></div>
+                  <div className="detail-info">
+                    <span className="label">Reserved By</span>
+                    <span className="value">{selectedSlot.reservedBy || 'None'}</span>
+                  </div>
+                </div>
+                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
+                  <div className="detail-icon"><FiEdit2 /></div>
+                  <div className="detail-info">
+                    <span className="label">Notes</span>
+                    <span className="value">{selectedSlot.notes || 'No notes provided.'}</span>
+                  </div>
                 </div>
               </div>
-              <div className="detail-group">
-                <label>Status</label>
-                <div className="detail-value">
-                  {(() => {
-                    const st = typeof selectedSlot.status === 'string' ? selectedSlot.status.toUpperCase() : selectedSlot.status;
-                    return (
-                      <span className={`status-badge ${st === 0 || st === 'AVAILABLE' ? 'active' : st === 1 || st === 'RESERVED' ? 'reserved' : 'deactivated'}`}>
-                        {getStatusText(selectedSlot.status)}
-                      </span>
-                    );
-                  })()}
-                </div>
-              </div>
-              <div className="detail-group">
-                <label>Reserved By</label>
-                <div className="detail-value">{selectedSlot.reservedBy || 'None'}</div>
-              </div>
-              <div className="detail-group" style={{gridColumn: '1 / -1'}}>
-                <label>Notes</label>
-                <div className="detail-value" style={{background: '#f8fafc', padding: '10px', borderRadius: '6px'}}>
-                  {selectedSlot.notes || 'No notes provided.'}
-                </div>
-              </div>
+            </div>
+            <div className="user-modal-footer">
+              <button className="btn-modal-close" onClick={() => setSelectedSlot(null)}>Close</button>
             </div>
           </div>
         </div>
@@ -497,7 +513,22 @@ const Slots = () => {
                 const oldSt = typeof statusConfirm.slot.status === 'string' ? statusConfirm.slot.status.toUpperCase() : statusConfirm.slot.status;
                 const newSt = typeof statusConfirm.newStatus === 'string' ? statusConfirm.newStatus.toUpperCase() : statusConfirm.newStatus;
                 return (
-                  <p>Are you sure you want to change the status of this slot from <strong className={`text-${oldSt === 0 || oldSt === 'AVAILABLE' ? 'active' : 'deactivated'}`}>{getStatusText(statusConfirm.slot.status)}</strong> to <strong className={`text-${newSt === 0 || newSt === 'AVAILABLE' ? 'active' : 'deactivated'}`}>{getStatusText(statusConfirm.newStatus)}</strong>?</p>
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                      <div className="detail-icon" style={{ backgroundColor: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '8px' }}>
+                        <FiGrid style={{ fontSize: '1.2rem' }} />
+                      </div>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{statusConfirm.slot.slotName || 'Unknown Slot'}</h3>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>{formatSlotTime(statusConfirm.slot.startDateTime)}</p>
+                      </div>
+                    </div>
+                    <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                        Are you sure you want to change the status of this slot from <strong>{getStatusText(statusConfirm.slot.status)}</strong> to <strong>{getStatusText(statusConfirm.newStatus)}</strong>?
+                      </p>
+                    </div>
+                  </>
                 );
               })()}
             </div>

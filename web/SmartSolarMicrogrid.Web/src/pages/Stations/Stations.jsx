@@ -16,7 +16,12 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiBarChart2,
-  FiHome
+  FiHome,
+  FiFileText,
+  FiHash,
+  FiCheckCircle,
+  FiXCircle,
+  FiActivity
 } from 'react-icons/fi';
 import { 
   PieChart, 
@@ -425,22 +430,14 @@ const Stations = () => {
                       </div>
                     </td>
                     <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <button className="pill-btn btn-view" title="View" onClick={() => setSelectedStation(station)}>
-                        <FiEye /> View
-                      </button>
+                      <button className="review-btn" onClick={() => setSelectedStation(station)}>Review</button>
                       {user?.role === 'BACKOFFICE' && (
                         <>
-                          <button className="pill-btn btn-edit" title="Edit" onClick={() => navigate(`/stations/edit/${station.stationId}`)}>
-                            <FiEdit2 /> Edit
-                          </button>
+                          <button className="edit-btn" onClick={() => navigate(`/stations/edit/${station.stationId}`)}>Edit</button>
                           {(station.status === 'ACTIVE' || station.status === 0) ? (
-                            <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => handleDeactivate(station)}>
-                              <FiSlash /> Deactivate
-                            </button>
+                            <button className="deactivate-btn" onClick={() => handleDeactivate(station)}>Deactivate</button>
                           ) : (
-                            <button className="pill-btn btn-activate" title="Activate" onClick={() => handleActivate(station)}>
-                              <FiPlay /> Activate
-                            </button>
+                            <button className="activate-btn" onClick={() => handleActivate(station)}>Activate</button>
                           )}
                         </>
                       )}
@@ -473,48 +470,67 @@ const Stations = () => {
               <button className="user-modal-close" onClick={() => setSelectedStation(null)}>&times;</button>
             </div>
             <div className="user-modal-body">
-              <div className="detail-group">
-                <label>Station Name</label>
-                <div className="detail-value">{selectedStation.stationName}</div>
-              </div>
-              <div className="detail-group">
-                <label>Description</label>
-                <div className="detail-value">{selectedStation.description || 'None'}</div>
-              </div>
-              <div className="detail-group">
-                <label>Station ID</label>
-                <div className="detail-value">{selectedStation.stationId}</div>
-              </div>
-              <div className="detail-group">
-                <label>Address</label>
-                <div className="detail-value">{selectedStation.address}</div>
-              </div>
-              <div className="detail-group">
-                <label>Latitude</label>
-                <div className="detail-value">{selectedStation.latitude}</div>
-              </div>
-              <div className="detail-group">
-                <label>Longitude</label>
-                <div className="detail-value">{selectedStation.longitude}</div>
-              </div>
-              <div className="detail-group">
-                <label>Capacity</label>
-                <div className="detail-value">{selectedStation.capacity} MW</div>
-              </div>
-              <div className="detail-group">
-                <label>Battery Slots</label>
-                <div className="detail-value">{selectedStation.batterySlotCount}</div>
-              </div>
-              <div className="detail-group">
-                <label>Operating Hours</label>
-                <div className="detail-value">{selectedStation.operatingStartTime} - {selectedStation.operatingEndTime}</div>
-              </div>
-              <div className="detail-group">
-                <label>Status</label>
-                <div className="detail-value">
-                  {selectedStation.status === 'ACTIVE' || selectedStation.status === 0 ? 'Active' : 'Deactivated'}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiHome /></div>
+                  <div className="detail-info">
+                    <span className="label">Station Name</span>
+                    <span className="value">{selectedStation.stationName}</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiHash /></div>
+                  <div className="detail-info">
+                    <span className="label">Station ID</span>
+                    <span className="value" style={{ fontSize: '0.8rem' }}>{selectedStation.stationId}</span>
+                  </div>
+                </div>
+                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
+                  <div className="detail-icon"><FiMapPin /></div>
+                  <div className="detail-info">
+                    <span className="label">Address</span>
+                    <span className="value">{selectedStation.address}</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiPower /></div>
+                  <div className="detail-info">
+                    <span className="label">Capacity</span>
+                    <span className="value">{selectedStation.capacity} MW</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiBattery /></div>
+                  <div className="detail-info">
+                    <span className="label">Battery Slots</span>
+                    <span className="value">{selectedStation.batterySlotCount}</span>
+                  </div>
+                </div>
+                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
+                  <div className="detail-icon"><FiClock /></div>
+                  <div className="detail-info">
+                    <span className="label">Operating Hours</span>
+                    <span className="value">{selectedStation.operatingStartTime} - {selectedStation.operatingEndTime}</span>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon"><FiActivity /></div>
+                  <div className="detail-info">
+                    <span className="label">Status</span>
+                    <span className="value">{selectedStation.status === 'ACTIVE' || selectedStation.status === 0 ? 'Active' : 'Deactivated'}</span>
+                  </div>
+                </div>
+                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
+                  <div className="detail-icon"><FiFileText /></div>
+                  <div className="detail-info">
+                    <span className="label">Description</span>
+                    <span className="value">{selectedStation.description || 'None'}</span>
+                  </div>
                 </div>
               </div>
+            </div>
+            <div className="user-modal-footer">
+              <button className="btn-modal-close" onClick={() => setSelectedStation(null)}>Close</button>
             </div>
           </div>
         </div>
@@ -529,11 +545,40 @@ const Stations = () => {
               <button className="user-modal-close" onClick={() => setStatusConfirm(null)}>&times;</button>
             </div>
             <div className="user-modal-body">
-              <p>Are you sure you want to change the status of <strong>{statusConfirm.station.stationName}</strong> from <strong className={`text-${(statusConfirm.station.status === 'ACTIVE' || statusConfirm.station.status === 0) ? 'active' : 'deactivated'}`}>{(statusConfirm.station.status === 'ACTIVE' || statusConfirm.station.status === 0) ? 'Active' : 'Deactivated'}</strong> to <strong className={`text-${statusConfirm.newStatus === 0 ? 'active' : 'deactivated'}`}>{statusConfirm.newStatus === 0 ? 'Active' : 'Deactivated'}</strong>?</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                <div className="detail-icon" style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}>
+                  <FiHome />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{statusConfirm.station.stationName}</h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Capacity: {statusConfirm.station.capacity} MW</p>
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  {statusConfirm.newStatus === 0 ? (
+                    <FiCheckCircle style={{ color: '#10b981', fontSize: '1.5rem' }} />
+                  ) : (
+                    <FiXCircle style={{ color: '#ef4444', fontSize: '1.5rem' }} />
+                  )}
+                  <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                    {statusConfirm.newStatus === 0 ? 'Activate Station' : 'Deactivate Station'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Are you sure you want to change the status of this station to <strong>{statusConfirm.newStatus === 0 ? 'Active' : 'Deactivated'}</strong>?
+                </p>
+              </div>
             </div>
             <div className="user-modal-footer">
               <button className="btn-modal-cancel" onClick={() => setStatusConfirm(null)}>Cancel</button>
-              <button className="btn-modal-confirm" onClick={confirmStatusChange}>Confirm Change</button>
+              <button 
+                className="btn-modal-confirm" 
+                style={{ backgroundColor: statusConfirm.newStatus === 1 ? '#ef4444' : '#10b981' }}
+                onClick={confirmStatusChange}
+              >
+                Confirm Change
+              </button>
             </div>
           </div>
         </div>
