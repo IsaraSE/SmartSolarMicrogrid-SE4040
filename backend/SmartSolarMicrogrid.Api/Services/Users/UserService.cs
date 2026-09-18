@@ -7,6 +7,7 @@
  * Date: 2026-09-14
  */
 
+using SmartSolarMicrogrid.Api.Exceptions;
 using SmartSolarMicrogrid.Api.Models.DTOs;
 using SmartSolarMicrogrid.Api.Models.Entities;
 using SmartSolarMicrogrid.Api.Models.Enums;
@@ -37,10 +38,23 @@ public class UserService : IUserService
 
     public async Task<UserDto> CreateUserAsync(CreateUserDto request)
     {
+        var errors = new Dictionary<string, string[]>();
+
         var existingUser = await _userRepository.GetByEmailAsync(request.Email);
         if (existingUser != null)
         {
-            throw new ArgumentException("A user with this email already exists.");
+            errors.Add("Email", new[] { "A user with this email already exists." });
+        }
+
+        var existingPhone = await _userRepository.GetByPhoneAsync(request.Phone);
+        if (existingPhone != null)
+        {
+            errors.Add("Phone", new[] { "A user with this phone number already exists." });
+        }
+
+        if (errors.Any())
+        {
+            throw new AppValidationException(errors);
         }
 
         var user = new UserDetail
@@ -67,6 +81,19 @@ public class UserService : IUserService
         if (user == null)
         {
             return null;
+        }
+
+        var errors = new Dictionary<string, string[]>();
+
+        var existingPhone = await _userRepository.GetByPhoneAsync(request.Phone);
+        if (existingPhone != null && existingPhone.UserId != userId)
+        {
+            errors.Add("Phone", new[] { "A user with this phone number already exists." });
+        }
+
+        if (errors.Any())
+        {
+            throw new AppValidationException(errors);
         }
 
         user.FullName = request.FullName;

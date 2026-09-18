@@ -18,6 +18,7 @@ const UserForm = () => {
   const [loading, setLoading] = useState(isEditMode);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -69,6 +70,9 @@ const UserForm = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (error) setError(null);
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: null }));
+    }
   };
 
   const handleReset = () => {
@@ -87,6 +91,7 @@ const UserForm = () => {
         additionalInfo: ''
       });
       setError(null);
+      setFieldErrors({});
     }
   };
 
@@ -157,7 +162,27 @@ const UserForm = () => {
       }
       navigate('/users');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save user. Please try again.');
+      if (err.response?.status === 400 && err.response.data?.errors) {
+        // Handle field-specific validation errors from backend
+        const backendErrors = err.response.data.errors;
+        const newFieldErrors = {};
+        let mainError = null;
+
+        Object.keys(backendErrors).forEach((key) => {
+          // ASP.NET Core often capitalizes the key (e.g. "Email") while frontend uses "email"
+          const lowerKey = key.charAt(0).toLowerCase() + key.slice(1);
+          newFieldErrors[lowerKey] = backendErrors[key][0];
+          
+          if (!mainError) {
+             mainError = backendErrors[key][0];
+          }
+        });
+
+        setFieldErrors(newFieldErrors);
+        setError('Please fix the validation errors below.');
+      } else {
+        setError(err.response?.data?.message || err.response?.data?.Message || 'Failed to save user. Please try again.');
+      }
     } finally {
       setSaving(false);
     }
@@ -210,7 +235,7 @@ const UserForm = () => {
               </div>
             </div>
 
-            <div className="form-group">
+            <div className={`form-group ${fieldErrors.email ? 'has-error' : ''}`}>
               <label>Email Address {isEditMode ? '' : <span className="required">*</span>}</label>
               <div className="input-wrapper">
                 <FiMail className="input-icon" />
@@ -226,10 +251,14 @@ const UserForm = () => {
                   title="Please enter a valid email address (e.g., user@example.com)"
                 />
               </div>
-              <span className="input-help">This email will be used for system login and notifications.</span>
+              {fieldErrors.email ? (
+                <span className="field-error-msg">{fieldErrors.email}</span>
+              ) : (
+                <span className="input-help">This email will be used for system login and notifications.</span>
+              )}
             </div>
 
-            <div className="form-group">
+            <div className={`form-group ${fieldErrors.phone ? 'has-error' : ''}`}>
               <label>Phone Number <span className="required">*</span></label>
               <div className="input-wrapper">
                 <FiPhone className="input-icon" />
@@ -244,6 +273,7 @@ const UserForm = () => {
                   title="Please enter a valid phone number, e.g. +94 77 123 4567 or 0771234567"
                 />
               </div>
+              {fieldErrors.phone && <span className="field-error-msg">{fieldErrors.phone}</span>}
             </div>
 
             <div className="form-group">
