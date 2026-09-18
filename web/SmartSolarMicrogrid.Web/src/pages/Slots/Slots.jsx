@@ -63,7 +63,7 @@ const Slots = () => {
       setStations(stationList);
       
       if (stationList.length > 0) {
-        let initialStation = stationList[0];
+        let initialStation = { stationId: 'all', stationName: 'All Stations' };
         
         const savedStationId = localStorage.getItem('lastSelectedStationId');
         
@@ -71,13 +71,17 @@ const Slots = () => {
           const matched = stationList.find(s => s.stationId === location.state.stationId);
           if (matched) initialStation = matched;
         } else if (savedStationId) {
-          const matched = stationList.find(s => s.stationId === savedStationId);
-          if (matched) initialStation = matched;
+          if (savedStationId === 'all') {
+            initialStation = { stationId: 'all', stationName: 'All Stations' };
+          } else {
+            const matched = stationList.find(s => s.stationId === savedStationId);
+            if (matched) initialStation = matched;
+          }
         }
         
         setSelectedStation(initialStation);
         localStorage.setItem('lastSelectedStationId', initialStation.stationId);
-        await fetchSlotsForStation(initialStation.stationId);
+        await fetchSlotsForStation(initialStation.stationId, stationList);
       }
     } catch (error) {
       console.error("Failed to load initial data:", error);
@@ -86,11 +90,18 @@ const Slots = () => {
     }
   };
 
-  const fetchSlotsForStation = async (stationId) => {
+  const fetchSlotsForStation = async (stationId, currentStations = stations) => {
     try {
       setLoading(true);
-      const response = await slotService.getSlotsByStationId(stationId);
-      setSlots(response.data || []);
+      if (stationId === 'all') {
+        const promises = currentStations.map(st => slotService.getSlotsByStationId(st.stationId));
+        const results = await Promise.all(promises);
+        const allSlots = results.flatMap(r => r.data || []);
+        setSlots(allSlots);
+      } else {
+        const response = await slotService.getSlotsByStationId(stationId);
+        setSlots(response.data || []);
+      }
     } catch (error) {
       console.error("Failed to load slots:", error);
     } finally {
@@ -100,7 +111,10 @@ const Slots = () => {
 
   const handleStationChange = (e) => {
     const stationId = e.target.value;
-    const station = stations.find(s => s.stationId === stationId);
+    let station = { stationId: 'all', stationName: 'All Stations' };
+    if (stationId !== 'all') {
+      station = stations.find(s => s.stationId === stationId);
+    }
     setSelectedStation(station);
     localStorage.setItem('lastSelectedStationId', stationId);
     fetchSlotsForStation(stationId);
@@ -245,18 +259,41 @@ const Slots = () => {
               Reserved
             </button>
           </div>
-          <div className="table-actions-right">
-            <div className="station-selector-wrapper">
-              <FiMapPin className="station-selector-icon" />
-              <select className="station-selector-select" value={selectedStation?.stationId || ''} onChange={handleStationChange}>
-                <option value="" disabled>Select Station</option>
+          <div className="table-actions-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <FiMapPin style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '18px' }} />
+              <select 
+                value={selectedStation?.stationId || 'all'} 
+                onChange={handleStationChange}
+                style={{ 
+                  padding: '12px 40px 12px 46px', 
+                  borderRadius: '10px', 
+                  border: '1px solid #e2e8f0', 
+                  outline: 'none', 
+                  backgroundColor: 'white', 
+                  appearance: 'none', 
+                  cursor: 'pointer', 
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  color: '#0f172a',
+                  width: '260px' 
+                }}
+              >
+                <option value="all">All Stations</option>
                 {stations.map(station => (
                   <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
                 ))}
               </select>
+              <svg 
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" 
+                style={{ position: 'absolute', right: '16px', color: '#0f172a', pointerEvents: 'none' }}
+              >
+                <polyline points="7 15 12 20 17 15"></polyline>
+                <polyline points="7 9 12 4 17 9"></polyline>
+              </svg>
             </div>
             {user?.role === 'GRID_OPERATOR' && (
-              <button className="btn-add" onClick={handleAddClick} disabled={!selectedStation} style={{ height: '42px', display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', whiteSpace: 'nowrap', borderRadius: '8px' }}>
+              <button className="btn-add" onClick={handleAddClick} disabled={!selectedStation || selectedStation.stationId === 'all'} style={{ height: '42px', display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', whiteSpace: 'nowrap', borderRadius: '8px' }}>
                 <FiPlus /> Add Slot
               </button>
             )}

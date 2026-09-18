@@ -11,8 +11,12 @@ const Reservations = () => {
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterStation, setFilterStation] = useState('all');
   const [activeTab, setActiveTab] = useState('ALL');
   
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', reservationId: null });
@@ -97,15 +101,52 @@ const Reservations = () => {
 
   const mapStatusToBadge = (status) => {
     // API returns 0: PENDING, 1: APPROVED, 2: CANCELLED, 3: COMPLETED
-    if (status === 1 || status === 'APPROVED') {
-      return <span className="status-badge confirmed">Confirmed</span>;
-    } else if (status === 2 || status === 'CANCELLED') {
-      return <span className="status-badge cancelled">Cancelled</span>;
-    } else if (status === 0 || status === 'PENDING') {
-      return <span className="status-badge pending">Pending</span>;
-    } else {
-      return <span className="status-badge pending">{status}</span>;
+    let st = status;
+    if (typeof status === 'string') {
+      st = status.toUpperCase();
     }
+
+    let bgColor = '#f1f5f9';
+    let textColor = '#64748b';
+    let text = st;
+
+    if (st === 1 || st === 'APPROVED') {
+      bgColor = '#dcfce7'; // green
+      textColor = '#166534';
+      text = 'Confirmed';
+    } else if (st === 2 || st === 'CANCELLED') {
+      bgColor = '#fee2e2'; // red
+      textColor = '#991b1b';
+      text = 'Cancelled';
+    } else if (st === 0 || st === 'PENDING') {
+      bgColor = '#fef3c7'; // yellow
+      textColor = '#b45309';
+      text = 'Pending';
+    } else if (st === 3 || st === 'COMPLETED') {
+      bgColor = '#dbeafe'; // blue
+      textColor = '#1e40af';
+      text = 'Completed';
+    }
+
+    return (
+      <span 
+        style={{ 
+          display: 'inline-flex', 
+          width: '130px',
+          justifyContent: 'center',
+          padding: '6px 16px', 
+          borderRadius: '20px', 
+          fontSize: '0.85rem', 
+          fontWeight: '500', 
+          border: 'none', 
+          cursor: 'default', 
+          backgroundColor: bgColor, 
+          color: textColor 
+        }}
+      >
+        {text}
+      </span>
+    );
   };
 
   const formatDate = (dateString) => {
@@ -121,102 +162,59 @@ const Reservations = () => {
   };
 
   const filteredReservations = reservations.filter(res => {
-    if (activeTab === 'ALL') return true;
-    if (activeTab === 'PENDING' && (res.status === 0 || res.status === 'PENDING')) return true;
-    if (activeTab === 'APPROVED' && (res.status === 1 || res.status === 'APPROVED')) return true;
-    if (activeTab === 'CANCELLED' && (res.status === 2 || res.status === 'CANCELLED')) return true;
-    if (activeTab === 'COMPLETED' && (res.status === 3 || res.status === 'COMPLETED')) return true;
-    return false;
+    // 1. Tab filter
+    let matchTab = false;
+    if (activeTab === 'ALL') matchTab = true;
+    else if (activeTab === 'PENDING' && (res.status === 0 || res.status === 'PENDING')) matchTab = true;
+    else if (activeTab === 'APPROVED' && (res.status === 1 || res.status === 'APPROVED')) matchTab = true;
+    else if (activeTab === 'CANCELLED' && (res.status === 2 || res.status === 'CANCELLED')) matchTab = true;
+    else if (activeTab === 'COMPLETED' && (res.status === 3 || res.status === 'COMPLETED')) matchTab = true;
+    
+    if (!matchTab) return false;
+
+    // 2. Station filter
+    if (filterStation !== 'all' && res.stationId !== filterStation) return false;
+
+    // 3. Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const resId = (res.reservationNumber || res.reservationId || '').toLowerCase();
+      const prosumer = (res.prosumerNic || '').toLowerCase();
+      const stationName = (getStationName(res.stationId) || '').toLowerCase();
+      const slotName = (res.slotName || '').toLowerCase();
+      
+      if (!resId.includes(q) && !prosumer.includes(q) && !stationName.includes(q) && !slotName.includes(q)) {
+        return false;
+      }
+    }
+
+    return true;
   });
+
+  // Pagination Calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredReservations.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
 
   return (
     <div className="reservations-container fade-in">
       
       {/* Header */}
       <div className="reservations-header">
-        <div className="header-left">
+        <div className="reservations-title">
           <h1>Reservation Management</h1>
           <p>View, search and manage all charging reservations across your solar microgrid network.</p>
         </div>
-        <div className="breadcrumbs">
-          <span>Home</span> &gt; 
-          <span>Reservations</span> &gt; 
-          <span>Reservation Management</span>
+        <div className="reservations-breadcrumbs">
+          <span>Reservations</span>
+          <span className="separator">›</span>
+          <span className="current">Reservation Management</span>
         </div>
       </div>
 
-      {/* Rules Banner */}
-      <div className="rules-banner">
-        <div className="rules-banner-header">
-          <div className="info-icon-circle"><FiInfo /></div>
-          Reservation Rules
-        </div>
-        <div className="rules-grid">
-          <div className="rule-item">
-            <div className="rule-icon-wrapper booking"><FiCalendar /></div>
-            <div className="rule-content">
-              <span className="rule-title">Booking Window</span>
-              <span className="rule-desc">Reservations can only be made within 7 days from the current date.</span>
-            </div>
-          </div>
-          <div className="rule-item">
-            <div className="rule-icon-wrapper update"><FiEdit2 /></div>
-            <div className="rule-content">
-              <span className="rule-title">Update Notice</span>
-              <span className="rule-desc">Updates to a reservation require at least 12 hours notice before the scheduled start time.</span>
-            </div>
-          </div>
-          <div className="rule-item">
-            <div className="rule-icon-wrapper cancel"><FiX /></div>
-            <div className="rule-content">
-              <span className="rule-title">Cancellation Notice</span>
-              <span className="rule-desc">Cancellations require at least 12 hours notice before the scheduled start time.</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Filters Bar */}
-      <div className="reservations-filters-bar">
-        <div className="filters-top-row">
-          <div className="filter-item search-item">
-            <label>Search</label>
-            <div className="filter-input">
-              <FiSearch style={{color: '#94a3b8'}} />
-              <input type="text" placeholder="Search by ID or name..." />
-            </div>
-          </div>
-          
-          {/* Status filter removed, replaced by tabs below */}
 
-          <div className="filter-item">
-            <label>Date Range</label>
-            <div className="filter-input" style={{fontSize: '13px', justifyContent: 'center', cursor: 'pointer'}}>
-              <FiCalendar style={{color: '#64748b', marginRight: '6px'}} />
-              <span>Last 30 Days</span>
-            </div>
-          </div>
-
-          <div className="filter-item">
-            <label>Station</label>
-            <div className="filter-select">
-              <select defaultValue="all">
-                <option value="all">All Stations</option>
-                {stations.map(st => (
-                  <option key={st.stationId} value={st.stationId}>{st.stationName}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="filters-bottom-row">
-          <div className="actions-group">
-            <button className="btn-reset">Reset</button>
-            <button className="btn-apply"><FiFilter /> Apply Filters</button>
-          </div>
-        </div>
-      </div>
 
       {/* Table Card */}
       <div className="reservations-table-card">
@@ -228,16 +226,57 @@ const Reservations = () => {
             <button className={`tab-btn ${activeTab === 'CANCELLED' ? 'active' : ''}`} onClick={() => setActiveTab('CANCELLED')}>Cancelled</button>
             <button className={`tab-btn ${activeTab === 'COMPLETED' ? 'active' : ''}`} onClick={() => setActiveTab('COMPLETED')}>Completed</button>
           </div>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <span className="showing-text">Showing 1 - {filteredReservations.length} reservations</span>
-            <div className="per-page-control">
-              Show 
-              <select className="per-page-select">
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
+          
+          <div className="table-actions-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div className="table-search" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <FiSearch style={{ position: 'absolute', left: '16px', color: '#94a3b8', fontSize: '18px' }} />
+              <input 
+                type="text" 
+                placeholder="Search reservations..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ 
+                  padding: '12px 40px 12px 46px', 
+                  borderRadius: '10px', 
+                  border: '1px solid #e2e8f0', 
+                  outline: 'none', 
+                  width: '260px', 
+                  fontSize: '15px' 
+                }}
+              />
+            </div>
+            
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <FiMapPin style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '18px' }} />
+              <select 
+                value={filterStation}
+                onChange={(e) => setFilterStation(e.target.value)}
+                style={{ 
+                  padding: '12px 40px 12px 46px', 
+                  borderRadius: '10px', 
+                  border: '1px solid #e2e8f0', 
+                  outline: 'none', 
+                  backgroundColor: 'white', 
+                  appearance: 'none', 
+                  cursor: 'pointer', 
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  color: '#0f172a',
+                  width: '260px' 
+                }}
+              >
+                <option value="all">All Stations</option>
+                {stations.map(station => (
+                  <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
+                ))}
               </select>
-              per page
+              <svg 
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" 
+                style={{ position: 'absolute', right: '16px', color: '#0f172a', pointerEvents: 'none' }}
+              >
+                <polyline points="7 15 12 20 17 15"></polyline>
+                <polyline points="7 9 12 4 17 9"></polyline>
+              </svg>
             </div>
           </div>
         </div>
@@ -269,15 +308,15 @@ const Reservations = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="8" style={{textAlign: 'center', padding: '24px'}}>Loading reservations...</td></tr>
-              ) : filteredReservations.length === 0 ? (
+                <tr><td colSpan="7" style={{textAlign: 'center', padding: '40px'}}>Loading reservations...</td></tr>
+              ) : currentItems.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{textAlign: 'center', padding: '40px', color: '#64748b'}}>
-                    No reservations found for the selected filters.
+                    No reservations found matching the filters.
                   </td>
                 </tr>
               ) : (
-                filteredReservations.map(res => (
+                currentItems.map(res => (
                   <tr key={res.reservationId}>
                     
                     <td className="res-id">{res.reservationNumber || res.reservationId?.substring(0,8).toUpperCase() || 'RES-####'}</td>
@@ -322,15 +361,30 @@ const Reservations = () => {
         </div>
 
         <div className="table-footer">
-          <span className="showing-text">
-            Showing {filteredReservations.length > 0 ? 1 : 0} - {Math.min(10, filteredReservations.length)} of {filteredReservations.length} reservations
-          </span>
-          <div className="pagination">
-            <button className="page-btn"><FiChevronLeft /></button>
-            <button className="page-btn active">1</button>
-            <button className="page-btn">2</button>
-            <button className="page-btn">3</button>
-            <button className="page-btn"><FiChevronRight /></button>
+          <div className="footer-info">
+            Showing {filteredReservations.length === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredReservations.length)} of {filteredReservations.length} reservations
+          </div>
+          <div className="footer-controls">
+            <div className="pagination">
+              <button className="page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>‹</button>
+              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
+                <button 
+                  key={page} 
+                  className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >{page}</button>
+              ))}
+              <button className="page-btn" disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>›</button>
+            </div>
+            <div className="rows-per-page">
+              <span>Show</span>
+              <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
