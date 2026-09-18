@@ -177,7 +177,7 @@ const UserForm = () => {
 
       <div className="userform-title-area">
         <h1>{isEditMode ? 'Edit User' : 'Create User'}</h1>
-        <p>{isEditMode ? 'Update user details and permissions.' : 'Add a new user to the Smart Solar Microgrid Trading System.'}</p>
+        <p>{isEditMode ? 'Update user details and permissions.' : 'Add a new user to the HelioGrid platform.'}</p>
       </div>
 
       {error && <div className="error-banner">{error}</div>}

@@ -59,6 +59,7 @@
   width: 32px;
   height: 32px;
   object-fit: contain;
+  border-radius: 8px;
 }
 
 .sidebar-brand h2 {

@@ -32,13 +32,25 @@ const ProtectedRoute = ({ children }) => {
     return (
       <div style={{
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
         fontFamily: 'Inter, sans-serif',
         color: '#64748b',
+        background: '#f8fafc',
+        gap: '20px',
       }}>
-        Loading...
+        <div style={{
+          width: '44px',
+          height: '44px',
+          border: '3px solid #e2e8f0',
+          borderTopColor: '#10b981',
+          borderRadius: '50%',
+          animation: 'appSpin 0.8s linear infinite',
+        }} />
+        <span style={{ fontSize: '0.85rem', fontWeight: '500', letterSpacing: '0.3px', color: '#94a3b8' }}>Loading HelioGrid...</span>
+        <style>{`@keyframes appSpin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }

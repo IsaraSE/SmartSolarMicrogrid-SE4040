@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
 import {
   FiUser,
   FiLock,
@@ -12,11 +11,10 @@ import {
   FiAlertCircle,
   FiShield,
 } from 'react-icons/fi';
-import { PiLeafLight, PiUsersLight, PiChartBarLight } from 'react-icons/pi';
+import { PiSolarPanelLight, PiLightningLight, PiShieldCheckLight } from 'react-icons/pi';
+import heliogridLogo from '../../assets/images/heliogrid-logo-transparent.png';
 import solarHeroBg from '../../assets/images/solar-hero-bg.jpg';
 import './Login.css';
-
-import leafLogo from '../../assets/images/leaf-logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -42,9 +40,20 @@ const Login = () => {
         setError(response.message || 'Login failed. Please try again.');
       }
     } catch (err) {
-      const message =
-        err.response?.data?.message ||
-        'Unable to connect to server. Please try again.';
+      let message = 'Unable to connect to server. Please try again.';
+      
+      if (err.response) {
+        if (err.response.status === 400 && err.response.data?.errors) {
+          // Extract the first ASP.NET Core validation error
+          const firstErrorKey = Object.keys(err.response.data.errors)[0];
+          message = err.response.data.errors[firstErrorKey][0];
+        } else if (err.response.status === 401) {
+          message = 'Invalid email or password.';
+        } else {
+          message = err.response.data?.message || err.response.data?.Message || message;
+        }
+      }
+      
       setError(message);
     } finally {
       setLoading(false);
@@ -64,10 +73,10 @@ const Login = () => {
         {/* Hero Header */}
         <div className="hero-header">
           <div className="hero-brand">
-            <img src={leafLogo} alt="Smart Solar Logo" className="hero-brand-icon" />
+            <img src={heliogridLogo} alt="HelioGrid Logo" className="hero-brand-icon" />
             <div className="hero-brand-text">
-              <h2>Smart Solar</h2>
-              <p>Microgrid Trading System</p>
+              <h2>HelioGrid</h2>
+              <p>Smart Energy Platform</p>
             </div>
           </div>
           <div className="hero-tagline">
@@ -100,7 +109,7 @@ const Login = () => {
           <div className="hero-features">
             <div className="hero-feature-item">
               <div className="hero-feature-icon">
-                <PiLeafLight />
+                <PiSolarPanelLight />
               </div>
               <span>
                 Renewable
@@ -110,7 +119,7 @@ const Login = () => {
             </div>
             <div className="hero-feature-item">
               <div className="hero-feature-icon">
-                <PiUsersLight />
+                <PiLightningLight />
               </div>
               <span>
                 Connected
@@ -120,12 +129,12 @@ const Login = () => {
             </div>
             <div className="hero-feature-item">
               <div className="hero-feature-icon">
-                <PiChartBarLight />
+                <PiShieldCheckLight />
               </div>
               <span>
-                A More Resilient
+                Secure &amp;
                 <br />
-                Tomorrow
+                Reliable
               </span>
             </div>
           </div>
@@ -145,23 +154,23 @@ const Login = () => {
       {/* ========== RIGHT LOGIN PANEL ========== */}
       <div className="login-panel">
         <div className="watermark-container">
-          <img src={leafLogo} alt="Watermark" className="watermark-logo" />
+          <img src={heliogridLogo} alt="Watermark" className="watermark-logo" />
         </div>
         <div className="login-card-container">
           <div className="login-card">
             {/* Login Brand */}
             <div className="login-brand login-brand-center">
-              <img src={leafLogo} alt="Smart Solar Logo" className="login-brand-icon" />
+              <img src={heliogridLogo} alt="HelioGrid Logo" className="login-brand-icon" />
               <div className="login-brand-text login-brand-text-dark">
-                <h2>Smart Solar</h2>
-                <p>Microgrid Trading System</p>
+                <h2>HelioGrid</h2>
+                <p>Smart Energy Platform</p>
               </div>
             </div>
 
             {/* Login Heading */}
             <div className="login-heading">
               <h1>Welcome Back</h1>
-              <p>Sign in to access the Smart Solar Microgrid Trading System.</p>
+              <p>Sign in to access the HelioGrid Management Console.</p>
             </div>
 
             {/* Login Form */}
@@ -241,11 +250,14 @@ const Login = () => {
               {/* Sign In Button */}
               <button
                 type="submit"
-                className="login-btn"
+                className={`login-btn ${loading ? 'login-btn-loading' : ''}`}
                 disabled={loading || !email || !password}
               >
                 {loading ? (
-                  <div className="spinner" />
+                  <div className="login-loader">
+                    <div className="login-loader-spinner"></div>
+                    <span>Authenticating...</span>
+                  </div>
                 ) : (
                   <>
                     Sign In <FiArrowRight />
@@ -270,7 +282,7 @@ const Login = () => {
             <span>Renewable People. Real Progress.</span>
           </div>
           <p>
-            Smart Solar Microgrid Trading System
+            HelioGrid — Smart Energy Platform
             <br />© 2025. All rights reserved.
           </p>
         </div>

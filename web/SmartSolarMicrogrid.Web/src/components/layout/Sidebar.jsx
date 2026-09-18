@@ -8,7 +8,7 @@ import {
   LuCalendarCheck, 
   LuSettings 
 } from 'react-icons/lu';
-import leafLogo from '../../assets/images/leaf-logo.png';
+import heliogridLogo from '../../assets/images/heliogrid-logo-transparent.png';
 import solarHeroBg from '../../assets/images/solar-hero-bg.jpg';
 import './Sidebar.css';
 
@@ -29,10 +29,10 @@ const Sidebar = () => {
       
       <div className="sidebar-content">
         <div className="sidebar-header">
-          <img src={leafLogo} alt="Smart Solar Logo" className="sidebar-logo" />
+          <img src={heliogridLogo} alt="HelioGrid Logo" className="sidebar-logo" />
           <div className="sidebar-brand">
-            <h2>Smart Solar</h2>
-            <p>Microgrid Trading System</p>
+            <h2>HelioGrid</h2>
+            <p>Smart Energy Platform</p>
           </div>
         </div>
 
@@ -53,7 +53,7 @@ const Sidebar = () => {
           <h3>Clean Energy<br/>Stronger Communities</h3>
           <p></p>
           <div className="sidebar-footer-brand">
-            <img src={leafLogo} alt="Logo" />
+            <img src={heliogridLogo} alt="Logo" />
             <span>Powering a<br/>Sustainable Tomorrow</span>
           </div>
         </div>

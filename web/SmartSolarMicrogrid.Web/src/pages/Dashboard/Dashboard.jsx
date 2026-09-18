@@ -412,7 +412,7 @@ const Dashboard = () => {
       {/* Tiny footer disclaimer */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
         <div>
-          <p style={{ margin: 0, fontFamily: 'Inter', fontSize: '0.75rem', fontWeight: '600', color: '#1a233a' }}>Smart Solar Microgrid Trading System</p>
+          <p style={{ margin: 0, fontFamily: 'Inter', fontSize: '0.75rem', fontWeight: '600', color: '#1a233a' }}>HelioGrid — Smart Energy Platform</p>
           <p style={{ margin: 0, fontFamily: 'Inter', fontSize: '0.7rem', color: '#64748b' }}>Building a smarter, cleaner, and more resilient energy future.</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Inter', fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>
