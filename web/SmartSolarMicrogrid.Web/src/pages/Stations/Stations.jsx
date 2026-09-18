@@ -21,7 +21,8 @@ import {
   FiHash,
   FiCheckCircle,
   FiXCircle,
-  FiActivity
+  FiActivity,
+  FiPlus
 } from 'react-icons/fi';
 import { 
   PieChart, 
@@ -72,6 +73,10 @@ const Stations = () => {
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [sortBy, setSortBy] = useState('Sort by');
   const [selectedStation, setSelectedStation] = useState(null);
   const [statusConfirm, setStatusConfirm] = useState(null);
   const [infoMsg, setInfoMsg] = useState(null);
@@ -143,16 +148,37 @@ const Stations = () => {
   // Chart data
   const chartData = [
     { name: 'Active', value: activeStations, color: '#10b981' },
-    { name: 'Deactivated', value: deactivatedStations, color: '#e2e8f0' }
+    { name: 'Deactivated', value: deactivatedStations, color: '#ef4444' }
   ];
 
   // Map center (Sri Lanka approximate center)
   const mapCenter = [7.8731, 80.7718];
 
-  const filteredStations = stations.filter(s => 
-    s.stationName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.stationId?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStations = stations.filter(s => {
+    const searchMatch = 
+      s.stationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.stationId?.toString().includes(searchTerm);
+      
+    let statusMatch = true;
+    if (statusFilter === 'ACTIVE') {
+      statusMatch = s.status === 'ACTIVE' || s.status === 0;
+    } else if (statusFilter === 'DEACTIVATED') {
+      statusMatch = s.status === 'DEACTIVATED' || s.status === 1;
+    }
+    
+    return searchMatch && statusMatch;
+  }).sort((a, b) => {
+    if (sortBy === 'Name A-Z') {
+      return (a.stationName || '').localeCompare(b.stationName || '');
+    }
+    return 0; // Default sort
+  });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentStations = filteredStations.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredStations.length / itemsPerPage);
 
   return (
     <div className="stations-container">
@@ -161,90 +187,13 @@ const Stations = () => {
           <h1 className="page-title">Station Management</h1>
           <p className="page-subtitle">Manage solar microgrid stations across the network. Add, update and monitor station details.</p>
         </div>
-        <div className="header-meta">
-          <div className="date-widget">
-            <FiClock className="widget-icon" />
-            <div className="widget-content">
-              <span className="widget-title">Tue, 22 Apr 2025</span>
-              <span className="widget-subtitle">Good to see you today.</span>
-            </div>
-          </div>
-          <div className="weather-widget">
-            <PiSunLight className="widget-icon text-yellow" />
-            <div className="widget-content">
-              <span className="widget-title">A cleaner</span>
-              <span className="widget-subtitle">tomorrow is possible.</span>
-            </div>
-          </div>
+        <div className="stations-breadcrumbs">
+          <span>Stations</span>
+          <span className="separator">›</span>
+          <span className="current">Station Management</span>
         </div>
       </div>
 
-      {/* Top Stat Cards */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-card-top">
-            <div className="stat-icon-wrapper green-light">
-              <FiHome className="stat-icon" />
-            </div>
-            <p className="stat-label">Total Stations</p>
-          </div>
-          <div className="stat-card-bottom">
-            <div className="stat-info">
-              <h2 className="stat-value">{totalStations}</h2>
-              <p className="stat-trend positive">↑ 27% <span>vs. last month</span></p>
-            </div>
-            <Sparkline color="#10b981" />
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-top">
-            <div className="stat-icon-wrapper blue-light">
-              <FiPower className="stat-icon" />
-            </div>
-            <p className="stat-label">Active Stations</p>
-          </div>
-          <div className="stat-card-bottom">
-            <div className="stat-info">
-              <h2 className="stat-value">{activeStations}</h2>
-              <p className="stat-trend positive">↑ 20% <span>vs. last month</span></p>
-            </div>
-            <Sparkline color="#3b82f6" />
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-top">
-            <div className="stat-icon-wrapper yellow-light">
-              <FiPauseCircle className="stat-icon" />
-            </div>
-            <p className="stat-label">Deactivated Stations</p>
-          </div>
-          <div className="stat-card-bottom">
-            <div className="stat-info">
-              <h2 className="stat-value">{deactivatedStations}</h2>
-              <p className="stat-trend negative">↓ 33% <span>vs. last month</span></p>
-            </div>
-            <Sparkline color="#eab308" />
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-top">
-            <div className="stat-icon-wrapper purple-light">
-              <FiBatteryCharging className="stat-icon" />
-            </div>
-            <p className="stat-label">Total Capacity</p>
-          </div>
-          <div className="stat-card-bottom">
-            <div className="stat-info">
-              <h2 className="stat-value">{totalCapacity} MW</h2>
-              <p className="stat-trend positive">↑ 18% <span>vs. last month</span></p>
-            </div>
-            <Sparkline color="#a855f7" />
-          </div>
-        </div>
-      </div>
 
       {/* Map and Chart Section */}
       <div className="visuals-grid">
@@ -329,7 +278,7 @@ const Stations = () => {
                   </div>
                 </div>
                 <div className="legend-row">
-                  <div className="legend-label"><span className="legend-dot gray"></span> Deactivated</div>
+                  <div className="legend-label"><span className="legend-dot red"></span> Deactivated</div>
                   <div className="legend-stats">
                     <span className="legend-value">{deactivatedStations}</span> 
                     <span className="legend-pct">{totalStations ? Math.round((deactivatedStations/totalStations)*100) : 0}%</span>
@@ -360,8 +309,8 @@ const Stations = () => {
             <h3><FiHome /> All Stations</h3>
           </div>
           {user?.role === 'BACKOFFICE' && (
-            <button className="btn-primary-blue" onClick={() => navigate('/stations/add')}>
-              + Add Station
+            <button className="btn-add" onClick={() => navigate('/stations/add')}>
+              <FiPlus /> Add Station
             </button>
           )}
         </div>
@@ -378,19 +327,15 @@ const Stations = () => {
           </div>
           
           <div className="filter-group">
-            <select className="filter-select">
-              <option>All Statuses</option>
+            <select className="filter-select" value={statusFilter} onChange={(e) => {setStatusFilter(e.target.value); setCurrentPage(1);}}>
+              <option value="All Statuses">All Statuses</option>
               <option value="ACTIVE">Active</option>
               <option value="DEACTIVATED">Deactivated</option>
             </select>
-            <select className="filter-select">
-              <option>All Regions</option>
-              <option>Colombo</option>
-              <option>Kandy</option>
-            </select>
-            <select className="filter-select sort-select">
-              <option>Sort by</option>
-              <option>Name A-Z</option>
+
+            <select className="filter-select sort-select" value={sortBy} onChange={(e) => {setSortBy(e.target.value); setCurrentPage(1);}}>
+              <option value="Sort by">Sort by</option>
+              <option value="Name A-Z">Name A-Z</option>
             </select>
           </div>
         </div>
@@ -402,7 +347,7 @@ const Stations = () => {
                 <th>Station Name</th>
                 <th>Address</th>
                 <th>Capacity</th>
-                <th>Battery Slots</th>
+                <th style={{textAlign: 'center'}}>Battery Slots</th>
                 <th>Operating Hours</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -411,23 +356,33 @@ const Stations = () => {
             <tbody>
               {loading ? (
                 <tr><td colSpan="10" style={{textAlign: 'center', padding: '20px'}}>Loading stations...</td></tr>
-              ) : filteredStations.length === 0 ? (
+              ) : currentStations.length === 0 ? (
                 <tr><td colSpan="10" style={{textAlign: 'center', padding: '20px'}}>No stations found.</td></tr>
               ) : (
-                filteredStations.map(station => (
+                currentStations.map(station => (
                   <tr key={station.stationId}>
                     <td className="font-semibold">{station.stationName}</td>
                     <td className="address-col" title={station.address}>{station.address}</td>
                     <td>{station.capacity} MW</td>
-                    <td>{station.batterySlotCount}</td>
+                    <td style={{textAlign: 'center'}}>{station.batterySlotCount}</td>
                     <td>{station.operatingStartTime} - {station.operatingEndTime}</td>
                     <td>
-                      <div className={`status-badge-btn status-${(station.status === 'ACTIVE' || station.status === 0) ? 'active' : 'deactivated'}`} style={{ cursor: 'default' }}>
-                        <div className="status-badge-content">
-                          <span className="status-dot"></span>
-                          <span>{(station.status === 'ACTIVE' || station.status === 0) ? 'Active' : 'Deactivated'}</span>
-                        </div>
-                      </div>
+                      <span 
+                        className={`status-badge-btn static-badge status-${(station.status === 'ACTIVE' || station.status === 0) ? 'active' : 'deactivated'}`} 
+                        style={{ 
+                          display: 'inline-flex', 
+                          padding: '6px 12px', 
+                          borderRadius: '20px', 
+                          fontSize: '0.85rem', 
+                          fontWeight: '500', 
+                          border: 'none', 
+                          cursor: 'default', 
+                          backgroundColor: (station.status === 'ACTIVE' || station.status === 0) ? '#dcfce7' : '#fee2e2', 
+                          color: (station.status === 'ACTIVE' || station.status === 0) ? '#166534' : '#991b1b' 
+                        }}
+                      >
+                        {(station.status === 'ACTIVE' || station.status === 0) ? 'Active' : 'Deactivated'}
+                      </span>
                     </td>
                     <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <button className="review-btn" onClick={() => setSelectedStation(station)}>Review</button>
@@ -449,14 +404,31 @@ const Stations = () => {
           </table>
         </div>
         
-        <div className="pagination">
-          <span>Showing 1 - {Math.min(5, filteredStations.length)} of {filteredStations.length} stations</span>
-          <div className="page-numbers">
-            <button className="action-btn"><FiChevronLeft/></button>
-            <div className="page-num active">1</div>
-            <div className="page-num">2</div>
-            <div className="page-num">3</div>
-            <button className="action-btn"><FiChevronRight/></button>
+        <div className="table-footer">
+          <div className="footer-info">
+            Showing {filteredStations.length === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredStations.length)} of {filteredStations.length} stations
+          </div>
+          <div className="footer-controls">
+            <div className="pagination">
+              <button className="page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>‹</button>
+              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
+                <button 
+                  key={page} 
+                  className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >{page}</button>
+              ))}
+              <button className="page-btn" disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>›</button>
+            </div>
+            <div className="rows-per-page">
+              <span>Show</span>
+              <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
