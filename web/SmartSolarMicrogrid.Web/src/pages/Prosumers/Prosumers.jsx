@@ -216,12 +216,8 @@ const Prosumers = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button className="btn-filter">
-              <FiFilter /> Filters
-            </button>
           </div>
         </div>
-
         <div className="table-responsive">
           <table className="prosumers-table users-table">
             <thead>
@@ -257,11 +253,21 @@ const Prosumers = () => {
                     </td>
                     <td className="cell-phone">{prosumer.phone}</td>
                     <td>
-                      <span className={`status-badge-btn static-badge status-${prosumer.accountStatus?.toLowerCase() || 'unknown'}`}>
-                        <div className="status-badge-content">
-                          <span className="status-dot"></span>
-                          <span>{prosumer.accountStatus === 'ACTIVE' ? 'Active' : prosumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}</span>
-                        </div>
+                      <span 
+                        className={`status-badge-btn static-badge status-${prosumer.accountStatus?.toLowerCase() || 'unknown'}`} 
+                        style={{ 
+                          display: 'inline-flex', 
+                          padding: '6px 12px', 
+                          borderRadius: '20px', 
+                          fontSize: '0.85rem', 
+                          fontWeight: '500', 
+                          border: 'none', 
+                          cursor: 'default', 
+                          backgroundColor: prosumer.accountStatus === 'ACTIVE' ? '#dcfce7' : prosumer.accountStatus === 'PENDING' ? '#fef3c7' : '#fee2e2', 
+                          color: prosumer.accountStatus === 'ACTIVE' ? '#166534' : prosumer.accountStatus === 'PENDING' ? '#b45309' : '#991b1b' 
+                        }}
+                      >
+                        {prosumer.accountStatus === 'ACTIVE' ? 'Active' : prosumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}
                       </span>
                     </td>
                     <td className="cell-actions" style={{ display: 'flex', gap: '8px' }}>
