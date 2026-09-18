@@ -1,0 +1,23 @@
+package com.smartsolarmicrogrid.prosumer.data.model
+
+data class Reservation(
+    val reservationId: String,
+    val prosumerNic: String,
+    val stationId: String,
+    val slotId: String,
+    val bookingDate: String,
+    val startTime: String,
+    val status: String,          // PENDING, APPROVED, CANCELLED, COMPLETED
+    val qrReference: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+    val completedAt: String? = null
+)
+
+data class CreateReservationRequest(
+    val prosumerNic: String,
+    val stationId: String,
+    val slotId: String,
+    val bookingDate: String,
+    val startTime: String
+)
