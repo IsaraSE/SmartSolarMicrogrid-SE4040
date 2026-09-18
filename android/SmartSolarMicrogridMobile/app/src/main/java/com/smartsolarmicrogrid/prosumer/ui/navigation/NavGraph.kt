@@ -20,6 +20,7 @@ import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingListScreen
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingListViewModel
 import com.smartsolarmicrogrid.prosumer.ui.dashboard.DashboardScreen
 import com.smartsolarmicrogrid.prosumer.ui.home.HomeScreen
+import com.smartsolarmicrogrid.prosumer.ui.qr.BookingQrScreen
 import com.smartsolarmicrogrid.prosumer.ui.profile.EditProfileScreen
 import com.smartsolarmicrogrid.prosumer.ui.profile.ProfileScreen
 import com.smartsolarmicrogrid.prosumer.ui.station.SlotListScreen
@@ -43,6 +44,7 @@ sealed class Screen(val route: String) {
     object BookingList : Screen("booking_list")
     object BookingDetails : Screen("booking_details")
     object Dashboard : Screen("dashboard")
+    object BookingQr : Screen("booking_qr")
 
     object ModifyBooking : Screen("modify_booking/{source}") {
         fun createRoute(source: String) = "modify_booking/$source"
@@ -217,7 +219,22 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                         bookingViewModel.resetState()
                         navController.navigate(Screen.CancelBooking.createRoute(SOURCE_LIST))
                     },
-                    onShowQr = { /* TODO: Step 11 - Booking QR screen */ },
+                    onShowQr = { navController.navigate(Screen.BookingQr.route) },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(Screen.BookingQr.route) { backStackEntry ->
+            val listEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Screen.BookingList.route)
+            }
+            val bookingListViewModel: BookingListViewModel = viewModel(listEntry)
+            val reservation = bookingListViewModel.selectedReservation
+
+            if (reservation != null) {
+                BookingQrScreen(
+                    reservation = reservation,
                     onBack = { navController.popBackStack() }
                 )
             }
