@@ -19,5 +19,6 @@ public class SlotDto
     public DateTime StartDateTime { get; set; }
     public DateTime EndDateTime { get; set; }
     public SlotStatus Status { get; set; }
+    public string? ReservedBy { get; set; }
     public string? Notes { get; set; }
 }

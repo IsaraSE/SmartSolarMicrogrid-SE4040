@@ -116,6 +116,7 @@ public class SlotService : ISlotService
             StartDateTime = slot.StartDateTime,
             EndDateTime = slot.EndDateTime,
             Status = slot.Status,
+            ReservedBy = slot.ReservedBy,
             Notes = slot.Notes
         };
     }

@@ -359,23 +359,25 @@ const Slots = () => {
                       <FiEye /> View
                     </button>
                     
-                    {(st === 0 || st === 'AVAILABLE') && (
-                      <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => requestStatusChange(slot, 2)}>
-                        <FiSlash /> Deactivate
-                      </button>
-                    )}
+                    <div style={{ width: '160px', flexShrink: 0 }}>
+                      {(st === 0 || st === 'AVAILABLE') && (
+                        <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => requestStatusChange(slot, 2)} style={{ width: '100%', justifyContent: 'center' }}>
+                          <FiSlash /> Deactivate
+                        </button>
+                      )}
 
-                    {(st === 2 || st === 'UNAVAILABLE') && (
-                      <button className="pill-btn btn-activate" title="Activate" onClick={() => requestStatusChange(slot, 0)}>
-                        <FiPlay /> Activate
-                      </button>
-                    )}
+                      {(st === 2 || st === 'UNAVAILABLE') && (
+                        <button className="pill-btn btn-activate" title="Activate" onClick={() => requestStatusChange(slot, 0)} style={{ width: '100%', justifyContent: 'center' }}>
+                          <FiPlay /> Activate
+                        </button>
+                      )}
 
-                    {(st === 1 || st === 'RESERVED') && (
-                      <button className="pill-btn btn-view" style={{backgroundColor: '#f3f4f6', color: '#4b5563', border: '1px solid #e5e7eb'}} title="View Reservation" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
-                        <FiList /> View Reservation
-                      </button>
-                    )}
+                      {(st === 1 || st === 'RESERVED') && (
+                        <button className="pill-btn btn-view" style={{backgroundColor: '#f3f4f6', color: '#4b5563', border: '1px solid #e5e7eb', width: '100%', justifyContent: 'center'}} title="View Reservation" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
+                          <FiList /> View Reservation
+                        </button>
+                      )}
+                    </div>
 
                     <div className="dropdown-container" style={{ position: 'relative' }}>
                       <button 

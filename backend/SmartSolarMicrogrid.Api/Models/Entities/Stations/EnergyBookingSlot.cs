@@ -5,6 +5,7 @@ using System;
 
 namespace SmartSolarMicrogrid.Api.Models.Entities.Stations;
 
+[BsonIgnoreExtraElements]
 public class EnergyBookingSlot
 {
     [BsonId]
@@ -21,6 +22,9 @@ public class EnergyBookingSlot
     
     [BsonRepresentation(BsonType.String)]
     public SlotStatus Status { get; set; }
+    
+    [BsonIgnoreIfNull]
+    public string? ReservedBy { get; set; }
     
     [BsonIgnoreIfNull]
     public string? Notes { get; set; }

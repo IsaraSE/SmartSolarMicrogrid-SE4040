@@ -4,6 +4,7 @@ using SmartSolarMicrogrid.Api.Models.Enums;
 
 namespace SmartSolarMicrogrid.Api.Models.Entities.Stations;
 
+[BsonIgnoreExtraElements]
 public class SolarStationInfo
 {
     [BsonId]
