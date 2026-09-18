@@ -191,11 +191,9 @@ const Reservations = () => {
 
           <div className="filter-item">
             <label>Date Range</label>
-            <div className="filter-input" style={{fontSize: '13px', justifyContent: 'center'}}>
-              <FiCalendar style={{color: '#64748b'}} />
-              <span>Apr 15, 2025</span>
-              <FiArrowRight style={{color: '#94a3b8', margin: '0 4px'}} />
-              <span>Apr 30, 2025</span>
+            <div className="filter-input" style={{fontSize: '13px', justifyContent: 'center', cursor: 'pointer'}}>
+              <FiCalendar style={{color: '#64748b', marginRight: '6px'}} />
+              <span>Last 30 Days</span>
             </div>
           </div>
 
@@ -324,7 +322,9 @@ const Reservations = () => {
         </div>
 
         <div className="table-footer">
-          <span className="showing-text">Showing 1 - 10 of 24 reservations</span>
+          <span className="showing-text">
+            Showing {filteredReservations.length > 0 ? 1 : 0} - {Math.min(10, filteredReservations.length)} of {filteredReservations.length} reservations
+          </span>
           <div className="pagination">
             <button className="page-btn"><FiChevronLeft /></button>
             <button className="page-btn active">1</button>
