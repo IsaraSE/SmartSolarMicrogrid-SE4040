@@ -27,6 +27,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useAuth } from '../../context/AuthContext';
 import { stationService } from '../../services/stationService';
 import './Stations.css';
 
@@ -61,6 +62,7 @@ const Sparkline = ({ color }) => (
 );
 
 const Stations = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -352,9 +354,11 @@ const Stations = () => {
           <div className="card-header" style={{marginBottom: 0}}>
             <h3><FiHome /> All Stations</h3>
           </div>
-          <button className="btn-primary-blue" onClick={() => navigate('/stations/add')}>
-            + Add Station
-          </button>
+          {user?.role === 'BACKOFFICE' && (
+            <button className="btn-primary-blue" onClick={() => navigate('/stations/add')}>
+              + Add Station
+            </button>
+          )}
         </div>
         
         <div className="table-filters">
@@ -424,17 +428,21 @@ const Stations = () => {
                       <button className="pill-btn btn-view" title="View" onClick={() => setSelectedStation(station)}>
                         <FiEye /> View
                       </button>
-                      <button className="pill-btn btn-edit" title="Edit" onClick={() => navigate(`/stations/edit/${station.stationId}`)}>
-                        <FiEdit2 /> Edit
-                      </button>
-                      {(station.status === 'ACTIVE' || station.status === 0) ? (
-                        <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => handleDeactivate(station)}>
-                          <FiSlash /> Deactivate
-                        </button>
-                      ) : (
-                        <button className="pill-btn btn-activate" title="Activate" onClick={() => handleActivate(station)}>
-                          <FiPlay /> Activate
-                        </button>
+                      {user?.role === 'BACKOFFICE' && (
+                        <>
+                          <button className="pill-btn btn-edit" title="Edit" onClick={() => navigate(`/stations/edit/${station.stationId}`)}>
+                            <FiEdit2 /> Edit
+                          </button>
+                          {(station.status === 'ACTIVE' || station.status === 0) ? (
+                            <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => handleDeactivate(station)}>
+                              <FiSlash /> Deactivate
+                            </button>
+                          ) : (
+                            <button className="pill-btn btn-activate" title="Activate" onClick={() => handleActivate(station)}>
+                              <FiPlay /> Activate
+                            </button>
+                          )}
+                        </>
                       )}
                     </td>
                   </tr>

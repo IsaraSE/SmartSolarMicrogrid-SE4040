@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight, FiCheck } from 'react-icons/fi';
 import { reservationService } from '../../services/reservationService';
 import { stationService } from '../../services/stationService';
+import { useAuth } from '../../context/AuthContext';
 import './Reservations.css';
 
 const Reservations = () => {
+  const { user } = useAuth();
   const [reservations, setReservations] = useState([]);
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -305,11 +307,11 @@ const Reservations = () => {
                     </td>
                     <td>
                       <div className="table-actions">
-                        {(res.status === 0 || res.status === 'PENDING') && (
+                        {(res.status === 0 || res.status === 'PENDING') && user?.role === 'GRID_OPERATOR' && (
                           <button className="pill-btn btn-view" style={{ backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} title="Approve Reservation" onClick={() => setConfirmModal({ isOpen: true, type: 'APPROVE', reservationId: res.reservationId })}><FiCheck /> Approve</button>
                         )}
                         <button className="pill-btn btn-view" title="View Details" onClick={() => { setSelectedReservation(res); setShowViewModal(true); }}><FiEye /> View</button>
-                        {res.status !== 2 && res.status !== 'CANCELLED' && res.status !== 3 && res.status !== 'COMPLETED' && (
+                        {res.status !== 2 && res.status !== 'CANCELLED' && res.status !== 3 && res.status !== 'COMPLETED' && user?.role === 'GRID_OPERATOR' && (
                           <button className="action-btn delete" title="Cancel Reservation" onClick={() => setConfirmModal({ isOpen: true, type: 'CANCEL', reservationId: res.reservationId })}><FiTrash2 /></button>
                         )}
                       </div>

@@ -10,18 +10,28 @@ import {
 } from 'react-icons/lu';
 import heliogridLogo from '../../assets/images/heliogrid-logo-transparent.png';
 import solarHeroBg from '../../assets/images/solar-hero-bg.jpg';
+import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = () => {
+  const { user } = useAuth();
+
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: <LuLayoutDashboard /> },
-    { path: '/users', label: 'Users', icon: <LuUsers /> },
-    { path: '/prosumers', label: 'Prosumers', icon: <LuHouse /> },
+    { path: '/users', label: 'Users', icon: <LuUsers />, requireBackoffice: true },
+    { path: '/prosumers', label: 'Prosumers', icon: <LuHouse />, requireBackoffice: true },
     { path: '/stations', label: 'Stations', icon: <LuBatteryCharging /> },
     { path: '/slots', label: 'Slots', icon: <LuCalendar /> },
     { path: '/reservations', label: 'Reservations', icon: <LuCalendarCheck /> },
     { path: '/settings', label: 'Settings', icon: <LuSettings /> },
   ];
+
+  const visibleNavItems = navItems.filter(item => {
+    if (item.requireBackoffice && user?.role !== 'BACKOFFICE') {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="sidebar">
@@ -37,7 +47,7 @@ const Sidebar = () => {
         </div>
 
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}

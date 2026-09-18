@@ -12,8 +12,10 @@ import { slotService } from '../../services/slotService';
 import stationHeroBg from '../../assets/images/solar-hero-bg.jpg';
 import './Slots.css';
 import '../Users/Users.css'; // For modal styles
+import { useAuth } from '../../context/AuthContext';
 
 const Slots = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
@@ -309,9 +311,11 @@ const Slots = () => {
                 <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
               ))}
             </select>
-            <button className="btn-add" onClick={handleAddClick} disabled={!selectedStation} style={{ height: '42px', display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', whiteSpace: 'nowrap', borderRadius: '8px' }}>
-              <FiPlus /> Add Slot
-            </button>
+            {user?.role === 'GRID_OPERATOR' && (
+              <button className="btn-add" onClick={handleAddClick} disabled={!selectedStation} style={{ height: '42px', display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', whiteSpace: 'nowrap', borderRadius: '8px' }}>
+                <FiPlus /> Add Slot
+              </button>
+            )}
           </div>
         </div>
 
@@ -359,45 +363,49 @@ const Slots = () => {
                       <FiEye /> View
                     </button>
                     
-                    <div style={{ width: '160px', flexShrink: 0 }}>
-                      {(st === 0 || st === 'AVAILABLE') && (
-                        <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => requestStatusChange(slot, 2)} style={{ width: '100%', justifyContent: 'center' }}>
-                          <FiSlash /> Deactivate
-                        </button>
-                      )}
+                    {user?.role === 'GRID_OPERATOR' && (
+                      <>
+                        <div style={{ width: '160px', flexShrink: 0 }}>
+                          {(st === 0 || st === 'AVAILABLE') && (
+                            <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => requestStatusChange(slot, 2)} style={{ width: '100%', justifyContent: 'center' }}>
+                              <FiSlash /> Deactivate
+                            </button>
+                          )}
 
-                      {(st === 2 || st === 'UNAVAILABLE') && (
-                        <button className="pill-btn btn-activate" title="Activate" onClick={() => requestStatusChange(slot, 0)} style={{ width: '100%', justifyContent: 'center' }}>
-                          <FiPlay /> Activate
-                        </button>
-                      )}
+                          {(st === 2 || st === 'UNAVAILABLE') && (
+                            <button className="pill-btn btn-activate" title="Activate" onClick={() => requestStatusChange(slot, 0)} style={{ width: '100%', justifyContent: 'center' }}>
+                              <FiPlay /> Activate
+                            </button>
+                          )}
 
-                      {(st === 1 || st === 'RESERVED') && (
-                        <button className="pill-btn btn-view" style={{backgroundColor: '#f3f4f6', color: '#4b5563', border: '1px solid #e5e7eb', width: '100%', justifyContent: 'center'}} title="View Reservation" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
-                          <FiList /> View Reservation
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="dropdown-container" style={{ position: 'relative' }}>
-                      <button 
-                        className="pill-btn" 
-                        style={{ padding: '6px 8px', backgroundColor: 'transparent', border: 'none', color: '#64748b' }} 
-                        onClick={(e) => toggleDropdown(slot.slotId, e)}
-                      >
-                        <FiMoreVertical size={18} />
-                      </button>
-                      {activeDropdown === slot.slotId && (
-                        <div className="dropdown-menu fade-in" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: '150px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                          <button className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#334155' }} onClick={() => handleEditSlot(slot)}>
-                            <FiEdit2 /> Edit Slot
-                          </button>
-                          <button className="dropdown-item text-danger" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#ef4444' }} onClick={() => requestDeleteSlot(slot)}>
-                            <FiTrash2 /> Delete Slot
-                          </button>
+                          {(st === 1 || st === 'RESERVED') && (
+                            <button className="pill-btn btn-view" style={{backgroundColor: '#f3f4f6', color: '#4b5563', border: '1px solid #e5e7eb', width: '100%', justifyContent: 'center'}} title="View Reservation" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
+                              <FiList /> View Reservation
+                            </button>
+                          )}
                         </div>
-                      )}
-                    </div>
+
+                        <div className="dropdown-container" style={{ position: 'relative' }}>
+                          <button 
+                            className="pill-btn" 
+                            style={{ padding: '6px 8px', backgroundColor: 'transparent', border: 'none', color: '#64748b' }} 
+                            onClick={(e) => toggleDropdown(slot.slotId, e)}
+                          >
+                            <FiMoreVertical size={18} />
+                          </button>
+                          {activeDropdown === slot.slotId && (
+                            <div className="dropdown-menu fade-in" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: '150px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                              <button className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#334155' }} onClick={() => handleEditSlot(slot)}>
+                                <FiEdit2 /> Edit Slot
+                              </button>
+                              <button className="dropdown-item text-danger" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#ef4444' }} onClick={() => requestDeleteSlot(slot)}>
+                                <FiTrash2 /> Delete Slot
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </td>
                 </tr>
               )})
