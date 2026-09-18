@@ -13,9 +13,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
 }
 
-.header-left h1 {
+.prosumers-title h1 {
   font-family: 'Poppins', sans-serif;
   font-size: 1.6rem;
   font-weight: 700;
@@ -23,47 +24,28 @@
   margin: 0 0 4px;
 }
 
-.header-left p {
+.prosumers-title p {
   font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
   color: #64748b;
   margin: 0;
 }
 
-.header-right {
-  display: flex;
-  gap: 24px;
-}
-
-.date-widget, .weather-widget {
+.prosumers-breadcrumbs {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.widget-icon {
-  font-size: 1.5rem;
+  gap: 8px;
+  font-size: 0.85rem;
   color: #64748b;
 }
 
-.widget-icon.text-yellow {
-  color: #f59e0b;
+.prosumers-breadcrumbs .separator {
+  color: #cbd5e1;
 }
 
-.widget-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.widget-title {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #1e293b;
-}
-
-.widget-subtitle {
-  font-size: 0.8rem;
-  color: #64748b;
+.prosumers-breadcrumbs .current {
+  color: #10b981;
+  font-weight: 500;
 }
 
 /* Summary Cards */
