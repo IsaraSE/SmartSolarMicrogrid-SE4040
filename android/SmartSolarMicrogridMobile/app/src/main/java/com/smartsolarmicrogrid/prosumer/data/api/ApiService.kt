@@ -1,3 +1,11 @@
+/*
+ * ApiService.kt
+ * Smart Solar Microgrid Trading System - Prosumer Mobile Application
+ *
+ * Retrofit definition of every REST endpoint the Prosumer app calls on the
+ * C# Web API. The app never touches MongoDB directly - all business logic and
+ * validation (7-day rule, 12-hour rule) is enforced by the service.
+ */
 package com.smartsolarmicrogrid.prosumer.data.api
 
 import com.smartsolarmicrogrid.prosumer.data.model.*
@@ -48,4 +56,16 @@ interface ApiService {
 
     @GET("api/reservations/history/{prosumerNic}")
     suspend fun getReservationHistory(@Path("prosumerNic") nic: String): Response<List<Reservation>>
+
+    /** Server-side search / filter used by the Booking List screen. */
+    @GET("api/reservations/search")
+    suspend fun searchReservations(
+        @Query("nic") nic: String,
+        @Query("keyword") keyword: String? = null,
+        @Query("status") status: String? = null
+    ): Response<List<Reservation>>
+
+    /** Single reservation, used to refresh details and read the QR reference. */
+    @GET("api/reservations/{id}")
+    suspend fun getReservation(@Path("id") id: String): Response<Reservation>
 }

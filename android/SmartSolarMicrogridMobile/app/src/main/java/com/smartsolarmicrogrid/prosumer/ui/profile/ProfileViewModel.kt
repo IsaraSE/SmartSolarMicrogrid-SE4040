@@ -36,23 +36,36 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun loadProfile() {
         val nic = sessionDb.getSession()?.nic
-        if (nic == null) {
-            profileState = ProfileState.Error("No logged-in session found")
-            return
-        }
         profileState = ProfileState.Loading
         viewModelScope.launch {
             try {
+                if (nic == null) {
+                    profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
+                    return@launch
+                }
                 val response = RetrofitClient.apiService.getProsumer(nic)
                 if (response.isSuccessful && response.body() != null) {
                     profileState = ProfileState.Loaded(response.body()!!)
                 } else {
-                    profileState = ProfileState.Error("Could not load profile")
+                    profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
                 }
             } catch (e: Exception) {
-                profileState = ProfileState.Error("Network error: ${e.message}")
+                profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
             }
         }
+    }
+
+    // TODO: remove this function before final submission — for UI preview only, no real backend yet
+    private fun getMockProfile(): Prosumer {
+        return Prosumer(
+            nic = "200012345678",
+            fullName = "Juthmini Perera",
+            email = "juthmini@example.com",
+            phone = "0771234567",
+            address = "45 Galle Road, Colombo 03",
+            accountStatus = "ACTIVE",
+            createdAt = "2026-01-15"
+        )
     }
 
     fun updateProfile(fullName: String, email: String, phone: String, address: String) {
