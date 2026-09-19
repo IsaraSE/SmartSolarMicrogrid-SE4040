@@ -1,45 +1,51 @@
 .reservations-container {
-  padding: 24px 32px;
-  max-width: 1400px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  gap: 20px;
 }
 
 /* Header Styles */
 .reservations-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 24px;
 }
 
-.header-left {
-  display: flex;
-  flex-direction: column;
-}
-
-.header-left h1 {
-  font-size: 24px;
+.reservations-title h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 4px 0;
+  color: #1a233a;
+  margin-bottom: 4px;
+  margin-top: 0;
 }
 
-.header-left p {
+.reservations-title p {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
   color: #64748b;
-  font-size: 14px;
   margin: 0;
 }
 
-.breadcrumbs {
-  font-size: 13px;
-  color: #64748b;
+.reservations-breadcrumbs {
   display: flex;
-  gap: 6px;
-  margin-top: 8px;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-family: 'Inter', sans-serif;
+  margin-top: 6px;
 }
 
-.breadcrumbs span:last-child {
-  color: #334155;
+.reservations-breadcrumbs .separator {
+  color: #cbd5e1;
+}
+
+.reservations-breadcrumbs .current {
+  color: #10b981;
   font-weight: 500;
 }
 
@@ -303,6 +309,10 @@
   border-radius: 12px;
   padding: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 
 .table-header-controls {
@@ -337,16 +347,18 @@
 
 .table-responsive-wrapper {
   width: 100%;
+  flex: 1;
   overflow-x: auto;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-.res-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
+/* Ensure header stays visible when scrolling vertically */
 .res-table th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
   text-align: left;
   padding: 12px 8px;
   color: #334155;
@@ -354,6 +366,11 @@
   font-weight: 600;
   border-bottom: 1px solid #f1f5f9;
   white-space: nowrap;
+}
+
+.res-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
 .th-content {
@@ -586,6 +603,8 @@ input[type="checkbox"] {
   font-size: 15px;
   color: #0f172a;
 }
+
+
 
 .btn-secondary {
   padding: 8px 16px;

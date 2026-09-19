@@ -16,7 +16,15 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiBarChart2,
-  FiHome
+  FiHome,
+  FiFileText,
+  FiHash,
+  FiCheckCircle,
+  FiXCircle,
+  FiActivity,
+  FiPlus,
+  FiX,
+  FiCopy
 } from 'react-icons/fi';
 import { 
   PieChart, 
@@ -27,6 +35,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useAuth } from '../../context/AuthContext';
 import { stationService } from '../../services/stationService';
 import './Stations.css';
 
@@ -61,10 +70,15 @@ const Sparkline = ({ color }) => (
 );
 
 const Stations = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [sortBy, setSortBy] = useState('Sort by');
   const [selectedStation, setSelectedStation] = useState(null);
   const [statusConfirm, setStatusConfirm] = useState(null);
   const [infoMsg, setInfoMsg] = useState(null);
@@ -136,16 +150,37 @@ const Stations = () => {
   // Chart data
   const chartData = [
     { name: 'Active', value: activeStations, color: '#10b981' },
-    { name: 'Deactivated', value: deactivatedStations, color: '#e2e8f0' }
+    { name: 'Deactivated', value: deactivatedStations, color: '#ef4444' }
   ];
 
   // Map center (Sri Lanka approximate center)
   const mapCenter = [7.8731, 80.7718];
 
-  const filteredStations = stations.filter(s => 
-    s.stationName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.stationId?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStations = stations.filter(s => {
+    const searchMatch = 
+      s.stationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.stationId?.toString().includes(searchTerm);
+      
+    let statusMatch = true;
+    if (statusFilter === 'ACTIVE') {
+      statusMatch = s.status === 'ACTIVE' || s.status === 0;
+    } else if (statusFilter === 'DEACTIVATED') {
+      statusMatch = s.status === 'DEACTIVATED' || s.status === 1;
+    }
+    
+    return searchMatch && statusMatch;
+  }).sort((a, b) => {
+    if (sortBy === 'Name A-Z') {
+      return (a.stationName || '').localeCompare(b.stationName || '');
+    }
+    return 0; // Default sort
+  });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentStations = filteredStations.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredStations.length / itemsPerPage);
 
   return (
     <div className="stations-container">
@@ -154,90 +189,13 @@ const Stations = () => {
           <h1 className="page-title">Station Management</h1>
           <p className="page-subtitle">Manage solar microgrid stations across the network. Add, update and monitor station details.</p>
         </div>
-        <div className="header-meta">
-          <div className="date-widget">
-            <FiClock className="widget-icon" />
-            <div className="widget-content">
-              <span className="widget-title">Tue, 22 Apr 2025</span>
-              <span className="widget-subtitle">Good to see you today.</span>
-            </div>
-          </div>
-          <div className="weather-widget">
-            <PiSunLight className="widget-icon text-yellow" />
-            <div className="widget-content">
-              <span className="widget-title">A cleaner</span>
-              <span className="widget-subtitle">tomorrow is possible.</span>
-            </div>
-          </div>
+        <div className="stations-breadcrumbs">
+          <span>Stations</span>
+          <span className="separator">›</span>
+          <span className="current">Station Management</span>
         </div>
       </div>
 
-      {/* Top Stat Cards */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-card-top">
-            <div className="stat-icon-wrapper green-light">
-              <FiHome className="stat-icon" />
-            </div>
-            <p className="stat-label">Total Stations</p>
-          </div>
-          <div className="stat-card-bottom">
-            <div className="stat-info">
-              <h2 className="stat-value">{totalStations}</h2>
-              <p className="stat-trend positive">↑ 27% <span>vs. last month</span></p>
-            </div>
-            <Sparkline color="#10b981" />
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-top">
-            <div className="stat-icon-wrapper blue-light">
-              <FiPower className="stat-icon" />
-            </div>
-            <p className="stat-label">Active Stations</p>
-          </div>
-          <div className="stat-card-bottom">
-            <div className="stat-info">
-              <h2 className="stat-value">{activeStations}</h2>
-              <p className="stat-trend positive">↑ 20% <span>vs. last month</span></p>
-            </div>
-            <Sparkline color="#3b82f6" />
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-top">
-            <div className="stat-icon-wrapper yellow-light">
-              <FiPauseCircle className="stat-icon" />
-            </div>
-            <p className="stat-label">Deactivated Stations</p>
-          </div>
-          <div className="stat-card-bottom">
-            <div className="stat-info">
-              <h2 className="stat-value">{deactivatedStations}</h2>
-              <p className="stat-trend negative">↓ 33% <span>vs. last month</span></p>
-            </div>
-            <Sparkline color="#eab308" />
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-top">
-            <div className="stat-icon-wrapper purple-light">
-              <FiBatteryCharging className="stat-icon" />
-            </div>
-            <p className="stat-label">Total Capacity</p>
-          </div>
-          <div className="stat-card-bottom">
-            <div className="stat-info">
-              <h2 className="stat-value">{totalCapacity} MW</h2>
-              <p className="stat-trend positive">↑ 18% <span>vs. last month</span></p>
-            </div>
-            <Sparkline color="#a855f7" />
-          </div>
-        </div>
-      </div>
 
       {/* Map and Chart Section */}
       <div className="visuals-grid">
@@ -322,7 +280,7 @@ const Stations = () => {
                   </div>
                 </div>
                 <div className="legend-row">
-                  <div className="legend-label"><span className="legend-dot gray"></span> Deactivated</div>
+                  <div className="legend-label"><span className="legend-dot red"></span> Deactivated</div>
                   <div className="legend-stats">
                     <span className="legend-value">{deactivatedStations}</span> 
                     <span className="legend-pct">{totalStations ? Math.round((deactivatedStations/totalStations)*100) : 0}%</span>
@@ -352,9 +310,11 @@ const Stations = () => {
           <div className="card-header" style={{marginBottom: 0}}>
             <h3><FiHome /> All Stations</h3>
           </div>
-          <button className="btn-primary-blue" onClick={() => navigate('/stations/add')}>
-            + Add Station
-          </button>
+          {user?.role === 'BACKOFFICE' && (
+            <button className="btn-add" onClick={() => navigate('/stations/add')}>
+              <FiPlus /> Add Station
+            </button>
+          )}
         </div>
         
         <div className="table-filters">
@@ -369,19 +329,15 @@ const Stations = () => {
           </div>
           
           <div className="filter-group">
-            <select className="filter-select">
-              <option>All Statuses</option>
+            <select className="filter-select" value={statusFilter} onChange={(e) => {setStatusFilter(e.target.value); setCurrentPage(1);}}>
+              <option value="All Statuses">All Statuses</option>
               <option value="ACTIVE">Active</option>
               <option value="DEACTIVATED">Deactivated</option>
             </select>
-            <select className="filter-select">
-              <option>All Regions</option>
-              <option>Colombo</option>
-              <option>Kandy</option>
-            </select>
-            <select className="filter-select sort-select">
-              <option>Sort by</option>
-              <option>Name A-Z</option>
+
+            <select className="filter-select sort-select" value={sortBy} onChange={(e) => {setSortBy(e.target.value); setCurrentPage(1);}}>
+              <option value="Sort by">Sort by</option>
+              <option value="Name A-Z">Name A-Z</option>
             </select>
           </div>
         </div>
@@ -393,48 +349,54 @@ const Stations = () => {
                 <th>Station Name</th>
                 <th>Address</th>
                 <th>Capacity</th>
-                <th>Battery Slots</th>
+                <th style={{textAlign: 'center'}}>Battery Slots</th>
                 <th>Operating Hours</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th style={{textAlign: 'center'}}>Status</th>
+                <th style={{textAlign: 'center'}}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan="10" style={{textAlign: 'center', padding: '20px'}}>Loading stations...</td></tr>
-              ) : filteredStations.length === 0 ? (
+              ) : currentStations.length === 0 ? (
                 <tr><td colSpan="10" style={{textAlign: 'center', padding: '20px'}}>No stations found.</td></tr>
               ) : (
-                filteredStations.map(station => (
+                currentStations.map(station => (
                   <tr key={station.stationId}>
                     <td className="font-semibold">{station.stationName}</td>
                     <td className="address-col" title={station.address}>{station.address}</td>
                     <td>{station.capacity} MW</td>
-                    <td>{station.batterySlotCount}</td>
+                    <td style={{textAlign: 'center'}}>{station.batterySlotCount}</td>
                     <td>{station.operatingStartTime} - {station.operatingEndTime}</td>
-                    <td>
-                      <div className={`status-badge-btn status-${(station.status === 'ACTIVE' || station.status === 0) ? 'active' : 'deactivated'}`} style={{ cursor: 'default' }}>
-                        <div className="status-badge-content">
-                          <span className="status-dot"></span>
-                          <span>{(station.status === 'ACTIVE' || station.status === 0) ? 'Active' : 'Deactivated'}</span>
-                        </div>
-                      </div>
+                    <td style={{textAlign: 'center'}}>
+                      <span 
+                        className={`status-badge-btn static-badge status-${(station.status === 'ACTIVE' || station.status === 0) ? 'active' : 'deactivated'}`} 
+                        style={{ 
+                          display: 'inline-flex', 
+                          padding: '6px 12px', 
+                          borderRadius: '20px', 
+                          fontSize: '0.85rem', 
+                          fontWeight: '500', 
+                          border: 'none', 
+                          cursor: 'default', 
+                          backgroundColor: (station.status === 'ACTIVE' || station.status === 0) ? '#dcfce7' : '#fee2e2', 
+                          color: (station.status === 'ACTIVE' || station.status === 0) ? '#166534' : '#991b1b' 
+                        }}
+                      >
+                        {(station.status === 'ACTIVE' || station.status === 0) ? 'Active' : 'Deactivated'}
+                      </span>
                     </td>
-                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <button className="pill-btn btn-view" title="View" onClick={() => setSelectedStation(station)}>
-                        <FiEye /> View
-                      </button>
-                      <button className="pill-btn btn-edit" title="Edit" onClick={() => navigate(`/stations/edit/${station.stationId}`)}>
-                        <FiEdit2 /> Edit
-                      </button>
-                      {(station.status === 'ACTIVE' || station.status === 0) ? (
-                        <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => handleDeactivate(station)}>
-                          <FiSlash /> Deactivate
-                        </button>
-                      ) : (
-                        <button className="pill-btn btn-activate" title="Activate" onClick={() => handleActivate(station)}>
-                          <FiPlay /> Activate
-                        </button>
+                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
+                      <button className="review-btn" onClick={() => setSelectedStation(station)}>Review</button>
+                      {user?.role === 'BACKOFFICE' && (
+                        <>
+                          <button className="edit-btn" onClick={() => navigate(`/stations/edit/${station.stationId}`)}>Edit</button>
+                          {(station.status === 'ACTIVE' || station.status === 0) ? (
+                            <button className="deactivate-btn" onClick={() => handleDeactivate(station)}>Deactivate</button>
+                          ) : (
+                            <button className="activate-btn" onClick={() => handleActivate(station)}>Activate</button>
+                          )}
+                        </>
                       )}
                     </td>
                   </tr>
@@ -444,69 +406,134 @@ const Stations = () => {
           </table>
         </div>
         
-        <div className="pagination">
-          <span>Showing 1 - {Math.min(5, filteredStations.length)} of {filteredStations.length} stations</span>
-          <div className="page-numbers">
-            <button className="action-btn"><FiChevronLeft/></button>
-            <div className="page-num active">1</div>
-            <div className="page-num">2</div>
-            <div className="page-num">3</div>
-            <button className="action-btn"><FiChevronRight/></button>
+        <div className="table-footer">
+          <div className="footer-info">
+            Showing {filteredStations.length === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredStations.length)} of {filteredStations.length} stations
+          </div>
+          <div className="footer-controls">
+            <div className="pagination">
+              <button className="page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>‹</button>
+              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
+                <button 
+                  key={page} 
+                  className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >{page}</button>
+              ))}
+              <button className="page-btn" disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>›</button>
+            </div>
+            <div className="rows-per-page">
+              <span>Show</span>
+              <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* View Station Modal */}
+      {/* View Station Modal (Premium Design) */}
       {selectedStation && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in">
-            <div className="user-modal-header">
-              <h2>Station Details</h2>
-              <button className="user-modal-close" onClick={() => setSelectedStation(null)}>&times;</button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <PiSunLight />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>Station Details</h2>
+                <p>View detailed information about this solar station.</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setSelectedStation(null)}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body">
-              <div className="detail-group">
-                <label>Station Name</label>
-                <div className="detail-value">{selectedStation.stationName}</div>
-              </div>
-              <div className="detail-group">
-                <label>Description</label>
-                <div className="detail-value">{selectedStation.description || 'None'}</div>
-              </div>
-              <div className="detail-group">
-                <label>Station ID</label>
-                <div className="detail-value">{selectedStation.stationId}</div>
-              </div>
-              <div className="detail-group">
-                <label>Address</label>
-                <div className="detail-value">{selectedStation.address}</div>
-              </div>
-              <div className="detail-group">
-                <label>Latitude</label>
-                <div className="detail-value">{selectedStation.latitude}</div>
-              </div>
-              <div className="detail-group">
-                <label>Longitude</label>
-                <div className="detail-value">{selectedStation.longitude}</div>
-              </div>
-              <div className="detail-group">
-                <label>Capacity</label>
-                <div className="detail-value">{selectedStation.capacity} MW</div>
-              </div>
-              <div className="detail-group">
-                <label>Battery Slots</label>
-                <div className="detail-value">{selectedStation.batterySlotCount}</div>
-              </div>
-              <div className="detail-group">
-                <label>Operating Hours</label>
-                <div className="detail-value">{selectedStation.operatingStartTime} - {selectedStation.operatingEndTime}</div>
-              </div>
-              <div className="detail-group">
-                <label>Status</label>
-                <div className="detail-value">
-                  {selectedStation.status === 'ACTIVE' || selectedStation.status === 0 ? 'Active' : 'Deactivated'}
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiHome /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Station Name</span>
+                  <span className="premium-info-value">{selectedStation.stationName}</span>
                 </div>
               </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiHash /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Station ID</span>
+                  <span className="premium-info-value text-muted">
+                    {selectedStation.stationId}
+                    <button style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => navigator.clipboard.writeText(selectedStation.stationId)} title="Copy ID">
+                      <FiCopy />
+                    </button>
+                  </span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Address</span>
+                  <span className="premium-info-value">{selectedStation.address}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiPower /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Capacity</span>
+                  <span className="premium-info-value">{selectedStation.capacity} MW</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiBattery /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Battery Slots</span>
+                  <span className="premium-info-value">{selectedStation.batterySlotCount}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiClock /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Operating Hours</span>
+                  <span className="premium-info-value">{selectedStation.operatingStartTime} - {selectedStation.operatingEndTime}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    <span className={`status-badge-btn static-badge status-${selectedStation.status === 'ACTIVE' || selectedStation.status === 0 ? 'active' : 'inactive'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: (selectedStation.status === 'ACTIVE' || selectedStation.status === 0) ? '#dcfce7' : '#fee2e2', color: (selectedStation.status === 'ACTIVE' || selectedStation.status === 0) ? '#166534' : '#991b1b' }}>
+                      <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
+                      {(selectedStation.status === 'ACTIVE' || selectedStation.status === 0) ? 'Active' : 'Deactivated'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiFileText /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Description</span>
+                  <span className="premium-info-value">{selectedStation.description || 'None'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="premium-modal-footer has-info">
+              <div className="premium-footer-info">
+                <PiSunLight style={{ fontSize: '18px' }} />
+                <span>HelioGrid - Smart Energy Platform</span>
+              </div>
+              <button className="btn-premium-close" onClick={() => setSelectedStation(null)}>Close</button>
             </div>
           </div>
         </div>
@@ -521,11 +548,40 @@ const Stations = () => {
               <button className="user-modal-close" onClick={() => setStatusConfirm(null)}>&times;</button>
             </div>
             <div className="user-modal-body">
-              <p>Are you sure you want to change the status of <strong>{statusConfirm.station.stationName}</strong> from <strong className={`text-${(statusConfirm.station.status === 'ACTIVE' || statusConfirm.station.status === 0) ? 'active' : 'deactivated'}`}>{(statusConfirm.station.status === 'ACTIVE' || statusConfirm.station.status === 0) ? 'Active' : 'Deactivated'}</strong> to <strong className={`text-${statusConfirm.newStatus === 0 ? 'active' : 'deactivated'}`}>{statusConfirm.newStatus === 0 ? 'Active' : 'Deactivated'}</strong>?</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                <div className="detail-icon" style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}>
+                  <FiHome />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{statusConfirm.station.stationName}</h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Capacity: {statusConfirm.station.capacity} MW</p>
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  {statusConfirm.newStatus === 0 ? (
+                    <FiCheckCircle style={{ color: '#10b981', fontSize: '1.5rem' }} />
+                  ) : (
+                    <FiXCircle style={{ color: '#ef4444', fontSize: '1.5rem' }} />
+                  )}
+                  <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                    {statusConfirm.newStatus === 0 ? 'Activate Station' : 'Deactivate Station'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Are you sure you want to change the status of this station to <strong>{statusConfirm.newStatus === 0 ? 'Active' : 'Deactivated'}</strong>?
+                </p>
+              </div>
             </div>
             <div className="user-modal-footer">
               <button className="btn-modal-cancel" onClick={() => setStatusConfirm(null)}>Cancel</button>
-              <button className="btn-modal-confirm" onClick={confirmStatusChange}>Confirm Change</button>
+              <button 
+                className="btn-modal-confirm" 
+                style={{ backgroundColor: statusConfirm.newStatus === 1 ? '#ef4444' : '#10b981' }}
+                onClick={confirmStatusChange}
+              >
+                Confirm Change
+              </button>
             </div>
           </div>
         </div>

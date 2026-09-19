@@ -32,35 +32,21 @@
   gap: 24px;
 }
 
-.date-widget, .weather-widget {
+.stations-breadcrumbs {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.widget-icon {
-  font-size: 1.5rem;
+  gap: 8px;
+  font-size: 0.85rem;
   color: #64748b;
 }
 
-.widget-icon.text-yellow {
-  color: #f59e0b;
+.stations-breadcrumbs .separator {
+  color: #cbd5e1;
 }
 
-.widget-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.widget-title {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #1e293b;
-}
-
-.widget-subtitle {
-  font-size: 0.75rem;
-  color: #64748b;
+.stations-breadcrumbs .current {
+  color: #10b981;
+  font-weight: 500;
 }
 
 /* Stats Grid */
@@ -158,6 +144,7 @@
   grid-template-columns: 2.2fr 1fr;
   gap: 16px;
   height: 280px;
+  margin-bottom: 48px;
 }
 
 .map-card, .chart-card {

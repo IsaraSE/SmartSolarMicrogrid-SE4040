@@ -344,23 +344,11 @@ const EditStation = () => {
                     required 
                   />
                 </div>
-                <div className="duration-widget">
-                  <span className="sun-icon">☀️</span>
-                  <div>
-                    <div className="dur-label">Operating Duration</div>
-                    <div className="dur-val">16 hours per day <span className="info-icon">i</span></div>
-                  </div>
-                </div>
               </div>
             </div>
             
             {/* Footer Form */}
-            <div className="form-footer-inline">
-              <button type="button" className="btn-danger-outline">
-                <FiTrash2 /> Deactivate Station
-              </button>
-              <span className="footer-note">Deactivate this station to remove it from active operations.</span>
-              
+            <div className="form-footer-inline" style={{ justifyContent: 'flex-end' }}>
               <div className="action-buttons">
                 <button type="button" className="btn-secondary" onClick={() => navigate('/stations')}>Cancel</button>
                 <button type="submit" form="stationForm" className="btn-primary" disabled={loading}>

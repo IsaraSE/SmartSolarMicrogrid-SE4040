@@ -14,6 +14,7 @@
 
 /* Search Box */
 .topbar-search {
+  position: relative;
   display: flex;
   align-items: center;
   background-color: #f8fafc;
@@ -41,20 +42,6 @@
 
 .topbar-search input::placeholder {
   color: #94a3b8;
-}
-
-.topbar-search-shortcut {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  padding: 2px 6px;
-  color: #64748b;
-  font-size: 0.75rem;
-  font-weight: 500;
-  font-family: 'Inter', sans-serif;
 }
 
 /* Actions (Right Side) */
@@ -136,3 +123,86 @@
   border-radius: 4px;
   margin-top: 2px;
 }
+
+/* Search Dropdown styles */
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  margin-top: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.search-loading {
+  padding: 16px;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.search-category {
+  padding: 8px 0;
+}
+
+.search-category:not(:last-child) {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.category-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 16px;
+  margin: 0 0 4px 0;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-item:hover {
+  background-color: #f8fafc;
+}
+
+.item-icon {
+  color: #64748b;
+  font-size: 1.2rem;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.item-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.item-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.item-sub.status-pending { color: #ca8a04; }
+.item-sub.status-active { color: #16a34a; }
+.item-sub.status-completed { color: #2563eb; }

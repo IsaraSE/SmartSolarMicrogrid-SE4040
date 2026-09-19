@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight, FiCheck } from 'react-icons/fi';
+import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight, FiCheck, FiHash, FiUser, FiMapPin, FiActivity, FiClock, FiCheckCircle, FiXCircle, FiGrid, FiCopy } from 'react-icons/fi';
 import { reservationService } from '../../services/reservationService';
 import { stationService } from '../../services/stationService';
+import { useAuth } from '../../context/AuthContext';
 import './Reservations.css';
 
 const Reservations = () => {
+  const { user } = useAuth();
   const [reservations, setReservations] = useState([]);
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterStation, setFilterStation] = useState('all');
   const [activeTab, setActiveTab] = useState('ALL');
   
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', reservationId: null });
@@ -95,15 +101,52 @@ const Reservations = () => {
 
   const mapStatusToBadge = (status) => {
     // API returns 0: PENDING, 1: APPROVED, 2: CANCELLED, 3: COMPLETED
-    if (status === 1 || status === 'APPROVED') {
-      return <span className="status-badge confirmed">Confirmed</span>;
-    } else if (status === 2 || status === 'CANCELLED') {
-      return <span className="status-badge cancelled">Cancelled</span>;
-    } else if (status === 0 || status === 'PENDING') {
-      return <span className="status-badge pending">Pending</span>;
-    } else {
-      return <span className="status-badge pending">{status}</span>;
+    let st = status;
+    if (typeof status === 'string') {
+      st = status.toUpperCase();
     }
+
+    let bgColor = '#f1f5f9';
+    let textColor = '#64748b';
+    let text = st;
+
+    if (st === 1 || st === 'APPROVED') {
+      bgColor = '#dcfce7'; // green
+      textColor = '#166534';
+      text = 'Confirmed';
+    } else if (st === 2 || st === 'CANCELLED') {
+      bgColor = '#fee2e2'; // red
+      textColor = '#991b1b';
+      text = 'Cancelled';
+    } else if (st === 0 || st === 'PENDING') {
+      bgColor = '#fef3c7'; // yellow
+      textColor = '#b45309';
+      text = 'Pending';
+    } else if (st === 3 || st === 'COMPLETED') {
+      bgColor = '#dbeafe'; // blue
+      textColor = '#1e40af';
+      text = 'Completed';
+    }
+
+    return (
+      <span 
+        style={{ 
+          display: 'inline-flex', 
+          width: '130px',
+          justifyContent: 'center',
+          padding: '6px 16px', 
+          borderRadius: '20px', 
+          fontSize: '0.85rem', 
+          fontWeight: '500', 
+          border: 'none', 
+          cursor: 'default', 
+          backgroundColor: bgColor, 
+          color: textColor 
+        }}
+      >
+        {text}
+      </span>
+    );
   };
 
   const formatDate = (dateString) => {
@@ -119,104 +162,59 @@ const Reservations = () => {
   };
 
   const filteredReservations = reservations.filter(res => {
-    if (activeTab === 'ALL') return true;
-    if (activeTab === 'PENDING' && (res.status === 0 || res.status === 'PENDING')) return true;
-    if (activeTab === 'APPROVED' && (res.status === 1 || res.status === 'APPROVED')) return true;
-    if (activeTab === 'CANCELLED' && (res.status === 2 || res.status === 'CANCELLED')) return true;
-    if (activeTab === 'COMPLETED' && (res.status === 3 || res.status === 'COMPLETED')) return true;
-    return false;
+    // 1. Tab filter
+    let matchTab = false;
+    if (activeTab === 'ALL') matchTab = true;
+    else if (activeTab === 'PENDING' && (res.status === 0 || res.status === 'PENDING')) matchTab = true;
+    else if (activeTab === 'APPROVED' && (res.status === 1 || res.status === 'APPROVED')) matchTab = true;
+    else if (activeTab === 'CANCELLED' && (res.status === 2 || res.status === 'CANCELLED')) matchTab = true;
+    else if (activeTab === 'COMPLETED' && (res.status === 3 || res.status === 'COMPLETED')) matchTab = true;
+    
+    if (!matchTab) return false;
+
+    // 2. Station filter
+    if (filterStation !== 'all' && res.stationId !== filterStation) return false;
+
+    // 3. Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const resId = (res.reservationNumber || res.reservationId || '').toLowerCase();
+      const prosumer = (res.prosumerNic || '').toLowerCase();
+      const stationName = (getStationName(res.stationId) || '').toLowerCase();
+      const slotName = (res.slotName || '').toLowerCase();
+      
+      if (!resId.includes(q) && !prosumer.includes(q) && !stationName.includes(q) && !slotName.includes(q)) {
+        return false;
+      }
+    }
+
+    return true;
   });
+
+  // Pagination Calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredReservations.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
 
   return (
     <div className="reservations-container fade-in">
       
       {/* Header */}
       <div className="reservations-header">
-        <div className="header-left">
+        <div className="reservations-title">
           <h1>Reservation Management</h1>
           <p>View, search and manage all charging reservations across your solar microgrid network.</p>
         </div>
-        <div className="breadcrumbs">
-          <span>Home</span> &gt; 
-          <span>Reservations</span> &gt; 
-          <span>Reservation Management</span>
+        <div className="reservations-breadcrumbs">
+          <span>Reservations</span>
+          <span className="separator">›</span>
+          <span className="current">Reservation Management</span>
         </div>
       </div>
 
-      {/* Rules Banner */}
-      <div className="rules-banner">
-        <div className="rules-banner-header">
-          <div className="info-icon-circle"><FiInfo /></div>
-          Reservation Rules
-        </div>
-        <div className="rules-grid">
-          <div className="rule-item">
-            <div className="rule-icon-wrapper booking"><FiCalendar /></div>
-            <div className="rule-content">
-              <span className="rule-title">Booking Window</span>
-              <span className="rule-desc">Reservations can only be made within 7 days from the current date.</span>
-            </div>
-          </div>
-          <div className="rule-item">
-            <div className="rule-icon-wrapper update"><FiEdit2 /></div>
-            <div className="rule-content">
-              <span className="rule-title">Update Notice</span>
-              <span className="rule-desc">Updates to a reservation require at least 12 hours notice before the scheduled start time.</span>
-            </div>
-          </div>
-          <div className="rule-item">
-            <div className="rule-icon-wrapper cancel"><FiX /></div>
-            <div className="rule-content">
-              <span className="rule-title">Cancellation Notice</span>
-              <span className="rule-desc">Cancellations require at least 12 hours notice before the scheduled start time.</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Filters Bar */}
-      <div className="reservations-filters-bar">
-        <div className="filters-top-row">
-          <div className="filter-item search-item">
-            <label>Search</label>
-            <div className="filter-input">
-              <FiSearch style={{color: '#94a3b8'}} />
-              <input type="text" placeholder="Search by ID or name..." />
-            </div>
-          </div>
-          
-          {/* Status filter removed, replaced by tabs below */}
 
-          <div className="filter-item">
-            <label>Date Range</label>
-            <div className="filter-input" style={{fontSize: '13px', justifyContent: 'center'}}>
-              <FiCalendar style={{color: '#64748b'}} />
-              <span>Apr 15, 2025</span>
-              <FiArrowRight style={{color: '#94a3b8', margin: '0 4px'}} />
-              <span>Apr 30, 2025</span>
-            </div>
-          </div>
-
-          <div className="filter-item">
-            <label>Station</label>
-            <div className="filter-select">
-              <select defaultValue="all">
-                <option value="all">All Stations</option>
-                {stations.map(st => (
-                  <option key={st.stationId} value={st.stationId}>{st.stationName}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="filters-bottom-row">
-          <div className="actions-group">
-            <button className="btn-reset">Reset</button>
-            <button className="btn-apply"><FiFilter /> Apply Filters</button>
-          </div>
-        </div>
-      </div>
 
       {/* Table Card */}
       <div className="reservations-table-card">
@@ -228,16 +226,57 @@ const Reservations = () => {
             <button className={`tab-btn ${activeTab === 'CANCELLED' ? 'active' : ''}`} onClick={() => setActiveTab('CANCELLED')}>Cancelled</button>
             <button className={`tab-btn ${activeTab === 'COMPLETED' ? 'active' : ''}`} onClick={() => setActiveTab('COMPLETED')}>Completed</button>
           </div>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <span className="showing-text">Showing 1 - {filteredReservations.length} reservations</span>
-            <div className="per-page-control">
-              Show 
-              <select className="per-page-select">
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
+          
+          <div className="table-actions-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div className="table-search" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <FiSearch style={{ position: 'absolute', left: '16px', color: '#94a3b8', fontSize: '18px' }} />
+              <input 
+                type="text" 
+                placeholder="Search reservations..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ 
+                  padding: '12px 40px 12px 46px', 
+                  borderRadius: '10px', 
+                  border: '1px solid #e2e8f0', 
+                  outline: 'none', 
+                  width: '260px', 
+                  fontSize: '15px' 
+                }}
+              />
+            </div>
+            
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <FiMapPin style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '18px' }} />
+              <select 
+                value={filterStation}
+                onChange={(e) => setFilterStation(e.target.value)}
+                style={{ 
+                  padding: '12px 40px 12px 46px', 
+                  borderRadius: '10px', 
+                  border: '1px solid #e2e8f0', 
+                  outline: 'none', 
+                  backgroundColor: 'white', 
+                  appearance: 'none', 
+                  cursor: 'pointer', 
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  color: '#0f172a',
+                  width: '260px' 
+                }}
+              >
+                <option value="all">All Stations</option>
+                {stations.map(station => (
+                  <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
+                ))}
               </select>
-              per page
+              <svg 
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" 
+                style={{ position: 'absolute', right: '16px', color: '#0f172a', pointerEvents: 'none' }}
+              >
+                <polyline points="7 15 12 20 17 15"></polyline>
+                <polyline points="7 9 12 4 17 9"></polyline>
+              </svg>
             </div>
           </div>
         </div>
@@ -261,23 +300,23 @@ const Reservations = () => {
                 <th>
                   <div className="th-content">End Date & Time</div>
                 </th>
-                <th>
-                  <div className="th-content">Status</div>
+                <th style={{textAlign: 'center'}}>
+                  <div className="th-content" style={{justifyContent: 'center'}}>Status</div>
                 </th>
-                <th>Actions</th>
+                <th style={{textAlign: 'center'}}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="8" style={{textAlign: 'center', padding: '24px'}}>Loading reservations...</td></tr>
-              ) : filteredReservations.length === 0 ? (
+                <tr><td colSpan="7" style={{textAlign: 'center', padding: '40px'}}>Loading reservations...</td></tr>
+              ) : currentItems.length === 0 ? (
                 <tr>
                   <td colSpan="7" style={{textAlign: 'center', padding: '40px', color: '#64748b'}}>
-                    No reservations found for the selected filters.
+                    No reservations found matching the filters.
                   </td>
                 </tr>
               ) : (
-                filteredReservations.map(res => (
+                currentItems.map(res => (
                   <tr key={res.reservationId}>
                     
                     <td className="res-id">{res.reservationNumber || res.reservationId?.substring(0,8).toUpperCase() || 'RES-####'}</td>
@@ -300,17 +339,17 @@ const Reservations = () => {
                         <span className="time-text">{formatTime(res.scheduledEndDateTime)}</span>
                       </div>
                     </td>
-                    <td>
+                    <td style={{textAlign: 'center'}}>
                       {mapStatusToBadge(res.status)}
                     </td>
                     <td>
-                      <div className="table-actions">
-                        {(res.status === 0 || res.status === 'PENDING') && (
-                          <button className="pill-btn btn-view" style={{ backgroundColor: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} title="Approve Reservation" onClick={() => setConfirmModal({ isOpen: true, type: 'APPROVE', reservationId: res.reservationId })}><FiCheck /> Approve</button>
+                      <div className="table-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
+                        <button className="review-btn" onClick={() => { setSelectedReservation(res); setShowViewModal(true); }}>Review</button>
+                        {(res.status === 0 || res.status === 'PENDING') && user?.role === 'GRID_OPERATOR' && (
+                          <button className="activate-btn" onClick={() => setConfirmModal({ isOpen: true, type: 'APPROVE', reservationId: res.reservationId })}>Approve</button>
                         )}
-                        <button className="pill-btn btn-view" title="View Details" onClick={() => { setSelectedReservation(res); setShowViewModal(true); }}><FiEye /> View</button>
-                        {res.status !== 2 && res.status !== 'CANCELLED' && res.status !== 3 && res.status !== 'COMPLETED' && (
-                          <button className="action-btn delete" title="Cancel Reservation" onClick={() => setConfirmModal({ isOpen: true, type: 'CANCEL', reservationId: res.reservationId })}><FiTrash2 /></button>
+                        {res.status !== 2 && res.status !== 'CANCELLED' && res.status !== 3 && res.status !== 'COMPLETED' && user?.role === 'GRID_OPERATOR' && (
+                          <button className="deactivate-btn" onClick={() => setConfirmModal({ isOpen: true, type: 'CANCEL', reservationId: res.reservationId })}>Cancel Res</button>
                         )}
                       </div>
                     </td>
@@ -322,88 +361,144 @@ const Reservations = () => {
         </div>
 
         <div className="table-footer">
-          <span className="showing-text">Showing 1 - 10 of 24 reservations</span>
-          <div className="pagination">
-            <button className="page-btn"><FiChevronLeft /></button>
-            <button className="page-btn active">1</button>
-            <button className="page-btn">2</button>
-            <button className="page-btn">3</button>
-            <button className="page-btn"><FiChevronRight /></button>
+          <div className="footer-info">
+            Showing {filteredReservations.length === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredReservations.length)} of {filteredReservations.length} reservations
+          </div>
+          <div className="footer-controls">
+            <div className="pagination">
+              <button className="page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>‹</button>
+              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
+                <button 
+                  key={page} 
+                  className={`page-btn ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >{page}</button>
+              ))}
+              <button className="page-btn" disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>›</button>
+            </div>
+            <div className="rows-per-page">
+              <span>Show</span>
+              <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* View Modal */}
+      {/* View Reservation Modal (Premium Design) */}
       {showViewModal && selectedReservation && (
-        <div className="modal-overlay">
-          <div className="modal-content view-modal">
-            <div className="modal-header">
-              <h2>Reservation Details</h2>
-              <button className="close-btn" onClick={() => setShowViewModal(false)}><FiX /></button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <FiCalendar />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>Reservation Details</h2>
+                <p>View complete reservation information and status</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setShowViewModal(false)}>
+                <FiX />
+              </button>
             </div>
-            <div className="modal-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div className="detail-group">
-                <label>Reservation ID</label>
-                <div className="detail-value">{selectedReservation.reservationNumber || selectedReservation.reservationId}</div>
-              </div>
-              <div className="detail-group">
-                <label>Prosumer NIC</label>
-                <div className="detail-value">{selectedReservation.prosumerNic}</div>
-              </div>
-              <div className="detail-group">
-                <label>Station / Slot</label>
-                <div className="detail-value">
-                  {getStationName(selectedReservation.stationId)}<br/>
-                  <span style={{color: '#64748b', fontSize: '13px'}}>{selectedReservation.slotName || 'Unknown Slot'}</span>
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiHash /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Reservation ID</span>
+                  <span className="premium-info-value">{selectedReservation.reservationNumber || selectedReservation.reservationId}</span>
                 </div>
               </div>
-              <div className="detail-group">
-                <label>Status</label>
-                <div className="detail-value">
-                  {mapStatusToBadge(selectedReservation.status)}
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiUser /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Prosumer NIC</span>
+                  <span className="premium-info-value">{selectedReservation.prosumerNic}</span>
                 </div>
               </div>
-              <div className="detail-group">
-                <label>Start Date & Time</label>
-                <div className="detail-value">
-                  {formatDate(selectedReservation.scheduledStartDateTime)} at {formatTime(selectedReservation.scheduledStartDateTime)}
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Station / Slot</span>
+                  <span className="premium-info-value">{getStationName(selectedReservation.stationId)} - {selectedReservation.slotName || 'Unknown Slot'}</span>
                 </div>
               </div>
-              <div className="detail-group">
-                <label>End Date & Time</label>
-                <div className="detail-value">
-                  {formatDate(selectedReservation.scheduledEndDateTime)} at {formatTime(selectedReservation.scheduledEndDateTime)}
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Start Date & Time</span>
+                  <span className="premium-info-value">{formatDate(selectedReservation.scheduledStartDateTime)} at {formatTime(selectedReservation.scheduledStartDateTime)}</span>
                 </div>
               </div>
-              <div className="detail-group">
-                <label>Created At</label>
-                <div className="detail-value">
-                  {formatDate(selectedReservation.createdAt)} {formatTime(selectedReservation.createdAt)}
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">End Date & Time</span>
+                  <span className="premium-info-value">{formatDate(selectedReservation.scheduledEndDateTime)} at {formatTime(selectedReservation.scheduledEndDateTime)}</span>
                 </div>
               </div>
-              <div className="detail-group">
-                <label>Updated At</label>
-                <div className="detail-value">
-                  {formatDate(selectedReservation.updatedAt)} {formatTime(selectedReservation.updatedAt)}
-                </div>
-              </div>
-              {selectedReservation.completedAt && (
-                <div className="detail-group">
-                  <label>Completed At</label>
-                  <div className="detail-value">
-                    {formatDate(selectedReservation.completedAt)} {formatTime(selectedReservation.completedAt)}
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    {mapStatusToBadge(selectedReservation.status)}
                   </div>
                 </div>
-              )}
-              <div className="detail-group" style={{ gridColumn: '1 / -1' }}>
-                <label>QR Reference (Mobile Verification Code)</label>
-                <div className="detail-value" style={{ fontFamily: 'monospace', background: '#f8fafc', padding: '8px', borderRadius: '4px', border: '1px dashed #cbd5e1' }}>
-                  {selectedReservation.qrReference || selectedReservation.reservationId}
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiClock /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Created At</span>
+                  <span className="premium-info-value">{formatDate(selectedReservation.createdAt)} {formatTime(selectedReservation.createdAt)}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiGrid /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">QR Reference</span>
+                  <span className="premium-info-value">
+                    {selectedReservation.qrReference || selectedReservation.reservationId}
+                    <button style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => navigator.clipboard.writeText(selectedReservation.qrReference || selectedReservation.reservationId)} title="Copy QR Reference">
+                      <FiCopy />
+                    </button>
+                  </span>
                 </div>
               </div>
             </div>
-            <div className="modal-actions" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="btn-secondary" onClick={() => setShowViewModal(false)}>Close</button>
+            
+            <div className="premium-modal-footer has-info">
+              <div className="premium-footer-info">
+                {selectedReservation.status === 2 || selectedReservation.status === 'CANCELLED' ? (
+                  <>
+                    <FiInfo style={{ fontSize: '16px' }} />
+                    <span>This reservation was cancelled and is no longer active.</span>
+                  </>
+                ) : selectedReservation.status === 0 || selectedReservation.status === 'PENDING' ? (
+                  <>
+                    <FiInfo style={{ fontSize: '16px' }} />
+                    <span>This reservation is pending approval.</span>
+                  </>
+                ) : (
+                  <>
+                    <FiInfo style={{ fontSize: '16px', opacity: 0 }} />
+                    <span></span>
+                  </>
+                )}
+              </div>
+              <button className="btn-premium-close" onClick={() => setShowViewModal(false)}>Close</button>
             </div>
           </div>
         </div>
@@ -411,24 +506,35 @@ const Reservations = () => {
 
       {/* Confirmation Modal */}
       {confirmModal.isOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '400px' }}>
-            <div className="modal-header">
+        <div className="user-modal-overlay">
+          <div className="user-modal-content status-confirm-modal fade-in">
+            <div className="user-modal-header">
               <h2>{confirmModal.type === 'APPROVE' ? 'Approve Reservation' : 'Cancel Reservation'}</h2>
-              <button className="close-btn" onClick={() => setConfirmModal({ isOpen: false, type: '', reservationId: null })}><FiX /></button>
+              <button className="user-modal-close" onClick={() => setConfirmModal({ isOpen: false, type: '', reservationId: null })}>&times;</button>
             </div>
-            <div className="modal-body">
-              <p style={{ margin: '0 0 16px 0', color: '#475569', lineHeight: '1.5' }}>
-                {confirmModal.type === 'APPROVE' 
-                  ? "Are you sure you want to approve this reservation? The Prosumer will be able to proceed with energy exchange." 
-                  : "Are you sure you want to cancel this reservation? This action cannot be undone."}
-              </p>
+            <div className="user-modal-body">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                <div className="detail-icon" style={{ backgroundColor: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '8px' }}>
+                  <FiCalendar style={{ fontSize: '1.2rem' }} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>Reservation Action</h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>ID: {confirmModal.reservationId}</p>
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  {confirmModal.type === 'APPROVE' 
+                    ? "Are you sure you want to approve this reservation? The Prosumer will be able to proceed with energy exchange." 
+                    : "Are you sure you want to cancel this reservation? This action cannot be undone."}
+                </p>
+              </div>
             </div>
-            <div className="modal-actions" style={{ padding: '0 24px 24px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button className="btn-secondary" onClick={() => setConfirmModal({ isOpen: false, type: '', reservationId: null })}>Close</button>
+            <div className="user-modal-footer">
+              <button className="btn-modal-cancel" onClick={() => setConfirmModal({ isOpen: false, type: '', reservationId: null })}>Cancel</button>
               <button 
-                className="btn-primary" 
-                style={{ background: confirmModal.type === 'CANCEL' ? '#ef4444' : '#10b981', border: 'none', padding: '8px 16px', borderRadius: '6px', color: 'white', fontWeight: '500', cursor: 'pointer' }}
+                className="btn-modal-confirm" 
+                style={{ backgroundColor: confirmModal.type === 'CANCEL' ? '#ef4444' : '#10b981' }}
                 onClick={confirmModal.type === 'APPROVE' ? executeApprove : executeCancel}
               >
                 {confirmModal.type === 'APPROVE' ? 'Approve' : 'Cancel Reservation'}

@@ -15,4 +15,5 @@ public interface IUserDetailsRepository : IBaseRepository<UserDetail>
 {
     Task<UserDetail?> GetByEmailAsync(string email);
     Task<UserDetail?> GetByNicAsync(string nic);
+    Task<UserDetail?> GetByPhoneAsync(string phone);
 }
