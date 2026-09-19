@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EventNote
+import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SolarPower
 import androidx.compose.material.icons.filled.SpaceDashboard
 import androidx.compose.material3.Icon
@@ -44,6 +47,13 @@ private val bottomNavItems = listOf(
     BottomNavItem(Screen.Profile.route, "Profile", Icons.Filled.Person)
 )
 
+private val operatorNavItems = listOf(
+    BottomNavItem(Screen.OperatorHome.route, "Dashboard", Icons.Filled.SpaceDashboard),
+    BottomNavItem(Screen.OperatorReservations.route, "Reservations", Icons.Filled.FactCheck),
+    BottomNavItem(Screen.OperatorScan.route, "Scan", Icons.Filled.QrCodeScanner),
+    BottomNavItem(Screen.OperatorMap.route, "Map", Icons.Filled.Map)
+)
+
 /**
  * Wraps a main screen with the bottom navigation bar.
  * currentRoute marks which tab is highlighted.
@@ -55,7 +65,7 @@ fun WithBottomBar(
     content: @Composable () -> Unit
 ) {
     Scaffold(
-        bottomBar = { ProsumerBottomBar(navController, currentRoute) },
+        bottomBar = { AppBottomBar(navController, currentRoute, bottomNavItems, Screen.Dashboard.route) },
         containerColor = Color.Transparent
     ) { innerPadding ->
         // Only bottom padding is applied so each screen's gradient still runs to the top.
@@ -65,18 +75,40 @@ fun WithBottomBar(
     }
 }
 
+/** Same wrapper for the grid operator sections. */
 @Composable
-private fun ProsumerBottomBar(navController: NavHostController, currentRoute: String) {
+fun WithOperatorBottomBar(
+    navController: NavHostController,
+    currentRoute: String,
+    content: @Composable () -> Unit
+) {
+    Scaffold(
+        bottomBar = { AppBottomBar(navController, currentRoute, operatorNavItems, Screen.OperatorHome.route) },
+        containerColor = Color.Transparent
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun AppBottomBar(
+    navController: NavHostController,
+    currentRoute: String,
+    items: List<BottomNavItem>,
+    homeRoute: String
+) {
     NavigationBar(containerColor = Color.White) {
-        bottomNavItems.forEach { item ->
+        items.forEach { item ->
             val selected = item.route == currentRoute
             NavigationBarItem(
                 selected = selected,
                 onClick = {
                     if (!selected) {
                         navController.navigate(item.route) {
-                            // Keep Dashboard as the base of the stack and reuse existing screens.
-                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            // Keep the section home as the base of the stack and reuse screens.
+                            popUpTo(homeRoute) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
