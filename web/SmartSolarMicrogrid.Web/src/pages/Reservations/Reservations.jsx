@@ -17,7 +17,7 @@ const Reservations = () => {
   const queryParams = new URLSearchParams(location.search);
   const initialTab = queryParams.get('tab') || 'ALL';
   const [activeTab, setActiveTab] = useState(initialTab);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -100,7 +100,7 @@ const Reservations = () => {
 
   const getStationName = (stationId) => {
     const station = stations.find(s => s.stationId === stationId);
-    return station ? station.stationName : (stationId?.substring(0,8) + '...');
+    return station ? station.stationName : (stationId?.substring(0, 8) + '...');
   };
 
   const mapStatusToBadge = (status) => {
@@ -133,19 +133,19 @@ const Reservations = () => {
     }
 
     return (
-      <span 
-        style={{ 
-          display: 'inline-flex', 
+      <span
+        style={{
+          display: 'inline-flex',
           width: '130px',
           justifyContent: 'center',
-          padding: '6px 16px', 
-          borderRadius: '20px', 
-          fontSize: '0.85rem', 
-          fontWeight: '500', 
-          border: 'none', 
-          cursor: 'default', 
-          backgroundColor: bgColor, 
-          color: textColor 
+          padding: '6px 16px',
+          borderRadius: '20px',
+          fontSize: '0.85rem',
+          fontWeight: '500',
+          border: 'none',
+          cursor: 'default',
+          backgroundColor: bgColor,
+          color: textColor
         }}
       >
         {text}
@@ -173,7 +173,7 @@ const Reservations = () => {
     else if (activeTab === 'APPROVED' && (res.status === 1 || res.status === 'APPROVED')) matchTab = true;
     else if (activeTab === 'CANCELLED' && (res.status === 2 || res.status === 'CANCELLED')) matchTab = true;
     else if (activeTab === 'COMPLETED' && (res.status === 3 || res.status === 'COMPLETED')) matchTab = true;
-    
+
     if (!matchTab) return false;
 
     // 2. Station filter
@@ -186,7 +186,7 @@ const Reservations = () => {
       const prosumer = (res.prosumerNic || '').toLowerCase();
       const stationName = (getStationName(res.stationId) || '').toLowerCase();
       const slotName = (res.slotName || '').toLowerCase();
-      
+
       if (!resId.includes(q) && !prosumer.includes(q) && !stationName.includes(q) && !slotName.includes(q)) {
         return false;
       }
@@ -208,7 +208,7 @@ const Reservations = () => {
 
   return (
     <div className="reservations-container fade-in">
-      
+
       {/* Header */}
       <div className="reservations-header">
         <div className="reservations-title">
@@ -235,40 +235,40 @@ const Reservations = () => {
             <button className={`tab-btn ${activeTab === 'CANCELLED' ? 'active' : ''}`} onClick={() => setActiveTab('CANCELLED')}>Cancelled</button>
             <button className={`tab-btn ${activeTab === 'COMPLETED' ? 'active' : ''}`} onClick={() => setActiveTab('COMPLETED')}>Completed</button>
           </div>
-          
+
           <div className="table-actions-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <div className="table-search" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <FiSearch style={{ position: 'absolute', left: '16px', color: '#94a3b8', fontSize: '18px' }} />
-              <input 
-                type="text" 
-                placeholder="Search reservations..." 
+              <input
+                type="text"
+                placeholder="Search reservations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ 
-                  padding: '12px 40px 12px 46px', 
-                  borderRadius: '10px', 
-                  border: '1px solid #e2e8f0', 
-                  outline: 'none', 
-                  width: '260px', 
+                style={{
+                  padding: '12px 40px 12px 46px',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  outline: 'none',
+                  width: '260px',
                   fontSize: '15px',
                   boxSizing: 'border-box'
                 }}
               />
             </div>
-            
+
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <FiMapPin style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '18px' }} />
-              <select 
+              <select
                 value={filterStation}
                 onChange={(e) => setFilterStation(e.target.value)}
-                style={{ 
-                  padding: '12px 40px 12px 46px', 
-                  borderRadius: '10px', 
-                  border: '1px solid #e2e8f0', 
-                  outline: 'none', 
-                  backgroundColor: 'white', 
-                  appearance: 'none', 
-                  cursor: 'pointer', 
+                style={{
+                  padding: '12px 40px 12px 46px',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  outline: 'none',
+                  backgroundColor: 'white',
+                  appearance: 'none',
+                  cursor: 'pointer',
                   fontSize: '15px',
                   fontWeight: '600',
                   color: '#0f172a',
@@ -281,8 +281,8 @@ const Reservations = () => {
                   <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
                 ))}
               </select>
-              <svg 
-                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" 
+              <svg
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                 style={{ position: 'absolute', right: '16px', color: '#0f172a', pointerEvents: 'none' }}
               >
                 <polyline points="7 15 12 20 17 15"></polyline>
@@ -311,26 +311,26 @@ const Reservations = () => {
                 <th>
                   <div className="th-content">End Date & Time</div>
                 </th>
-                <th style={{textAlign: 'center'}}>
-                  <div className="th-content" style={{justifyContent: 'center'}}>Status</div>
+                <th style={{ textAlign: 'center' }}>
+                  <div className="th-content" style={{ justifyContent: 'center' }}>Status</div>
                 </th>
-                <th style={{textAlign: 'center'}}>Actions</th>
+                <th style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="7" style={{textAlign: 'center', padding: '40px'}}>Loading reservations...</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px' }}>Loading reservations...</td></tr>
               ) : currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{textAlign: 'center', padding: '40px', color: '#64748b'}}>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
                     No reservations found matching the filters.
                   </td>
                 </tr>
               ) : (
                 currentItems.map(res => (
                   <tr key={res.reservationId}>
-                    
-                    <td className="res-id">{res.reservationNumber || res.reservationId?.substring(0,8).toUpperCase() || 'RES-####'}</td>
+
+                    <td className="res-id">{res.reservationNumber || res.reservationId?.substring(0, 8).toUpperCase() || 'RES-####'}</td>
                     <td className="res-nic">{res.prosumerNic || 'N/A'}</td>
                     <td>
                       <div className="date-time-cell">
@@ -350,7 +350,7 @@ const Reservations = () => {
                         <span className="time-text">{formatTime(res.scheduledEndDateTime)}</span>
                       </div>
                     </td>
-                    <td style={{textAlign: 'center'}}>
+                    <td style={{ textAlign: 'center' }}>
                       {mapStatusToBadge(res.status)}
                     </td>
                     <td>
@@ -378,9 +378,9 @@ const Reservations = () => {
           <div className="footer-controls">
             <div className="pagination">
               <button className="page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>‹</button>
-              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
-                <button 
-                  key={page} 
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
                   className={`page-btn ${currentPage === page ? 'active' : ''}`}
                   onClick={() => setCurrentPage(page)}
                 >{page}</button>
@@ -389,7 +389,7 @@ const Reservations = () => {
             </div>
             <div className="rows-per-page">
               <span>Show</span>
-              <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
+              <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -416,7 +416,7 @@ const Reservations = () => {
                 <FiX />
               </button>
             </div>
-            
+
             <div className="premium-modal-body">
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiHash /></div>
@@ -425,7 +425,7 @@ const Reservations = () => {
                   <span className="premium-info-value">{selectedReservation.reservationNumber || selectedReservation.reservationId}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiUser /></div>
                 <div className="premium-info-content">
@@ -433,7 +433,7 @@ const Reservations = () => {
                   <span className="premium-info-value">{selectedReservation.prosumerNic}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card full-width">
                 <div className="premium-info-icon"><FiMapPin /></div>
                 <div className="premium-info-content">
@@ -441,7 +441,7 @@ const Reservations = () => {
                   <span className="premium-info-value">{getStationName(selectedReservation.stationId)} - {selectedReservation.slotName || 'Unknown Slot'}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiCalendar /></div>
                 <div className="premium-info-content">
@@ -449,7 +449,7 @@ const Reservations = () => {
                   <span className="premium-info-value">{formatDate(selectedReservation.scheduledStartDateTime)} at {formatTime(selectedReservation.scheduledStartDateTime)}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiCalendar /></div>
                 <div className="premium-info-content">
@@ -457,7 +457,7 @@ const Reservations = () => {
                   <span className="premium-info-value">{formatDate(selectedReservation.scheduledEndDateTime)} at {formatTime(selectedReservation.scheduledEndDateTime)}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiActivity /></div>
                 <div className="premium-info-content">
@@ -467,7 +467,7 @@ const Reservations = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiClock /></div>
                 <div className="premium-info-content">
@@ -475,7 +475,7 @@ const Reservations = () => {
                   <span className="premium-info-value">{formatDate(selectedReservation.createdAt)} {formatTime(selectedReservation.createdAt)}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card full-width">
                 <div className="premium-info-icon"><FiGrid /></div>
                 <div className="premium-info-content">
@@ -489,7 +489,7 @@ const Reservations = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="premium-modal-footer has-info">
               <div className="premium-footer-info">
                 {selectedReservation.status === 2 || selectedReservation.status === 'CANCELLED' ? (
@@ -535,16 +535,16 @@ const Reservations = () => {
               </div>
               <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
-                  {confirmModal.type === 'APPROVE' 
-                    ? "Are you sure you want to approve this reservation? The Prosumer will be able to proceed with energy exchange." 
+                  {confirmModal.type === 'APPROVE'
+                    ? "Are you sure you want to approve this reservation? The Prosumer will be able to proceed with energy exchange."
                     : "Are you sure you want to cancel this reservation? This action cannot be undone."}
                 </p>
               </div>
             </div>
             <div className="user-modal-footer">
               <button className="btn-modal-cancel" onClick={() => setConfirmModal({ isOpen: false, type: '', reservationId: null })}>Cancel</button>
-              <button 
-                className="btn-modal-confirm" 
+              <button
+                className="btn-modal-confirm"
                 style={{ backgroundColor: confirmModal.type === 'CANCEL' ? '#ef4444' : '#10b981' }}
                 onClick={confirmModal.type === 'APPROVE' ? executeApprove : executeCancel}
               >
@@ -569,8 +569,8 @@ const Reservations = () => {
               </p>
             </div>
             <div className="modal-actions" style={{ padding: '0 24px 24px 24px', display: 'flex', justifyContent: 'flex-end' }}>
-              <button 
-                className="btn-primary" 
+              <button
+                className="btn-primary"
                 style={{ background: messageModal.type === 'error' ? '#ef4444' : '#10b981', border: 'none', padding: '8px 16px', borderRadius: '6px', color: 'white', fontWeight: '500', cursor: 'pointer' }}
                 onClick={() => setMessageModal({ isOpen: false, title: '', message: '', type: 'success' })}
               >

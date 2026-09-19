@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  FiClock, FiCalendar, FiMapPin, FiGrid, FiUsers, FiZap, 
-  FiCheckCircle, FiSlash, FiEdit2, FiMoreHorizontal, FiMoreVertical, FiRefreshCcw, 
+import {
+  FiClock, FiCalendar, FiMapPin, FiGrid, FiUsers, FiZap,
+  FiCheckCircle, FiSlash, FiEdit2, FiMoreHorizontal, FiMoreVertical, FiRefreshCcw,
   FiPlus, FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
   FiEye, FiTrash2, FiList, FiPlay, FiX, FiUser, FiActivity, FiFileText
 } from 'react-icons/fi';
 
 import { stationService } from '../../services/stationService';
 import { slotService } from '../../services/slotService';
+import dashboardService from '../../services/dashboardService';
 import stationHeroBg from '../../assets/images/solar-hero-bg.jpg';
 import './Slots.css';
 import '../Users/Users.css'; // For modal styles
@@ -21,7 +22,9 @@ const Slots = () => {
   const [selectedStation, setSelectedStation] = useState(null);
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
+  const [reservations, setReservations] = useState([]);
+
   // Tab State
   const [activeTab, setActiveTab] = useState('ALL');
 
@@ -35,7 +38,7 @@ const Slots = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [statusConfirm, setStatusConfirm] = useState(null);
   const [infoMsg, setInfoMsg] = useState(null);
-  
+
   const dropdownRef = useRef(null);
 
   const today = new Date();
@@ -45,9 +48,9 @@ const Slots = () => {
 
   useEffect(() => {
     fetchInitialData();
-    
+
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (!event.target.closest('.dropdown-container')) {
         setActiveDropdown(null);
       }
     };
@@ -61,12 +64,19 @@ const Slots = () => {
       const response = await stationService.getAllStations();
       const stationList = response.data || [];
       setStations(stationList);
-      
+
+      try {
+        const resRes = await dashboardService.getReservations();
+        setReservations(resRes.data || resRes || []);
+      } catch (err) {
+        console.error("Failed to load reservations", err);
+      }
+
       if (stationList.length > 0) {
         let initialStation = { stationId: 'all', stationName: 'All Stations' };
-        
+
         const savedStationId = localStorage.getItem('lastSelectedStationId');
-        
+
         if (location.state?.stationId) {
           const matched = stationList.find(s => s.stationId === location.state.stationId);
           if (matched) initialStation = matched;
@@ -78,7 +88,7 @@ const Slots = () => {
             if (matched) initialStation = matched;
           }
         }
-        
+
         setSelectedStation(initialStation);
         localStorage.setItem('lastSelectedStationId', initialStation.stationId);
         await fetchSlotsForStation(initialStation.stationId, stationList);
@@ -137,7 +147,7 @@ const Slots = () => {
     if (typeof status === 'string') {
       return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
     }
-    switch(status) {
+    switch (status) {
       case 0: return 'Available';
       case 1: return 'Reserved';
       case 2: return 'Unavailable';
@@ -149,6 +159,18 @@ const Slots = () => {
     if (selectedStation) {
       navigate('/slots/add', { state: { stationId: selectedStation.stationId } });
     }
+  };
+
+  const getReservedByText = (slot) => {
+    const st = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
+    if (st !== 1 && st !== 'RESERVED') {
+      return '-';
+    }
+    const reservation = reservations.find(r => r.slotId === slot.slotId && (r.status === 2 || String(r.status).toUpperCase() === 'APPROVED'));
+    if (reservation && reservation.prosumerNic) {
+      return reservation.prosumerNic;
+    }
+    return slot.reservedBy || 'Unknown Prosumer (ID)';
   };
 
   const handleEditSlot = (slot) => {
@@ -194,7 +216,7 @@ const Slots = () => {
   const confirmStatusChange = async () => {
     if (!statusConfirm) return;
     const { slot, newStatus } = statusConfirm;
-    
+
     try {
       await slotService.updateSlot(slot.slotId, {
         startDateTime: slot.startDateTime,
@@ -273,21 +295,21 @@ const Slots = () => {
           <div className="table-actions-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <FiMapPin style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '18px' }} />
-              <select 
-                value={selectedStation?.stationId || 'all'} 
+              <select
+                value={selectedStation?.stationId || 'all'}
                 onChange={handleStationChange}
-                style={{ 
-                  padding: '12px 40px 12px 46px', 
-                  borderRadius: '10px', 
-                  border: '1px solid #e2e8f0', 
-                  outline: 'none', 
-                  backgroundColor: 'white', 
-                  appearance: 'none', 
-                  cursor: 'pointer', 
+                style={{
+                  padding: '12px 40px 12px 46px',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  outline: 'none',
+                  backgroundColor: 'white',
+                  appearance: 'none',
+                  cursor: 'pointer',
                   fontSize: '15px',
                   fontWeight: '600',
                   color: '#0f172a',
-                  width: '260px' 
+                  width: '260px'
                 }}
               >
                 <option value="all">All Stations</option>
@@ -295,8 +317,8 @@ const Slots = () => {
                   <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
                 ))}
               </select>
-              <svg 
-                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" 
+              <svg
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                 style={{ position: 'absolute', right: '16px', color: '#0f172a', pointerEvents: 'none' }}
               >
                 <polyline points="7 15 12 20 17 15"></polyline>
@@ -312,107 +334,106 @@ const Slots = () => {
         </div>
 
         <div className="table-scroll-container">
-          <table className="slots-table" ref={dropdownRef}>
+          <table className="slots-table">
             <thead>
               <tr>
                 <th>Slot Name</th>
                 <th>Start Date & Time</th>
                 <th>End Date & Time</th>
-                <th style={{textAlign: 'center'}}>Status</th>
-                <th style={{textAlign: 'center'}}>Reserved By</th>
-                <th className="actions-column" style={{textAlign: 'center'}}>Actions</th>
+                <th style={{ textAlign: 'center' }}>Status</th>
+                <th style={{ textAlign: 'center' }}>Reserved By</th>
+                <th className="actions-column" style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" style={{textAlign: 'center', padding: '40px'}}>Loading slots...</td></tr>
+                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>Loading slots...</td></tr>
               ) : currentItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" style={{textAlign: 'center', color: '#64748b', padding: '40px'}}>
-                      No slots found for this category.
-                    </td>
-                  </tr>
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', color: '#64748b', padding: '40px' }}>
+                    No slots found for this category.
+                  </td>
+                </tr>
               ) : (
                 currentItems.map(slot => {
                   const st = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
                   return (
-                  <tr key={slot.slotId}>
-                    <td className="font-semibold">{slot.slotName || 'Unknown'}</td>
-                    <td>{formatSlotTime(slot.startDateTime)}</td>
-                    <td>{formatSlotTime(slot.endDateTime)}</td>
-                    <td style={{textAlign: 'center'}}>
-                      <span 
-                        style={{ 
-                          display: 'inline-flex', 
-                          width: '130px',
-                          justifyContent: 'center',
-                          padding: '6px 16px', 
-                          borderRadius: '20px', 
-                          fontSize: '0.85rem', 
-                          fontWeight: '500', 
-                          border: 'none', 
-                          cursor: 'default', 
-                          backgroundColor: (st === 0 || st === 'AVAILABLE') ? '#dcfce7' : (st === 1 || st === 'RESERVED') ? '#fef3c7' : '#fee2e2', 
-                          color: (st === 0 || st === 'AVAILABLE') ? '#166534' : (st === 1 || st === 'RESERVED') ? '#b45309' : '#991b1b' 
-                        }}
-                      >
-                        {getStatusText(slot.status)}
-                      </span>
-                    </td>
-                    <td className="text-secondary" style={{textAlign: 'center'}}>
-                      {slot.reservedBy || '-'}
-                    </td>
-                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
-                      <button className="review-btn" onClick={() => setSelectedSlot(slot)}>
-                        Review
-                      </button>
-                      
-                      {user?.role === 'GRID_OPERATOR' && (
-                        <>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            {(st === 0 || st === 'AVAILABLE') && (
-                              <button className="deactivate-btn" onClick={() => requestStatusChange(slot, 2)}>
-                                Deactivate
-                              </button>
-                            )}
+                    <tr key={slot.slotId}>
+                      <td className="font-semibold">{slot.slotName || 'Unknown'}</td>
+                      <td>{formatSlotTime(slot.startDateTime)}</td>
+                      <td>{formatSlotTime(slot.endDateTime)}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            width: '130px',
+                            justifyContent: 'center',
+                            padding: '6px 16px',
+                            borderRadius: '20px',
+                            fontSize: '0.85rem',
+                            fontWeight: '500',
+                            border: 'none',
+                            cursor: 'default',
+                            backgroundColor: (st === 0 || st === 'AVAILABLE') ? '#dcfce7' : (st === 1 || st === 'RESERVED') ? '#fef3c7' : '#fee2e2',
+                            color: (st === 0 || st === 'AVAILABLE') ? '#166534' : (st === 1 || st === 'RESERVED') ? '#b45309' : '#991b1b'
+                          }}
+                        >
+                          {getStatusText(slot.status)}
+                        </span>
+                      </td>
+                      <td className="text-secondary" style={{ textAlign: 'center' }}>
+                        {getReservedByText(slot)}
+                      </td>
+                      <td className="actions-cell" style={{ textAlign: 'center', verticalAlign: 'middle', position: 'relative', zIndex: activeDropdown === slot.slotId ? 50 : 1 }}>
+                        <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
+                          <button className="review-btn" onClick={() => setSelectedSlot(slot)}>
+                            Review
+                          </button>
 
-                            {(st === 2 || st === 'UNAVAILABLE') && (
-                              <button className="activate-btn" onClick={() => requestStatusChange(slot, 0)}>
-                                Activate
-                              </button>
-                            )}
+                          {user?.role === 'GRID_OPERATOR' && (
+                            <>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                {(st === 0 || st === 'AVAILABLE') && (
+                                  <button className="deactivate-btn" onClick={() => requestStatusChange(slot, 2)}>
+                                    Deactivate
+                                  </button>
+                                )}
 
-                            {(st === 1 || st === 'RESERVED') && (
-                              <button className="review-btn" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
-                                View Reservation
-                              </button>
-                            )}
-                          </div>
+                                {(st === 2 || st === 'UNAVAILABLE') && (
+                                  <button className="activate-btn" onClick={() => requestStatusChange(slot, 0)}>
+                                    Activate
+                                  </button>
+                                )}
 
-                          <div className="dropdown-container" style={{ position: 'relative' }}>
-                            <button 
-                              className="pill-btn" 
-                              style={{ padding: '6px 8px', backgroundColor: 'transparent', border: 'none', color: '#64748b' }} 
-                              onClick={(e) => toggleDropdown(slot.slotId, e)}
-                            >
-                              <FiMoreVertical size={18} />
-                            </button>
-                            {activeDropdown === slot.slotId && (
-                              <div className="dropdown-menu fade-in" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: '150px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                                <button className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#334155' }} onClick={() => handleEditSlot(slot)}>
-                                  <FiEdit2 /> Edit Slot
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        {user?.role === 'GRID_OPERATOR' && (
+                          <div className="dropdown-container" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)' }}>
+                                <button
+                                  className="pill-btn"
+                                  style={{ padding: '6px 8px', backgroundColor: 'transparent', border: 'none', color: '#64748b' }}
+                                  onClick={(e) => toggleDropdown(slot.slotId, e)}
+                                >
+                                  <FiMoreVertical size={18} />
                                 </button>
-                                <button className="dropdown-item text-danger" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#ef4444' }} onClick={() => requestDeleteSlot(slot)}>
-                                  <FiTrash2 /> Delete Slot
-                                </button>
+                                {activeDropdown === slot.slotId && (
+                                  <div className="dropdown-menu fade-in" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: '150px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                                    <button className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#334155' }} onClick={() => { handleEditSlot(slot); setActiveDropdown(null); }}>
+                                      <FiEdit2 /> Edit Slot
+                                    </button>
+                                    <button className="dropdown-item text-danger" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#ef4444' }} onClick={() => { requestDeleteSlot(slot); setActiveDropdown(null); }}>
+                                      <FiTrash2 /> Delete Slot
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             )}
-                          </div>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                )})
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -425,9 +446,9 @@ const Slots = () => {
           <div className="footer-controls">
             <div className="pagination">
               <button className="page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>‹</button>
-              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
-                <button 
-                  key={page} 
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
                   className={`page-btn ${currentPage === page ? 'active' : ''}`}
                   onClick={() => setCurrentPage(page)}
                 >{page}</button>
@@ -436,7 +457,7 @@ const Slots = () => {
             </div>
             <div className="rows-per-page">
               <span>Show</span>
-              <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
+              <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -448,7 +469,7 @@ const Slots = () => {
       </div>
 
       {/* --- Modals --- */}
-      
+
       {/* View Slot Modal (Premium Design) */}
       {selectedSlot && (
         <div className="premium-modal-overlay">
@@ -465,7 +486,7 @@ const Slots = () => {
                 <FiX />
               </button>
             </div>
-            
+
             <div className="premium-modal-body">
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiGrid /></div>
@@ -474,7 +495,7 @@ const Slots = () => {
                   <span className="premium-info-value">{selectedSlot.slotName || 'Unknown'}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiMapPin /></div>
                 <div className="premium-info-content">
@@ -482,7 +503,7 @@ const Slots = () => {
                   <span className="premium-info-value">{getStationName(selectedSlot.stationId)}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiCalendar /></div>
                 <div className="premium-info-content">
@@ -490,7 +511,7 @@ const Slots = () => {
                   <span className="premium-info-value">{formatSlotTime(selectedSlot.startDateTime)}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiCalendar /></div>
                 <div className="premium-info-content">
@@ -498,7 +519,7 @@ const Slots = () => {
                   <span className="premium-info-value">{formatSlotTime(selectedSlot.endDateTime)}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiClock /></div>
                 <div className="premium-info-content">
@@ -506,7 +527,7 @@ const Slots = () => {
                   <span className="premium-info-value">{Math.round((new Date(selectedSlot.endDateTime) - new Date(selectedSlot.startDateTime)) / (1000 * 60 * 60))} hour(s)</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiActivity /></div>
                 <div className="premium-info-content">
@@ -519,15 +540,15 @@ const Slots = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiUser /></div>
                 <div className="premium-info-content">
                   <span className="premium-info-label">Reserved By</span>
-                  <span className="premium-info-value">{selectedSlot.reservedBy || 'None'}</span>
+                  <span className="premium-info-value">{getReservedByText(selectedSlot)}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiFileText /></div>
                 <div className="premium-info-content">
@@ -536,7 +557,7 @@ const Slots = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="premium-modal-footer">
               <button className="btn-premium-close" onClick={() => setSelectedSlot(null)}>Close</button>
             </div>
@@ -594,11 +615,11 @@ const Slots = () => {
             </div>
             <div className="user-modal-body">
               <p>Are you sure you want to delete this slot? This action cannot be undone.</p>
-              <p style={{marginTop: '10px', fontSize: '0.9em', color: '#64748b'}}>Slot ID: {deleteConfirm.slotId}</p>
+              <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#64748b' }}>Slot ID: {deleteConfirm.slotId}</p>
             </div>
             <div className="user-modal-footer">
               <button className="btn-modal-cancel" onClick={() => setDeleteConfirm(null)}>Cancel</button>
-              <button className="btn-modal-confirm" style={{background: '#ef4444', color: 'white', border: 'none'}} onClick={confirmDelete}>Delete Slot</button>
+              <button className="btn-modal-confirm" style={{ background: '#ef4444', color: 'white', border: 'none' }} onClick={confirmDelete}>Delete Slot</button>
             </div>
           </div>
         </div>
