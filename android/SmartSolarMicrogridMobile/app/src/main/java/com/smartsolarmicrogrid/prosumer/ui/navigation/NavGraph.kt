@@ -11,6 +11,7 @@ package com.smartsolarmicrogrid.prosumer.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,6 +28,11 @@ import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingDetailsScreen
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingListScreen
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingListViewModel
 import com.smartsolarmicrogrid.prosumer.ui.dashboard.DashboardScreen
+import com.smartsolarmicrogrid.prosumer.ui.operator.OperatorDashboardScreen
+import com.smartsolarmicrogrid.prosumer.ui.operator.OperatorReservationsScreen
+import com.smartsolarmicrogrid.prosumer.ui.operator.OperatorViewModel
+import com.smartsolarmicrogrid.prosumer.ui.operator.QrScannerScreen
+import com.smartsolarmicrogrid.prosumer.ui.operator.StationMapScreen
 import com.smartsolarmicrogrid.prosumer.ui.qr.BookingQrScreen
 import com.smartsolarmicrogrid.prosumer.ui.profile.EditProfileScreen
 import com.smartsolarmicrogrid.prosumer.ui.profile.ProfileScreen
@@ -52,6 +58,12 @@ sealed class Screen(val route: String) {
     object Dashboard : Screen("dashboard")
     object BookingQr : Screen("booking_qr")
 
+    // Grid operator mode
+    object OperatorHome : Screen("operator_home")
+    object OperatorReservations : Screen("operator_reservations")
+    object OperatorScan : Screen("operator_scan")
+    object OperatorMap : Screen("operator_map")
+
     object ModifyBooking : Screen("modify_booking/{source}") {
         fun createRoute(source: String) = "modify_booking/$source"
     }
@@ -68,9 +80,14 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
 
         composable(Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess = {
-                    // Prosumers land straight on the dashboard after signing in.
-                    navController.navigate(Screen.Dashboard.route) {
+                onLoginSuccess = { role ->
+                    // The role decides which home screen the user lands on.
+                    val home = if (role == "GRID_OPERATOR") {
+                        Screen.OperatorHome.route
+                    } else {
+                        Screen.Dashboard.route
+                    }
+                    navController.navigate(home) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
@@ -187,6 +204,55 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                     onViewAllBookings = { navController.navigate(Screen.BookingList.route) },
                     onBack = null
                 )
+            }
+        }
+
+        // ---------- Grid operator mode ----------
+
+        composable(Screen.OperatorHome.route) { backStackEntry ->
+            val operatorViewModel: OperatorViewModel = viewModel(backStackEntry)
+            WithOperatorBottomBar(navController, Screen.OperatorHome.route) {
+                OperatorDashboardScreen(
+                    onScanQr = { navController.navigate(Screen.OperatorScan.route) },
+                    onViewReservations = { navController.navigate(Screen.OperatorReservations.route) },
+                    onViewMap = { navController.navigate(Screen.OperatorMap.route) },
+                    onLogout = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    operatorViewModel = operatorViewModel
+                )
+            }
+        }
+
+        composable(Screen.OperatorReservations.route) { backStackEntry ->
+            val operatorViewModel: OperatorViewModel = operatorViewModel(navController, backStackEntry)
+            WithOperatorBottomBar(navController, Screen.OperatorReservations.route) {
+                OperatorReservationsScreen(
+                    onScanQr = { navController.navigate(Screen.OperatorScan.route) },
+                    operatorViewModel = operatorViewModel
+                )
+            }
+        }
+
+        composable(Screen.OperatorScan.route) { backStackEntry ->
+            val operatorViewModel: OperatorViewModel = operatorViewModel(navController, backStackEntry)
+            WithOperatorBottomBar(navController, Screen.OperatorScan.route) {
+                QrScannerScreen(
+                    onBack = {
+                        operatorViewModel.resetScan()
+                        navController.popBackStack()
+                    },
+                    operatorViewModel = operatorViewModel
+                )
+            }
+        }
+
+        composable(Screen.OperatorMap.route) { backStackEntry ->
+            val operatorViewModel: OperatorViewModel = operatorViewModel(navController, backStackEntry)
+            WithOperatorBottomBar(navController, Screen.OperatorMap.route) {
+                StationMapScreen(operatorViewModel = operatorViewModel)
             }
         }
 
@@ -333,4 +399,19 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
             }
         }
     }
+}
+
+/**
+ * All operator tabs share the view model scoped to the operator dashboard entry,
+ * so counts, the pending list and the scan result stay consistent between tabs.
+ */
+@Composable
+private fun operatorViewModel(
+    navController: NavHostController,
+    backStackEntry: NavBackStackEntry
+): OperatorViewModel {
+    val homeEntry = remember(backStackEntry) {
+        navController.getBackStackEntry(Screen.OperatorHome.route)
+    }
+    return viewModel(homeEntry)
 }
