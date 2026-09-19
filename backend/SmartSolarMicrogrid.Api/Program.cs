@@ -172,6 +172,114 @@ using (var scope = app.Services.CreateScope())
             await userRepository.CreateAsync(deactivatedUser);
         }
     }
+
+    // --- SEED STATIONS, SLOTS & SAMPLE RESERVATIONS ---
+    var stationRepository = scope.ServiceProvider.GetRequiredService<SmartSolarMicrogrid.Api.Repositories.Stations.ISolarStationInfoRepository>();
+    var slotRepository = scope.ServiceProvider.GetRequiredService<SmartSolarMicrogrid.Api.Repositories.Stations.IEnergyBookingSlotRepository>();
+    var reservationRepository = scope.ServiceProvider.GetRequiredService<SmartSolarMicrogrid.Api.Repositories.Reservations.IEnergyReservationRepository>();
+
+    var existingStations = await stationRepository.GetAllAsync();
+    if (!existingStations.Any())
+    {
+        var stationsSeed = new[]
+        {
+            new { Name = "Colombo Central Hub", Address = "Union Place, Colombo 02", Lat = 6.9214, Lng = 79.8590, Cap = 250.0, Slots = 8 },
+            new { Name = "Kandy Solar Station", Address = "Peradeniya Rd, Kandy", Lat = 7.2906, Lng = 80.6337, Cap = 180.0, Slots = 6 },
+            new { Name = "Galle Coastal Grid", Address = "Fort, Galle", Lat = 6.0329, Lng = 80.2168, Cap = 150.0, Slots = 5 }
+        };
+
+        var createdStationIds = new List<string>();
+        foreach (var s in stationsSeed)
+        {
+            var stationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+            createdStationIds.Add(stationId);
+            await stationRepository.CreateAsync(new SmartSolarMicrogrid.Api.Models.Entities.Stations.SolarStationInfo
+            {
+                StationId = stationId,
+                StationName = s.Name,
+                Address = s.Address,
+                Latitude = s.Lat,
+                Longitude = s.Lng,
+                Capacity = s.Cap,
+                BatterySlotCount = s.Slots,
+                OperatingStartTime = "08:00",
+                OperatingEndTime = "18:00",
+                Description = $"{s.Name} - solar energy trading hub.",
+                Status = SmartSolarMicrogrid.Api.Models.Enums.Stations.StationStatus.ACTIVE
+            });
+
+            // Two AVAILABLE slots per day for the next 3 days (within the 7-day booking window).
+            for (int day = 1; day <= 3; day++)
+            {
+                var baseDate = DateTime.UtcNow.Date.AddDays(day);
+                var slotTimes = new[] { (Start: 9, End: 11), (Start: 14, End: 16) };
+                foreach (var t in slotTimes)
+                {
+                    await slotRepository.CreateAsync(new SmartSolarMicrogrid.Api.Models.Entities.Stations.EnergyBookingSlot
+                    {
+                        SlotId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+                        SlotName = $"{baseDate:yyyy-MM-dd} {t.Start:00}:00-{t.End:00}:00",
+                        StationId = stationId,
+                        StartDateTime = baseDate.AddHours(t.Start),
+                        EndDateTime = baseDate.AddHours(t.End),
+                        Status = SmartSolarMicrogrid.Api.Models.Enums.Stations.SlotStatus.AVAILABLE
+                    });
+                }
+            }
+        }
+
+        // Sample reservations for the default prosumer (NIC 123456789V) so the mobile
+        // Pending / Current / History screens all have data to show.
+        const string prosumerNic = "123456789V";
+        var mainStationId = createdStationIds[0];
+
+        async Task SeedReservation(
+            DateTime start,
+            SmartSolarMicrogrid.Api.Models.Enums.Reservations.ReservationStatus status,
+            SmartSolarMicrogrid.Api.Models.Enums.Stations.SlotStatus slotStatus)
+        {
+            var slotId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+            await slotRepository.CreateAsync(new SmartSolarMicrogrid.Api.Models.Entities.Stations.EnergyBookingSlot
+            {
+                SlotId = slotId,
+                SlotName = $"{start:yyyy-MM-dd HH:mm} (booked)",
+                StationId = mainStationId,
+                StartDateTime = start,
+                EndDateTime = start.AddHours(2),
+                Status = slotStatus,
+                ReservedBy = prosumerNic
+            });
+
+            var now = DateTime.UtcNow;
+            await reservationRepository.CreateAsync(new SmartSolarMicrogrid.Api.Models.Entities.Reservations.EnergyReservation
+            {
+                ReservationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+                ReservationNumber = "RES-" + Random.Shared.Next(10000, 99999),
+                ProsumerNic = prosumerNic,
+                StationId = mainStationId,
+                SlotId = slotId,
+                ScheduledStartDateTime = start,
+                ScheduledEndDateTime = start.AddHours(2),
+                Status = status,
+                QrReference = Guid.NewGuid().ToString("N"),
+                CreatedAt = now,
+                UpdatedAt = now,
+                CompletedAt = status == SmartSolarMicrogrid.Api.Models.Enums.Reservations.ReservationStatus.COMPLETED ? now : (DateTime?)null
+            });
+        }
+
+        await SeedReservation(DateTime.UtcNow.Date.AddDays(2).AddHours(10),
+            SmartSolarMicrogrid.Api.Models.Enums.Reservations.ReservationStatus.PENDING,
+            SmartSolarMicrogrid.Api.Models.Enums.Stations.SlotStatus.RESERVED);
+        await SeedReservation(DateTime.UtcNow.Date.AddDays(3).AddHours(10),
+            SmartSolarMicrogrid.Api.Models.Enums.Reservations.ReservationStatus.APPROVED,
+            SmartSolarMicrogrid.Api.Models.Enums.Stations.SlotStatus.RESERVED);
+        await SeedReservation(DateTime.UtcNow.Date.AddDays(-5).AddHours(10),
+            SmartSolarMicrogrid.Api.Models.Enums.Reservations.ReservationStatus.COMPLETED,
+            SmartSolarMicrogrid.Api.Models.Enums.Stations.SlotStatus.UNAVAILABLE);
+
+        Console.WriteLine("✅ Seeded 3 stations, available slots, and 3 sample reservations for NIC 123456789V.");
+    }
 }
 // -------------------------------
 
