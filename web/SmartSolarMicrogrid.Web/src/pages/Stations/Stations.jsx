@@ -15,6 +15,7 @@ import {
   FiPlay,
   FiChevronLeft,
   FiChevronRight,
+  FiChevronDown,
   FiBarChart2,
   FiHome,
   FiFileText,
@@ -329,16 +330,22 @@ const Stations = () => {
           </div>
           
           <div className="filter-group">
-            <select className="filter-select" value={statusFilter} onChange={(e) => {setStatusFilter(e.target.value); setCurrentPage(1);}}>
-              <option value="All Statuses">All Statuses</option>
-              <option value="ACTIVE">Active</option>
-              <option value="DEACTIVATED">Deactivated</option>
-            </select>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <select className="filter-select" value={statusFilter} onChange={(e) => {setStatusFilter(e.target.value); setCurrentPage(1);}} style={{ appearance: 'none', backgroundColor: 'transparent', paddingRight: '36px', position: 'relative', zIndex: 1 }}>
+                <option value="All Statuses">All Statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="DEACTIVATED">Deactivated</option>
+              </select>
+              <FiChevronDown style={{ position: 'absolute', right: '12px', color: '#64748b', pointerEvents: 'none', zIndex: 0 }} />
+            </div>
 
-            <select className="filter-select sort-select" value={sortBy} onChange={(e) => {setSortBy(e.target.value); setCurrentPage(1);}}>
-              <option value="Sort by">Sort by</option>
-              <option value="Name A-Z">Name A-Z</option>
-            </select>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <select className="filter-select sort-select" value={sortBy} onChange={(e) => {setSortBy(e.target.value); setCurrentPage(1);}} style={{ appearance: 'none', backgroundColor: 'transparent', paddingRight: '36px', position: 'relative', zIndex: 1 }}>
+                <option value="Sort by">Sort by</option>
+                <option value="Name A-Z">Name A-Z</option>
+              </select>
+              <FiChevronDown style={{ position: 'absolute', right: '12px', color: '#64748b', pointerEvents: 'none', zIndex: 0 }} />
+            </div>
           </div>
         </div>
 
