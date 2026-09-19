@@ -97,4 +97,17 @@ public class ProsumersController : ControllerBase
         }
         return Ok(ApiResponse<UserDto>.SuccessResponse("Prosumer reactivated successfully.", reactivatedProsumer));
     }
+    /// <summary>
+    /// Deactivates an active prosumer.
+    /// </summary>
+    [HttpPut("{nic}/deactivate")]
+    public async Task<IActionResult> DeactivateProsumer(string nic)
+    {
+        var deactivatedProsumer = await _prosumerService.DeactivateProsumerAsync(nic);
+        if (deactivatedProsumer == null)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("Prosumer not found or not in active status."));
+        }
+        return Ok(ApiResponse<UserDto>.SuccessResponse("Prosumer deactivated successfully.", deactivatedProsumer));
+    }
 }

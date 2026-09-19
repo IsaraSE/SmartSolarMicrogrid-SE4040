@@ -5,11 +5,14 @@ using System;
 
 namespace SmartSolarMicrogrid.Api.Models.Entities.Reservations;
 
+[BsonIgnoreExtraElements]
 public class EnergyReservation
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string? ReservationId { get; set; }
+    
+    public string ReservationNumber { get; set; } = null!;
     
     public string ProsumerNic { get; set; } = null!;
     

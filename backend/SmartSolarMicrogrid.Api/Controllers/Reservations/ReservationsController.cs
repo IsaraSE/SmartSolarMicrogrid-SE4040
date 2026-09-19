@@ -124,7 +124,7 @@ public class ReservationsController : ControllerBase
 
         var userNic = User.FindFirstValue("nic") ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
-        if (string.IsNullOrEmpty(userNic))
+        if (role == "PROSUMER" && string.IsNullOrEmpty(userNic))
         {
             return Unauthorized(ApiResponse<object>.ErrorResponse("User NIC not found in token."));
         }
@@ -148,7 +148,7 @@ public class ReservationsController : ControllerBase
     {
         var userNic = User.FindFirstValue("nic") ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
-        if (string.IsNullOrEmpty(userNic))
+        if (role == "PROSUMER" && string.IsNullOrEmpty(userNic))
         {
             return Unauthorized(ApiResponse<object>.ErrorResponse("User NIC not found in token."));
         }

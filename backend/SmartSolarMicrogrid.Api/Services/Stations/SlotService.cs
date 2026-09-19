@@ -40,12 +40,25 @@ public class SlotService : ISlotService
 
     public async Task<SlotDto> CreateSlotAsync(CreateSlotDto request)
     {
+        // Prevent duplicate time overlap for the same SlotName at the same Station
+        var existingSlots = await _slotRepository.GetByStationIdAsync(request.StationId);
+        var overlap = existingSlots.Any(s => 
+            s.SlotName == request.SlotName &&
+            (request.StartDateTime < s.EndDateTime && request.EndDateTime > s.StartDateTime));
+        
+        if (overlap)
+        {
+            throw new InvalidOperationException($"Time overlap: Slot {request.SlotName} is already scheduled during this time.");
+        }
+
         var slot = new EnergyBookingSlot
         {
             SlotId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            SlotName = request.SlotName,
             StationId = request.StationId,
             StartDateTime = request.StartDateTime,
             EndDateTime = request.EndDateTime,
+            Notes = request.Notes,
             Status = SlotStatus.AVAILABLE
         };
 
@@ -58,9 +71,22 @@ public class SlotService : ISlotService
         var slot = await _slotRepository.GetByIdAsync(id);
         if (slot == null) return null;
 
+        // Prevent duplicate time overlap for the same SlotName at the same Station on update
+        var existingSlots = await _slotRepository.GetByStationIdAsync(slot.StationId);
+        var overlap = existingSlots.Any(s => 
+            s.SlotId != slot.SlotId && 
+            s.SlotName == slot.SlotName &&
+            (request.StartDateTime < s.EndDateTime && request.EndDateTime > s.StartDateTime));
+            
+        if (overlap)
+        {
+            throw new InvalidOperationException($"Time overlap: Slot {slot.SlotName} is already scheduled during this time.");
+        }
+
         slot.StartDateTime = request.StartDateTime;
         slot.EndDateTime = request.EndDateTime;
         slot.Status = request.Status;
+        slot.Notes = request.Notes;
 
         await _slotRepository.UpdateAsync(id, slot);
         return MapToDto(slot);
@@ -85,10 +111,13 @@ public class SlotService : ISlotService
         return new SlotDto
         {
             SlotId = slot.SlotId!,
+            SlotName = slot.SlotName,
             StationId = slot.StationId,
             StartDateTime = slot.StartDateTime,
             EndDateTime = slot.EndDateTime,
-            Status = slot.Status
+            Status = slot.Status,
+            ReservedBy = slot.ReservedBy,
+            Notes = slot.Notes
         };
     }
 }

@@ -4,6 +4,7 @@ using SmartSolarMicrogrid.Api.Models.Enums;
 
 namespace SmartSolarMicrogrid.Api.Models.Entities.Stations;
 
+[BsonIgnoreExtraElements]
 public class SolarStationInfo
 {
     [BsonId]
@@ -17,6 +18,9 @@ public class SolarStationInfo
     public int BatterySlotCount { get; set; }
     public string OperatingStartTime { get; set; } = null!;
     public string OperatingEndTime { get; set; } = null!;
+    
+    [BsonIgnoreIfNull]
+    public string? Description { get; set; }
     
     [BsonRepresentation(BsonType.String)]
     public StationStatus Status { get; set; }

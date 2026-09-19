@@ -14,8 +14,11 @@ namespace SmartSolarMicrogrid.Api.Models.DTOs.Stations;
 public class SlotDto
 {
     public string SlotId { get; set; } = null!;
+    public string SlotName { get; set; } = null!;
     public string StationId { get; set; } = null!;
     public DateTime StartDateTime { get; set; }
     public DateTime EndDateTime { get; set; }
     public SlotStatus Status { get; set; }
+    public string? ReservedBy { get; set; }
+    public string? Notes { get; set; }
 }

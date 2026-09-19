@@ -41,4 +41,7 @@ public class UpdateStationDto
 
     [Required]
     public StationStatus Status { get; set; }
+
+    [MaxLength(500)]
+    public string? Description { get; set; }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   FiArrowLeft, 
   FiFileText, 
@@ -42,8 +42,9 @@ const LocationSelector = ({ position, setPosition }) => {
   return position ? <Marker position={position} icon={defaultIcon} /> : null;
 };
 
-const AddStation = () => {
+const EditStation = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -60,6 +61,38 @@ const AddStation = () => {
     operatingStartTime: '06:00',
     operatingEndTime: '22:00'
   });
+
+  useEffect(() => {
+    if (id) {
+      loadStationDetails();
+    }
+  }, [id]);
+
+  const loadStationDetails = async () => {
+    setLoading(true);
+    try {
+      const response = await stationService.getStationById(id);
+      const station = response.data;
+      if (station) {
+        setFormData({
+          stationName: station.stationName || '',
+          status: station.status === 0 || station.status === 'ACTIVE' ? 'ACTIVE' : 'DEACTIVATED',
+          description: station.description || '',
+          address: station.address || '',
+          latitude: station.latitude || 6.9200,
+          longitude: station.longitude || 79.8600,
+          capacity: station.capacity || '',
+          batterySlotCount: station.batterySlotCount || '',
+          operatingStartTime: station.operatingStartTime || '06:00',
+          operatingEndTime: station.operatingEndTime || '22:00'
+        });
+      }
+    } catch (err) {
+      setError('Failed to load station details.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [mapPosition, setMapPosition] = useState([formData.latitude, formData.longitude]);
 
@@ -101,13 +134,14 @@ const AddStation = () => {
         batterySlotCount: parseInt(formData.batterySlotCount),
         operatingStartTime: formData.operatingStartTime,
         operatingEndTime: formData.operatingEndTime,
-        description: formData.description
+        description: formData.description,
+        status: formData.status === 'ACTIVE' ? 0 : 1
       };
 
-      await stationService.createStation(stationDto);
+      await stationService.updateStation(id, stationDto);
       navigate('/stations');
     } catch (err) {
-      setError('Failed to create station. Please check your inputs.');
+      setError('Failed to update station. Please check your inputs.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -118,8 +152,8 @@ const AddStation = () => {
     <div className="add-station-container">
       <div className="header-bar">
         <div>
-          <h1 className="page-title">Create New Station</h1>
-          <p className="page-subtitle">Register a new solar charging station to the microgrid network.</p>
+          <h1 className="page-title">Edit Station</h1>
+          <p className="page-subtitle">Update details for this solar charging station.</p>
         </div>
         <button className="btn-outline" onClick={() => navigate('/stations')}>
           <FiArrowLeft /> Back to Stations
@@ -158,8 +192,8 @@ const AddStation = () => {
                   <div className="status-select-wrapper">
                     <span className="status-dot green"></span>
                     <select name="status" value={formData.status} onChange={handleChange}>
-                      <option value="Active">Active</option>
-                      <option value="Deactivated">Deactivated</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="DEACTIVATED">Deactivated</option>
                     </select>
                   </div>
                 </div>
@@ -440,4 +474,4 @@ const AddStation = () => {
   );
 };
 
-export default AddStation;
+export default EditStation;

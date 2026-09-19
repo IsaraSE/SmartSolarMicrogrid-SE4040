@@ -1,23 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { FiClock, FiCalendar, FiMapPin, FiGrid, FiUsers, FiZap, FiCheckCircle, FiSlash, FiEdit2, FiMoreHorizontal, FiRefreshCcw, FiPlus, FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  FiClock, FiCalendar, FiMapPin, FiGrid, FiUsers, FiZap, 
+  FiCheckCircle, FiSlash, FiEdit2, FiMoreHorizontal, FiMoreVertical, FiRefreshCcw, 
+  FiPlus, FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
+  FiEye, FiTrash2, FiList, FiPlay
+} from 'react-icons/fi';
 import { PiSunLight } from 'react-icons/pi';
 import { stationService } from '../../services/stationService';
 import { slotService } from '../../services/slotService';
 import stationHeroBg from '../../assets/images/solar-hero-bg.jpg';
 import './Slots.css';
+import '../Users/Users.css'; // For modal styles
 
 const Slots = () => {
+  const navigate = useNavigate();
   const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Tab State
+  const [activeTab, setActiveTab] = useState('ALL');
+
+  // Modal and Dropdown State
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null); // For View Modal
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [statusConfirm, setStatusConfirm] = useState(null);
+  const [infoMsg, setInfoMsg] = useState(null);
+  
+  const dropdownRef = useRef(null);
 
   const today = new Date();
   const formattedToday = today.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
 
+  const location = useLocation();
+
   useEffect(() => {
     fetchInitialData();
-  }, []);
+    
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [location.state?.stationId]);
 
   const fetchInitialData = async () => {
     try {
@@ -27,8 +57,21 @@ const Slots = () => {
       setStations(stationList);
       
       if (stationList.length > 0) {
-        setSelectedStation(stationList[0]);
-        await fetchSlotsForStation(stationList[0].id);
+        let initialStation = stationList[0];
+        
+        const savedStationId = localStorage.getItem('lastSelectedStationId');
+        
+        if (location.state?.stationId) {
+          const matched = stationList.find(s => s.stationId === location.state.stationId);
+          if (matched) initialStation = matched;
+        } else if (savedStationId) {
+          const matched = stationList.find(s => s.stationId === savedStationId);
+          if (matched) initialStation = matched;
+        }
+        
+        setSelectedStation(initialStation);
+        localStorage.setItem('lastSelectedStationId', initialStation.stationId);
+        await fetchSlotsForStation(initialStation.stationId);
       }
     } catch (error) {
       console.error("Failed to load initial data:", error);
@@ -39,20 +82,23 @@ const Slots = () => {
 
   const fetchSlotsForStation = async (stationId) => {
     try {
+      setLoading(true);
       const response = await slotService.getSlotsByStationId(stationId);
       setSlots(response.data || []);
     } catch (error) {
       console.error("Failed to load slots:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleStationChange = (e) => {
     const stationId = e.target.value;
-    const station = stations.find(s => s.id === stationId);
+    const station = stations.find(s => s.stationId === stationId);
     setSelectedStation(station);
-    if (stationId) {
-      fetchSlotsForStation(stationId);
-    }
+    localStorage.setItem('lastSelectedStationId', stationId);
+    fetchSlotsForStation(stationId);
+    setActiveTab('ALL');
   };
 
   const formatSlotTime = (dateString) => {
@@ -60,6 +106,94 @@ const Slots = () => {
     const date = new Date(dateString);
     return date.toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
   };
+
+  const getStatusText = (status) => {
+    if (typeof status === 'string') {
+      return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    }
+    switch(status) {
+      case 0: return 'Available';
+      case 1: return 'Reserved';
+      case 2: return 'Unavailable';
+      default: return 'Unknown';
+    }
+  };
+
+  const handleAddClick = () => {
+    if (selectedStation) {
+      navigate('/slots/add', { state: { stationId: selectedStation.stationId } });
+    }
+  };
+
+  const handleEditSlot = (slot) => {
+    navigate(`/slots/edit/${slot.slotId}`, { state: { slot } });
+  };
+
+  const toggleDropdown = (id, event) => {
+    event.stopPropagation();
+    if (activeDropdown === id) {
+      setActiveDropdown(null);
+    } else {
+      setActiveDropdown(id);
+    }
+  };
+
+  const requestDeleteSlot = (slot) => {
+    if (slot.status === 1) { // RESERVED
+      setInfoMsg({ type: 'error', title: 'Cannot Delete', message: 'Reserved slots cannot be deleted. The reservation must be cancelled first.' });
+      return;
+    }
+    setDeleteConfirm(slot);
+    setActiveDropdown(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+    try {
+      await slotService.deleteSlot(deleteConfirm.slotId);
+      setInfoMsg({ type: 'success', title: 'Deleted', message: 'Slot deleted successfully.' });
+      fetchSlotsForStation(selectedStation.stationId);
+    } catch (error) {
+      console.error("Failed to delete slot:", error);
+      setInfoMsg({ type: 'error', title: 'Error', message: error.response?.data?.message || 'Failed to delete slot.' });
+    } finally {
+      setDeleteConfirm(null);
+    }
+  };
+
+  const requestStatusChange = (slot, newStatus) => {
+    setStatusConfirm({ slot, newStatus });
+  };
+
+  const confirmStatusChange = async () => {
+    if (!statusConfirm) return;
+    const { slot, newStatus } = statusConfirm;
+    
+    try {
+      await slotService.updateSlot(slot.slotId, {
+        startDateTime: slot.startDateTime,
+        endDateTime: slot.endDateTime,
+        status: newStatus,
+        notes: slot.notes
+      });
+      setInfoMsg({ type: 'success', title: 'Status Updated', message: 'Slot status updated successfully.' });
+      fetchSlotsForStation(selectedStation.stationId);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      setInfoMsg({ type: 'error', title: 'Error', message: 'Failed to update slot status.' });
+    } finally {
+      setStatusConfirm(null);
+    }
+  };
+
+  // Filter slots based on tab
+  const filteredSlots = slots.filter(slot => {
+    const status = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
+    if (activeTab === 'AVAILABLE') return status === 0 || status === 'AVAILABLE';
+    if (activeTab === 'UNAVAILABLE') return status === 2 || status === 'UNAVAILABLE';
+    if (activeTab === 'RESERVED') return status === 1 || status === 'RESERVED';
+    return true; // ALL
+  });
 
   // SVG Sparkline component for stats
   const Sparkline = ({ color }) => (
@@ -75,7 +209,7 @@ const Slots = () => {
         <div className="header-left">
           <div className="breadcrumbs">
             <span>Stations</span> &gt; 
-            <span>{selectedStation?.name || 'Loading...'}</span> &gt; 
+            <span>{selectedStation?.stationName || 'Loading...'}</span> &gt; 
             <span>Slot Management</span>
           </div>
           <h1>Slot Management</h1>
@@ -99,54 +233,6 @@ const Slots = () => {
         </div>
       </div>
 
-      {/* Station Info Card */}
-      <div className="station-info-card">
-        <img src={stationHeroBg} alt="Station" className="station-hero-image" />
-        <div className="station-details">
-          <div className="station-title-row">
-            <h2>{selectedStation?.name || 'Select a Station'}</h2>
-            <span className="status-badge operational">Operational</span>
-          </div>
-          <div className="station-location">
-            <FiMapPin />
-            {selectedStation?.location || 'Location unavailable'}
-          </div>
-          <div className="station-stats-row">
-            <div className="info-stat">
-              <FiGrid className="info-stat-icon capacity" />
-              <div className="info-stat-content">
-                <span className="info-stat-value">{selectedStation?.capacity || 0} MW</span>
-                <span className="info-stat-label">Installed Capacity</span>
-              </div>
-            </div>
-            <div className="info-stat">
-              <FiUsers className="info-stat-icon prosumers" />
-              <div className="info-stat-content">
-                <span className="info-stat-value">48</span>
-                <span className="info-stat-label">Registered Prosumers</span>
-              </div>
-            </div>
-            <div className="info-stat">
-              <PiSunLight className="info-stat-icon energy" />
-              <div className="info-stat-content">
-                <span className="info-stat-value">2,340 MWh</span>
-                <span className="info-stat-label">Total Energy Traded</span>
-              </div>
-            </div>
-            <div className="info-stat">
-              <FiZap className="info-stat-icon hybrid" />
-              <div className="info-stat-content">
-                <span className="info-stat-value">Grid + Storage</span>
-                <span className="info-stat-label">Hybrid Supply</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <button className="view-details-btn">
-          View Station Details &rarr;
-        </button>
-      </div>
-
       {/* Stats Grid */}
       <div className="slots-stats-grid">
         <div className="slots-stat-card">
@@ -156,8 +242,8 @@ const Slots = () => {
             </div>
             <div className="slots-stat-info">
               <span className="slots-stat-title">Total Slots</span>
-              <span className="slots-stat-value">48</span>
-              <span className="slots-stat-sub">for selected period</span>
+              <span className="slots-stat-value">{slots.length}</span>
+              <span className="slots-stat-sub">For selected station</span>
             </div>
           </div>
         </div>
@@ -168,8 +254,7 @@ const Slots = () => {
             </div>
             <div className="slots-stat-info">
               <span className="slots-stat-title">Available Slots</span>
-              <span className="slots-stat-value">26</span>
-              <span className="slots-stat-sub">54% of total</span>
+              <span className="slots-stat-value">{slots.filter(s => { const st = typeof s.status === 'string' ? s.status.toUpperCase() : s.status; return st === 0 || st === 'AVAILABLE'; }).length}</span>
             </div>
           </div>
           <Sparkline color="#3b82f6" />
@@ -181,8 +266,7 @@ const Slots = () => {
             </div>
             <div className="slots-stat-info">
               <span className="slots-stat-title">Reserved Slots</span>
-              <span className="slots-stat-value">16</span>
-              <span className="slots-stat-sub">33% of total</span>
+              <span className="slots-stat-value">{slots.filter(s => { const st = typeof s.status === 'string' ? s.status.toUpperCase() : s.status; return st === 1 || st === 'RESERVED'; }).length}</span>
             </div>
           </div>
           <Sparkline color="#eab308" />
@@ -193,183 +277,270 @@ const Slots = () => {
               <FiSlash />
             </div>
             <div className="slots-stat-info">
-              <span className="slots-stat-title">Upcoming Slots</span>
-              <span className="slots-stat-value">6</span>
-              <span className="slots-stat-sub">Next 24 hours</span>
+              <span className="slots-stat-title">Unavailable</span>
+              <span className="slots-stat-value">{slots.filter(s => { const st = typeof s.status === 'string' ? s.status.toUpperCase() : s.status; return st === 2 || st === 'UNAVAILABLE'; }).length}</span>
             </div>
           </div>
           <Sparkline color="#ef4444" />
         </div>
       </div>
 
-      {/* Filters Bar */}
-      <div className="slots-filters-bar">
-        <div className="filters-group">
-          <div className="filter-item">
-            <label>Station</label>
-            <select className="filter-select" value={selectedStation?.id || ''} onChange={handleStationChange}>
+      {/* Main Content Area */}
+      <div className="table-wrapper">
+        <div className="table-header">
+          <div className="table-tabs">
+            <button className={`tab-btn ${activeTab === 'ALL' ? 'active' : ''}`} onClick={() => setActiveTab('ALL')}>
+              All Slots
+            </button>
+            <button className={`tab-btn ${activeTab === 'AVAILABLE' ? 'active' : ''}`} onClick={() => setActiveTab('AVAILABLE')}>
+              Available
+            </button>
+            <button className={`tab-btn ${activeTab === 'UNAVAILABLE' ? 'active' : ''}`} onClick={() => setActiveTab('UNAVAILABLE')}>
+              Unavailable
+            </button>
+            <button className={`tab-btn ${activeTab === 'RESERVED' ? 'active' : ''}`} onClick={() => setActiveTab('RESERVED')}>
+              Reserved
+            </button>
+          </div>
+          <div className="table-actions-right" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <select className="filter-select" value={selectedStation?.stationId || ''} onChange={handleStationChange} style={{minWidth: '220px', height: '42px', padding: '0 12px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#f8fafc', color: '#334155', fontWeight: '500', cursor: 'pointer', appearance: 'auto'}}>
+              <option value="" disabled>Select Station</option>
               {stations.map(station => (
-                <option key={station.id} value={station.id}>{station.name}</option>
+                <option key={station.stationId} value={station.stationId}>{station.stationName}</option>
               ))}
             </select>
-          </div>
-          <div className="filter-item">
-            <label>Date Range</label>
-            <div className="filter-input">
-              <FiCalendar style={{color: '#64748b'}} />
-              <span>Apr 21, 2025 - Apr 27, 2025</span>
-            </div>
-          </div>
-          <div className="filter-item">
-            <label>Status</label>
-            <select className="filter-select">
-              <option>All Statuses</option>
-              <option>Available</option>
-              <option>Reserved</option>
-              <option>Unavailable</option>
-            </select>
+            <button className="btn-add" onClick={handleAddClick} disabled={!selectedStation} style={{ height: '42px', display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', whiteSpace: 'nowrap', borderRadius: '8px' }}>
+              <FiPlus /> Add Slot
+            </button>
           </div>
         </div>
-        <div className="actions-group">
-          <button className="btn-reset">
-            <FiRefreshCcw /> Reset
-          </button>
-          <button className="btn-add-slot">
-            <FiPlus /> Add Slot
-          </button>
-        </div>
-      </div>
 
-      {/* Table Card */}
-      <div className="slots-table-card">
-        <div className="table-header-row">
-          <div className="table-title">
-            <FiCalendar className="table-title-icon" />
-            Time Slots (Apr 21 - Apr 27, 2025)
-          </div>
-          <div className="table-nav">
-            <button className="nav-btn"><FiChevronLeft /></button>
-            <span className="nav-label">This Week</span>
-            <button className="nav-btn"><FiChevronRight /></button>
-          </div>
-        </div>
-        
-        <table className="slots-table">
+        <table className="slots-table" ref={dropdownRef}>
           <thead>
             <tr>
-              <th>Slot ID</th>
+              <th>Slot Name</th>
               <th>Start Date & Time</th>
               <th>End Date & Time</th>
               <th>Status</th>
               <th>Reserved By</th>
-              <th>Actions</th>
+              <th className="actions-column">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="6" style={{textAlign: 'center'}}>Loading slots...</td></tr>
-            ) : slots.length === 0 ? (
-              <>
-                {/* Mock Data for visual fidelity if API returns empty */}
+              <tr><td colSpan="6" style={{textAlign: 'center', padding: '40px'}}>Loading slots...</td></tr>
+            ) : filteredSlots.length === 0 ? (
                 <tr>
-                  <td className="slot-id">SLOT-001</td>
-                  <td>Apr 22, 2025 08:00 AM</td>
-                  <td>Apr 22, 2025 10:00 AM</td>
-                  <td><span className="slot-status-badge available">Available</span></td>
-                  <td className="reserved-by">-</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
+                  <td colSpan="6" style={{textAlign: 'center', color: '#64748b', padding: '40px'}}>
+                    No slots found for this category.
                   </td>
                 </tr>
-                <tr>
-                  <td className="slot-id">SLOT-002</td>
-                  <td>Apr 22, 2025 10:00 AM</td>
-                  <td>Apr 22, 2025 12:00 PM</td>
-                  <td><span className="slot-status-badge reserved">Reserved</span></td>
-                  <td className="reserved-by active">SunPower (Pvt) Ltd</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="slot-id">SLOT-003</td>
-                  <td>Apr 22, 2025 12:00 PM</td>
-                  <td>Apr 22, 2025 02:00 PM</td>
-                  <td><span className="slot-status-badge available">Available</span></td>
-                  <td className="reserved-by">-</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="slot-id">SLOT-004</td>
-                  <td>Apr 22, 2025 02:00 PM</td>
-                  <td>Apr 22, 2025 04:00 PM</td>
-                  <td><span className="slot-status-badge unavailable">Unavailable</span></td>
-                  <td className="reserved-by active">Maintenance</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-                <tr>
-                  <td className="slot-id">SLOT-005</td>
-                  <td>Apr 22, 2025 04:00 PM</td>
-                  <td>Apr 22, 2025 06:00 PM</td>
-                  <td><span className="slot-status-badge reserved">Reserved</span></td>
-                  <td className="reserved-by active">Nimal Perera</td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
-                  </td>
-                </tr>
-              </>
             ) : (
-              slots.map(slot => (
-                <tr key={slot.id}>
-                  <td className="slot-id">{slot.id.substring(0,8).toUpperCase()}</td>
-                  <td>{formatSlotTime(slot.startTime)}</td>
-                  <td>{formatSlotTime(slot.endTime)}</td>
+              filteredSlots.map(slot => {
+                const st = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
+                return (
+                <tr key={slot.slotId}>
+                  <td className="font-semibold">{slot.slotName || 'Unknown'}</td>
+                  <td>{formatSlotTime(slot.startDateTime)}</td>
+                  <td>{formatSlotTime(slot.endDateTime)}</td>
                   <td>
-                    <span className={`slot-status-badge ${slot.status === 0 ? 'available' : slot.status === 1 ? 'reserved' : 'unavailable'}`}>
-                      {slot.status === 0 ? 'Available' : slot.status === 1 ? 'Reserved' : 'Unavailable'}
-                    </span>
+                    <div className={`status-badge-btn status-${st === 0 || st === 'AVAILABLE' ? 'active' : st === 1 || st === 'RESERVED' ? 'reserved' : 'deactivated'}`} style={{ cursor: 'default' }}>
+                      <div className="status-badge-content">
+                        <span className="status-dot"></span>
+                        <span>{getStatusText(slot.status)}</span>
+                      </div>
+                    </div>
                   </td>
-                  <td className={`reserved-by ${slot.reservedBy ? 'active' : ''}`}>
+                  <td className="text-secondary">
                     {slot.reservedBy || '-'}
                   </td>
-                  <td className="table-actions">
-                    <FiCalendar className="action-icon" />
-                    <FiEdit2 className="action-icon" />
-                    <FiMoreHorizontal className="action-icon" />
+                  <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button className="pill-btn btn-view" title="View Details" onClick={() => setSelectedSlot(slot)}>
+                      <FiEye /> View
+                    </button>
+                    
+                    <div style={{ width: '160px', flexShrink: 0 }}>
+                      {(st === 0 || st === 'AVAILABLE') && (
+                        <button className="pill-btn btn-deactivate" title="Deactivate" onClick={() => requestStatusChange(slot, 2)} style={{ width: '100%', justifyContent: 'center' }}>
+                          <FiSlash /> Deactivate
+                        </button>
+                      )}
+
+                      {(st === 2 || st === 'UNAVAILABLE') && (
+                        <button className="pill-btn btn-activate" title="Activate" onClick={() => requestStatusChange(slot, 0)} style={{ width: '100%', justifyContent: 'center' }}>
+                          <FiPlay /> Activate
+                        </button>
+                      )}
+
+                      {(st === 1 || st === 'RESERVED') && (
+                        <button className="pill-btn btn-view" style={{backgroundColor: '#f3f4f6', color: '#4b5563', border: '1px solid #e5e7eb', width: '100%', justifyContent: 'center'}} title="View Reservation" onClick={() => navigate('/reservations', { state: { slotId: slot.slotId } })}>
+                          <FiList /> View Reservation
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="dropdown-container" style={{ position: 'relative' }}>
+                      <button 
+                        className="pill-btn" 
+                        style={{ padding: '6px 8px', backgroundColor: 'transparent', border: 'none', color: '#64748b' }} 
+                        onClick={(e) => toggleDropdown(slot.slotId, e)}
+                      >
+                        <FiMoreVertical size={18} />
+                      </button>
+                      {activeDropdown === slot.slotId && (
+                        <div className="dropdown-menu fade-in" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: '150px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                          <button className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#334155' }} onClick={() => handleEditSlot(slot)}>
+                            <FiEdit2 /> Edit Slot
+                          </button>
+                          <button className="dropdown-item text-danger" style={{ width: '100%', textAlign: 'left', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: '#ef4444' }} onClick={() => requestDeleteSlot(slot)}>
+                            <FiTrash2 /> Delete Slot
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
-              ))
+              )})
             )}
           </tbody>
         </table>
 
         <div className="table-footer">
-          <span className="showing-text">Showing 1 - 8 of 48 slots</span>
+          <span className="showing-text">Showing {filteredSlots.length} slot(s)</span>
           <div className="pagination">
             <button className="page-btn"><FiChevronsLeft /></button>
             <button className="page-btn active">1</button>
-            <button className="page-btn">2</button>
-            <button className="page-btn">3</button>
-            <button className="page-btn">4</button>
-            <button className="page-btn">5</button>
             <button className="page-btn"><FiChevronsRight /></button>
           </div>
         </div>
       </div>
+
+      {/* --- Modals --- */}
+      
+      {/* View Slot Modal */}
+      {selectedSlot && (
+        <div className="user-modal-overlay">
+          <div className="user-modal-content fade-in">
+            <div className="user-modal-header">
+              <h2>Slot Details</h2>
+              <button className="user-modal-close" onClick={() => setSelectedSlot(null)}>&times;</button>
+            </div>
+            <div className="user-modal-body">
+              <div className="detail-group">
+                <label>Slot Name</label>
+                <div className="detail-value">{selectedSlot.slotName || 'Unknown'}</div>
+              </div>
+              <div className="detail-group">
+                <label>Station</label>
+                <div className="detail-value">{selectedStation?.stationName}</div>
+              </div>
+              <div className="detail-group">
+                <label>Start Date & Time</label>
+                <div className="detail-value">{formatSlotTime(selectedSlot.startDateTime)}</div>
+              </div>
+              <div className="detail-group">
+                <label>End Date & Time</label>
+                <div className="detail-value">{formatSlotTime(selectedSlot.endDateTime)}</div>
+              </div>
+              <div className="detail-group">
+                <label>Duration</label>
+                <div className="detail-value">
+                  {Math.round((new Date(selectedSlot.endDateTime) - new Date(selectedSlot.startDateTime)) / (1000 * 60 * 60))} hour(s)
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>Status</label>
+                <div className="detail-value">
+                  {(() => {
+                    const st = typeof selectedSlot.status === 'string' ? selectedSlot.status.toUpperCase() : selectedSlot.status;
+                    return (
+                      <span className={`status-badge ${st === 0 || st === 'AVAILABLE' ? 'active' : st === 1 || st === 'RESERVED' ? 'reserved' : 'deactivated'}`}>
+                        {getStatusText(selectedSlot.status)}
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
+              <div className="detail-group">
+                <label>Reserved By</label>
+                <div className="detail-value">{selectedSlot.reservedBy || 'None'}</div>
+              </div>
+              <div className="detail-group" style={{gridColumn: '1 / -1'}}>
+                <label>Notes</label>
+                <div className="detail-value" style={{background: '#f8fafc', padding: '10px', borderRadius: '6px'}}>
+                  {selectedSlot.notes || 'No notes provided.'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Confirmation Modal */}
+      {statusConfirm && (
+        <div className="user-modal-overlay">
+          <div className="user-modal-content status-confirm-modal fade-in">
+            <div className="user-modal-header">
+              <h2>Confirm Status Change</h2>
+              <button className="user-modal-close" onClick={() => setStatusConfirm(null)}>&times;</button>
+            </div>
+            <div className="user-modal-body">
+              {(() => {
+                const oldSt = typeof statusConfirm.slot.status === 'string' ? statusConfirm.slot.status.toUpperCase() : statusConfirm.slot.status;
+                const newSt = typeof statusConfirm.newStatus === 'string' ? statusConfirm.newStatus.toUpperCase() : statusConfirm.newStatus;
+                return (
+                  <p>Are you sure you want to change the status of this slot from <strong className={`text-${oldSt === 0 || oldSt === 'AVAILABLE' ? 'active' : 'deactivated'}`}>{getStatusText(statusConfirm.slot.status)}</strong> to <strong className={`text-${newSt === 0 || newSt === 'AVAILABLE' ? 'active' : 'deactivated'}`}>{getStatusText(statusConfirm.newStatus)}</strong>?</p>
+                );
+              })()}
+            </div>
+            <div className="user-modal-footer">
+              <button className="btn-modal-cancel" onClick={() => setStatusConfirm(null)}>Cancel</button>
+              <button className="btn-modal-confirm" onClick={confirmStatusChange}>Confirm Change</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="user-modal-overlay">
+          <div className="user-modal-content status-confirm-modal fade-in" style={{ borderTop: '4px solid #ef4444' }}>
+            <div className="user-modal-header">
+              <h2>Delete Slot</h2>
+              <button className="user-modal-close" onClick={() => setDeleteConfirm(null)}>&times;</button>
+            </div>
+            <div className="user-modal-body">
+              <p>Are you sure you want to delete this slot? This action cannot be undone.</p>
+              <p style={{marginTop: '10px', fontSize: '0.9em', color: '#64748b'}}>Slot ID: {deleteConfirm.slotId}</p>
+            </div>
+            <div className="user-modal-footer">
+              <button className="btn-modal-cancel" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="btn-modal-confirm" style={{background: '#ef4444', color: 'white', border: 'none'}} onClick={confirmDelete}>Delete Slot</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Info / Error Modal */}
+      {infoMsg && (
+        <div className="user-modal-overlay">
+          <div className="user-modal-content fade-in" style={{ maxWidth: '400px' }}>
+            <div className="user-modal-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+              <h2 style={{ color: infoMsg.type === 'error' ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {infoMsg.type === 'error' ? '⚠️' : '✅'} {infoMsg.title}
+              </h2>
+              <button className="user-modal-close" onClick={() => setInfoMsg(null)}>&times;</button>
+            </div>
+            <div className="user-modal-body" style={{ padding: '20px', paddingTop: '10px' }}>
+              <p style={{ margin: 0, color: '#475569', lineHeight: '1.5' }}>{infoMsg.message}</p>
+            </div>
+            <div className="user-modal-footer" style={{ borderTop: 'none', justifyContent: 'flex-end', padding: '20px', paddingTop: '0' }}>
+              <button className="btn-modal-confirm" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={() => setInfoMsg(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

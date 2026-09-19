@@ -43,7 +43,7 @@ export const reservationService = {
   // Update a reservation status
   updateReservationStatus: async (id, statusData) => {
     try {
-      const response = await api.patch(`/Reservations/${id}/status`, statusData);
+      const response = await api.put(`/Reservations/${id}/status`, statusData);
       return response.data;
     } catch (error) {
       console.error('Error updating reservation status:', error);

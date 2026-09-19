@@ -17,7 +17,10 @@ import UserForm from './pages/Users/UserForm';
 import Prosumers from './pages/Prosumers/Prosumers';
 import Stations from './pages/Stations/Stations';
 import AddStation from './pages/Stations/AddStation';
+import EditStation from './pages/Stations/EditStation';
 import Slots from './pages/Slots/Slots';
+import AddSlot from './pages/Slots/AddSlot';
+import EditSlot from './pages/Slots/EditSlot';
 import Reservations from './pages/Reservations/Reservations';
 import Settings from './pages/Settings/Settings';
 
@@ -120,10 +123,37 @@ function App() {
           />
 
           <Route
+            path="/stations/edit/:id"
+            element={
+              <ProtectedRoute>
+                <EditStation />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/slots"
             element={
               <ProtectedRoute>
                 <Slots />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/slots/add"
+            element={
+              <ProtectedRoute>
+                <AddSlot />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/slots/edit/:id"
+            element={
+              <ProtectedRoute>
+                <EditSlot />
               </ProtectedRoute>
             }
           />

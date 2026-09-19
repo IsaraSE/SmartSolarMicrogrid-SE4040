@@ -261,19 +261,16 @@
   letter-spacing: 0.5px;
 }
 
-.role-admin {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
+
 
 .role-backoffice {
-  background-color: #d1fae5;
+  background-color: #e6fced;
   color: #059669;
 }
 
 .role-grid_operator {
-  background-color: #dbeafe;
-  color: #2563eb;
+  background-color: #e0f2fe;
+  color: #0284c7;
 }
 
 /* Status Badges */
@@ -451,4 +448,224 @@
   border: 1px solid #fecaca;
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+/* Redesigned Actions and Text */
+.cell-email {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-action {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.btn-view-text {
+  color: #3b82f6;
+  border-color: #bfdbfe;
+}
+.btn-view-text:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.btn-edit-text {
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+.btn-edit-text:hover {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+/* Status Button Badge */
+.status-badge-btn {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 12px;
+}
+
+.status-badge-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-chevron {
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.status-badge-btn:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.status-badge-btn.status-active {
+  background-color: #e6fced;
+  color: #16a34a;
+}
+.status-badge-btn.status-active .status-dot {
+  background-color: #22c55e;
+}
+
+.status-badge-btn.status-deactivated {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+.status-badge-btn.status-deactivated .status-dot {
+  background-color: #ef4444;
+}
+
+/* Modals */
+.user-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.user-modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.user-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.user-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+}
+.user-modal-close:hover {
+  color: #0f172a;
+}
+
+.user-modal-body {
+  padding: 24px;
+}
+
+.detail-group {
+  margin-bottom: 16px;
+}
+.detail-group:last-child {
+  margin-bottom: 0;
+}
+
+.detail-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 0.95rem;
+  color: #334155;
+  font-weight: 500;
+}
+.detail-value.text-muted {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.user-modal-footer {
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-modal-close, .btn-modal-cancel {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #475569;
+}
+.btn-modal-close:hover, .btn-modal-cancel:hover {
+  background: #f1f5f9;
+}
+
+.btn-modal-confirm {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: #10b981;
+  color: white;
+}
+.btn-modal-confirm:hover {
+  background: #059669;
+}
+
+.status-confirm-modal .user-modal-body p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.5;
+}
+.status-confirm-modal strong {
+  color: #0f172a;
+}
+.text-active {
+  color: #059669 !important;
+}
+.text-deactivated {
+  color: #dc2626 !important;
 }

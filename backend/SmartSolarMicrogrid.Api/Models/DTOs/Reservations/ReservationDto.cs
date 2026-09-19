@@ -14,9 +14,11 @@ namespace SmartSolarMicrogrid.Api.Models.DTOs.Reservations;
 public class ReservationDto
 {
     public string ReservationId { get; set; } = null!;
+    public string ReservationNumber { get; set; } = null!;
     public string ProsumerNic { get; set; } = null!;
     public string StationId { get; set; } = null!;
     public string SlotId { get; set; } = null!;
+    public string? SlotName { get; set; }
     public DateTime ScheduledStartDateTime { get; set; }
     public DateTime ScheduledEndDateTime { get; set; }
     public ReservationStatus Status { get; set; }
