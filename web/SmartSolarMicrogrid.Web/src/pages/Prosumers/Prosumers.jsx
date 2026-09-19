@@ -226,8 +226,8 @@ const Prosumers = () => {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Account Status</th>
-                <th className="th-actions">Actions</th>
+                <th style={{ textAlign: 'center' }}>Status</th>
+                <th className="th-actions" style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -252,7 +252,7 @@ const Prosumers = () => {
                       <div className="email-text" title={prosumer.email}>{prosumer.email}</div>
                     </td>
                     <td className="cell-phone">{prosumer.phone}</td>
-                    <td>
+                    <td style={{ textAlign: 'center' }}>
                       <span 
                         className={`status-badge-btn static-badge status-${prosumer.accountStatus?.toLowerCase() || 'unknown'}`} 
                         style={{ 
@@ -270,7 +270,7 @@ const Prosumers = () => {
                         {prosumer.accountStatus === 'ACTIVE' ? 'Active' : prosumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}
                       </span>
                     </td>
-                    <td className="cell-actions" style={{ display: 'flex', gap: '8px' }}>
+                    <td className="cell-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
                       <button className="review-btn" onClick={() => setSelectedProsumer(prosumer)}>
                         Review
                       </button>
@@ -375,7 +375,7 @@ const Prosumers = () => {
                 <div className="detail-card">
                   <div className="detail-icon"><FiActivity /></div>
                   <div className="detail-info">
-                    <span className="label">Account Status</span>
+                    <span className="label">Status</span>
                     <span className="value">{selectedProsumer.accountStatus === 'ACTIVE' ? 'Active' : selectedProsumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}</span>
                   </div>
                 </div>

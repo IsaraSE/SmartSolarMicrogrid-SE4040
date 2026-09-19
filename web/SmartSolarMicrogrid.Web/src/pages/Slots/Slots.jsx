@@ -307,9 +307,9 @@ const Slots = () => {
                 <th>Slot Name</th>
                 <th>Start Date & Time</th>
                 <th>End Date & Time</th>
-                <th>Status</th>
-                <th>Reserved By</th>
-                <th className="actions-column">Actions</th>
+                <th style={{textAlign: 'center'}}>Status</th>
+                <th style={{textAlign: 'center'}}>Reserved By</th>
+                <th className="actions-column" style={{textAlign: 'center'}}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -329,7 +329,7 @@ const Slots = () => {
                     <td className="font-semibold">{slot.slotName || 'Unknown'}</td>
                     <td>{formatSlotTime(slot.startDateTime)}</td>
                     <td>{formatSlotTime(slot.endDateTime)}</td>
-                    <td>
+                    <td style={{textAlign: 'center'}}>
                       <span 
                         style={{ 
                           display: 'inline-flex', 
@@ -348,10 +348,10 @@ const Slots = () => {
                         {getStatusText(slot.status)}
                       </span>
                     </td>
-                    <td className="text-secondary">
+                    <td className="text-secondary" style={{textAlign: 'center'}}>
                       {slot.reservedBy || '-'}
                     </td>
-                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
                       <button className="review-btn" onClick={() => setSelectedSlot(slot)}>
                         Review
                       </button>

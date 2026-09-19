@@ -349,8 +349,8 @@ const Stations = () => {
                 <th>Capacity</th>
                 <th style={{textAlign: 'center'}}>Battery Slots</th>
                 <th>Operating Hours</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th style={{textAlign: 'center'}}>Status</th>
+                <th style={{textAlign: 'center'}}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -366,7 +366,7 @@ const Stations = () => {
                     <td>{station.capacity} MW</td>
                     <td style={{textAlign: 'center'}}>{station.batterySlotCount}</td>
                     <td>{station.operatingStartTime} - {station.operatingEndTime}</td>
-                    <td>
+                    <td style={{textAlign: 'center'}}>
                       <span 
                         className={`status-badge-btn static-badge status-${(station.status === 'ACTIVE' || station.status === 0) ? 'active' : 'deactivated'}`} 
                         style={{ 
@@ -384,7 +384,7 @@ const Stations = () => {
                         {(station.status === 'ACTIVE' || station.status === 0) ? 'Active' : 'Deactivated'}
                       </span>
                     </td>
-                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
                       <button className="review-btn" onClick={() => setSelectedStation(station)}>Review</button>
                       {user?.role === 'BACKOFFICE' && (
                         <>

@@ -453,8 +453,8 @@ const Dashboard = () => {
                 <th>Prosumer Name</th>
                 <th>Email</th>
                 <th>Registered At</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th style={{textAlign: 'center'}}>Status</th>
+                <th style={{textAlign: 'center'}}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -473,11 +473,11 @@ const Dashboard = () => {
                     <td style={{fontWeight: '500', color: '#1e293b'}}>{pro.name}</td>
                     <td>{pro.email}</td>
                     <td>{pro.dateStr}</td>
-                    <td>
+                    <td style={{textAlign: 'center'}}>
                       <span className="badge pending-badge">Pending</span>
                     </td>
                     <td>
-                      <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
                         <button className="review-btn" onClick={() => setReviewModal({ isOpen: true, prosumer: pro })}>Review</button>
                         <button className="activate-btn" onClick={() => setConfirmModal({ isOpen: true, prosumer: pro })}>Activate</button>
                       </div>

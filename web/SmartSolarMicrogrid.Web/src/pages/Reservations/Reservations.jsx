@@ -300,10 +300,10 @@ const Reservations = () => {
                 <th>
                   <div className="th-content">End Date & Time</div>
                 </th>
-                <th>
-                  <div className="th-content">Status</div>
+                <th style={{textAlign: 'center'}}>
+                  <div className="th-content" style={{justifyContent: 'center'}}>Status</div>
                 </th>
-                <th>Actions</th>
+                <th style={{textAlign: 'center'}}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -339,11 +339,11 @@ const Reservations = () => {
                         <span className="time-text">{formatTime(res.scheduledEndDateTime)}</span>
                       </div>
                     </td>
-                    <td>
+                    <td style={{textAlign: 'center'}}>
                       {mapStatusToBadge(res.status)}
                     </td>
                     <td>
-                      <div className="table-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div className="table-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
                         <button className="review-btn" onClick={() => { setSelectedReservation(res); setShowViewModal(true); }}>Review</button>
                         {(res.status === 0 || res.status === 'PENDING') && user?.role === 'GRID_OPERATOR' && (
                           <button className="activate-btn" onClick={() => setConfirmModal({ isOpen: true, type: 'APPROVE', reservationId: res.reservationId })}>Approve</button>

@@ -317,7 +317,7 @@ const UserForm = () => {
             </div>
 
             <div className="form-group">
-              <label>Account Status <span className="required">*</span></label>
+              <label>Status <span className="required">*</span></label>
               <div className="input-wrapper select-wrapper">
                 <span className={`form-status-dot form-status-${formData.accountStatus?.toLowerCase()}`}></span>
                 <select 

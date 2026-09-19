@@ -202,8 +202,8 @@ const Users = () => {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Role</th>
-                <th>Account Status</th>
-                <th className="th-actions">Actions</th>
+                <th style={{ textAlign: 'center' }}>Status</th>
+                <th className="th-actions" style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -234,12 +234,12 @@ const Users = () => {
                         {user.role}
                       </span>
                     </td>
-                    <td>
+                    <td style={{ textAlign: 'center' }}>
                       <span className={`status-badge-btn static-badge status-${user.accountStatus?.toLowerCase() || 'unknown'}`} style={{ display: 'inline-flex', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: 'none', cursor: 'default', backgroundColor: user.accountStatus === 'ACTIVE' ? '#dcfce7' : '#fee2e2', color: user.accountStatus === 'ACTIVE' ? '#166534' : '#991b1b' }}>
                         {user.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}
                       </span>
                     </td>
-                    <td className="cell-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', position: 'relative', whiteSpace: 'nowrap', minWidth: 'max-content' }}>
+                    <td className="cell-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', position: 'relative', whiteSpace: 'nowrap', minWidth: 'max-content' }}>
                       <button className="review-btn" onClick={() => setViewUser(user)}>Review</button>
                       
                       {user.accountStatus === 'ACTIVE' ? (
@@ -371,7 +371,7 @@ const Users = () => {
                 <div className="detail-card">
                   <div className="detail-icon"><FiActivity /></div>
                   <div className="detail-info">
-                    <span className="label">Account Status</span>
+                    <span className="label">Status</span>
                     <span className="value">{viewUser.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</span>
                   </div>
                 </div>
