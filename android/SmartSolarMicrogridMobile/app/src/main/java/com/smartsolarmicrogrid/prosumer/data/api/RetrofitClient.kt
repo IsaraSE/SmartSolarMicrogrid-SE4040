@@ -9,7 +9,7 @@ object RetrofitClient {
 
     // TODO: replace with your team's actual hosted/local API base URL.
     // Emulator note: 10.0.2.2 is how the Android emulator reaches your PC's "localhost".
-    private const val BASE_URL = "http://10.0.2.2:5000/"
+    private const val BASE_URL = "http://10.0.2.2:5235/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
