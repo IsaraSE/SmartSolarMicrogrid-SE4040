@@ -1,3 +1,11 @@
+/*
+ * NavGraph.kt
+ * Smart Solar Microgrid Trading System - Prosumer Mobile Application
+ *
+ * Single navigation graph for the Prosumer app. Shared ViewModels are scoped to
+ * a parent back stack entry so the selected station, slot and reservation stay
+ * available across the booking screens.
+ */
 package com.smartsolarmicrogrid.prosumer.ui.navigation
 
 import androidx.compose.runtime.Composable
@@ -19,7 +27,6 @@ import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingDetailsScreen
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingListScreen
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingListViewModel
 import com.smartsolarmicrogrid.prosumer.ui.dashboard.DashboardScreen
-import com.smartsolarmicrogrid.prosumer.ui.home.HomeScreen
 import com.smartsolarmicrogrid.prosumer.ui.qr.BookingQrScreen
 import com.smartsolarmicrogrid.prosumer.ui.profile.EditProfileScreen
 import com.smartsolarmicrogrid.prosumer.ui.profile.ProfileScreen
@@ -34,7 +41,6 @@ const val SOURCE_LIST = "list"
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
-    object Home : Screen("home")
     object Profile : Screen("profile")
     object EditProfile : Screen("edit_profile")
     object Stations : Screen("stations")
@@ -57,12 +63,14 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun NavGraph(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = Screen.Home.route) {
+    // TODO: set back to Screen.Login.route before final submission
+    NavHost(navController = navController, startDestination = Screen.Dashboard.route) {
 
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
+                    // Prosumers land straight on the dashboard after signing in.
+                    navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
@@ -77,25 +85,18 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        composable(Screen.Home.route) {
-            HomeScreen(
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onNavigateToStations = { navController.navigate(Screen.Stations.route) },
-                onNavigateToBookings = { navController.navigate(Screen.BookingList.route) },
-                onNavigateToDashboard = { navController.navigate(Screen.Dashboard.route) }
-            )
-        }
-
         composable(Screen.Profile.route) {
-            ProfileScreen(
-                onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
-                onDeactivated = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-                onBack = { navController.popBackStack() }
-            )
+            WithBottomBar(navController, Screen.Profile.route) {
+                ProfileScreen(
+                    onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
+                    onDeactivated = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
 
         composable(Screen.EditProfile.route) {
@@ -107,14 +108,16 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
 
         composable(Screen.Stations.route) {
             val stationViewModel: StationViewModel = viewModel()
-            StationListScreen(
-                onStationSelected = { station ->
-                    stationViewModel.selectStationAndLoadSlots(station)
-                    navController.navigate(Screen.Slots.route)
-                },
-                onBack = { navController.popBackStack() },
-                stationViewModel = stationViewModel
-            )
+            WithBottomBar(navController, Screen.Stations.route) {
+                StationListScreen(
+                    onStationSelected = { station ->
+                        stationViewModel.selectStationAndLoadSlots(station)
+                        navController.navigate(Screen.Slots.route)
+                    },
+                    onBack = { navController.popBackStack() },
+                    stationViewModel = stationViewModel
+                )
+            }
         }
 
         composable(Screen.Slots.route) { backStackEntry ->
@@ -164,8 +167,8 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                 BookingSummaryScreen(
                     reservation = state.reservation,
                     onDone = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) { inclusive = true }
+                        navController.navigate(Screen.BookingList.route) {
+                            popUpTo(Screen.Dashboard.route)
                         }
                     },
                     onModify = {
@@ -179,24 +182,28 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
         }
 
         composable(Screen.Dashboard.route) {
-            DashboardScreen(
-                onViewAllBookings = { navController.navigate(Screen.BookingList.route) },
-                onBack = { navController.popBackStack() }
-            )
+            WithBottomBar(navController, Screen.Dashboard.route) {
+                DashboardScreen(
+                    onViewAllBookings = { navController.navigate(Screen.BookingList.route) },
+                    onBack = null
+                )
+            }
         }
 
         // ---------- Booking views: Current / Pending / History + search ----------
 
         composable(Screen.BookingList.route) { backStackEntry ->
             val bookingListViewModel: BookingListViewModel = viewModel(backStackEntry)
-            BookingListScreen(
-                onBookingSelected = { reservation ->
-                    bookingListViewModel.selectReservation(reservation)
-                    navController.navigate(Screen.BookingDetails.route)
-                },
-                onBack = { navController.popBackStack() },
-                bookingListViewModel = bookingListViewModel
-            )
+            WithBottomBar(navController, Screen.BookingList.route) {
+                BookingListScreen(
+                    onBookingSelected = { reservation ->
+                        bookingListViewModel.selectReservation(reservation)
+                        navController.navigate(Screen.BookingDetails.route)
+                    },
+                    onBack = { navController.popBackStack() },
+                    bookingListViewModel = bookingListViewModel
+                )
+            }
         }
 
         composable(Screen.BookingDetails.route) { backStackEntry ->
@@ -315,8 +322,8 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                     CancelBookingScreen(
                         reservation = state.reservation,
                         onCancelled = {
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Home.route) { inclusive = true }
+                            navController.navigate(Screen.BookingList.route) {
+                                popUpTo(Screen.Dashboard.route)
                             }
                         },
                         onBack = { navController.popBackStack() },

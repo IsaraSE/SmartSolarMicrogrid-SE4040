@@ -38,7 +38,7 @@ private val SurfaceGray = Color(0xFFF5F5F5)
 @Composable
 fun DashboardScreen(
     onViewAllBookings: () -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,   // null hides the back arrow (dashboard is a bottom-bar tab)
     dashboardViewModel: DashboardViewModel = viewModel()
 ) {
     val state = dashboardViewModel.dashboardState
@@ -67,18 +67,20 @@ fun DashboardScreen(
                     .padding(horizontal = 16.dp, vertical = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                if (onBack != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
                     }
+                    Spacer(modifier = Modifier.width(12.dp))
                 }
-                Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Dashboard", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     Text(
