@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight, FiCheck, FiHash, FiUser, FiMapPin, FiActivity, FiClock, FiCheckCircle, FiXCircle, FiGrid, FiCopy } from 'react-icons/fi';
 import { reservationService } from '../../services/reservationService';
 import { stationService } from '../../services/stationService';
@@ -12,7 +13,10 @@ const Reservations = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStation, setFilterStation] = useState('all');
-  const [activeTab, setActiveTab] = useState('ALL');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialTab = queryParams.get('tab') || 'ALL';
+  const [activeTab, setActiveTab] = useState(initialTab);
   
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -187,15 +191,20 @@ const Reservations = () => {
         return false;
       }
     }
-
     return true;
   });
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, filterStation, searchQuery]);
+
+  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
 
   // Pagination Calculations
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredReservations.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage);
 
   return (
     <div className="reservations-container fade-in">
@@ -241,7 +250,8 @@ const Reservations = () => {
                   border: '1px solid #e2e8f0', 
                   outline: 'none', 
                   width: '260px', 
-                  fontSize: '15px' 
+                  fontSize: '15px',
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -262,7 +272,8 @@ const Reservations = () => {
                   fontSize: '15px',
                   fontWeight: '600',
                   color: '#0f172a',
-                  width: '260px' 
+                  width: '260px',
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value="all">All Stations</option>
@@ -349,7 +360,7 @@ const Reservations = () => {
                           <button className="activate-btn" onClick={() => setConfirmModal({ isOpen: true, type: 'APPROVE', reservationId: res.reservationId })}>Approve</button>
                         )}
                         {res.status !== 2 && res.status !== 'CANCELLED' && res.status !== 3 && res.status !== 'COMPLETED' && user?.role === 'GRID_OPERATOR' && (
-                          <button className="deactivate-btn" onClick={() => setConfirmModal({ isOpen: true, type: 'CANCEL', reservationId: res.reservationId })}>Cancel Res</button>
+                          <button className="deactivate-btn" onClick={() => setConfirmModal({ isOpen: true, type: 'CANCEL', reservationId: res.reservationId })}>Cancel</button>
                         )}
                       </div>
                     </td>
