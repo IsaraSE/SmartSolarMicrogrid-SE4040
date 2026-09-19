@@ -9,6 +9,7 @@
 
 using SmartSolarMicrogrid.Api.Exceptions;
 using SmartSolarMicrogrid.Api.Models.DTOs;
+using SmartSolarMicrogrid.Api.Models.DTOs.Users;
 using SmartSolarMicrogrid.Api.Models.Entities;
 using SmartSolarMicrogrid.Api.Models.Enums;
 using SmartSolarMicrogrid.Api.Repositories;
@@ -106,11 +107,11 @@ public class UserService : IUserService
         return MapToDto(user);
     }
 
-    private static UserDto MapToDto(UserDetail user)
+    private UserDto MapToDto(UserDetail user)
     {
         return new UserDto
         {
-            UserId = user.UserId!,
+            UserId = user.UserId,
             Nic = user.Nic,
             FullName = user.FullName,
             Email = user.Email,
@@ -121,5 +122,64 @@ public class UserService : IUserService
             AdditionalInfo = user.AdditionalInfo,
             CreatedAt = user.CreatedAt
         };
+    }
+
+    public async Task<UserDto?> UpdateProfileAsync(string userId, UpdateProfileDto request)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return null;
+        }
+
+        var errors = new Dictionary<string, string[]>();
+
+        var existingEmail = await _userRepository.GetByEmailAsync(request.Email);
+        if (existingEmail != null && existingEmail.UserId != userId)
+        {
+            errors.Add("Email", new[] { "This email is already taken by another account." });
+        }
+
+        var existingPhone = await _userRepository.GetByPhoneAsync(request.Phone);
+        if (existingPhone != null && existingPhone.UserId != userId)
+        {
+            errors.Add("Phone", new[] { "This phone number is already taken by another account." });
+        }
+
+        if (errors.Any())
+        {
+            throw new AppValidationException(errors);
+        }
+
+        user.FullName = request.FullName;
+        user.Email = request.Email;
+        user.Phone = request.Phone;
+        user.Address = request.Address;
+
+        await _userRepository.UpdateAsync(userId, user);
+        return MapToDto(user);
+    }
+
+    public async Task<bool> ChangePasswordAsync(string userId, ChangePasswordDto request)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return false;
+        }
+
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash);
+        if (!isPasswordValid)
+        {
+            throw new AppValidationException(new Dictionary<string, string[]>
+            {
+                { "CurrentPassword", new[] { "Current password is incorrect." } }
+            });
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _userRepository.UpdateAsync(userId, user);
+
+        return true;
     }
 }
