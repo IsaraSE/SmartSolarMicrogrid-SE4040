@@ -4,7 +4,7 @@ import {
   FiClock, FiCalendar, FiMapPin, FiGrid, FiUsers, FiZap, 
   FiCheckCircle, FiSlash, FiEdit2, FiMoreHorizontal, FiMoreVertical, FiRefreshCcw, 
   FiPlus, FiChevronLeft, FiChevronRight, FiChevronsLeft, FiChevronsRight,
-  FiEye, FiTrash2, FiList, FiPlay
+  FiEye, FiTrash2, FiList, FiPlay, FiX, FiUser, FiActivity, FiFileText
 } from 'react-icons/fi';
 
 import { stationService } from '../../services/stationService';
@@ -119,6 +119,12 @@ const Slots = () => {
     localStorage.setItem('lastSelectedStationId', stationId);
     fetchSlotsForStation(stationId);
     setActiveTab('ALL');
+  };
+
+  const getStationName = (stationId) => {
+    if (!stationId) return 'All Stations';
+    const station = stations.find(s => s.stationId === stationId);
+    return station ? station.stationName : 'All Stations';
   };
 
   const formatSlotTime = (dateString) => {
@@ -438,76 +444,96 @@ const Slots = () => {
 
       {/* --- Modals --- */}
       
-      {/* View Slot Modal */}
+      {/* View Slot Modal (Premium Design) */}
       {selectedSlot && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in">
-            <div className="user-modal-header">
-              <h2>Slot Details</h2>
-              <button className="user-modal-close" onClick={() => setSelectedSlot(null)}>&times;</button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <FiCalendar />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>Slot Details</h2>
+                <p>View detailed information about this time slot.</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setSelectedSlot(null)}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiGrid /></div>
-                  <div className="detail-info">
-                    <span className="label">Slot Name</span>
-                    <span className="value">{selectedSlot.slotName || 'Unknown'}</span>
-                  </div>
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiGrid /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Slot Name</span>
+                  <span className="premium-info-value">{selectedSlot.slotName || 'Unknown'}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiMapPin /></div>
-                  <div className="detail-info">
-                    <span className="label">Station</span>
-                    <span className="value">{selectedStation?.stationName}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Station</span>
+                  <span className="premium-info-value">{getStationName(selectedSlot.stationId)}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiCalendar /></div>
-                  <div className="detail-info">
-                    <span className="label">Start Date & Time</span>
-                    <span className="value">{formatSlotTime(selectedSlot.startDateTime)}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Start Date & Time</span>
+                  <span className="premium-info-value">{formatSlotTime(selectedSlot.startDateTime)}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiCalendar /></div>
-                  <div className="detail-info">
-                    <span className="label">End Date & Time</span>
-                    <span className="value">{formatSlotTime(selectedSlot.endDateTime)}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">End Date & Time</span>
+                  <span className="premium-info-value">{formatSlotTime(selectedSlot.endDateTime)}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiClock /></div>
-                  <div className="detail-info">
-                    <span className="label">Duration</span>
-                    <span className="value">{Math.round((new Date(selectedSlot.endDateTime) - new Date(selectedSlot.startDateTime)) / (1000 * 60 * 60))} hour(s)</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiClock /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Duration</span>
+                  <span className="premium-info-value">{Math.round((new Date(selectedSlot.endDateTime) - new Date(selectedSlot.startDateTime)) / (1000 * 60 * 60))} hour(s)</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiCheckCircle /></div>
-                  <div className="detail-info">
-                    <span className="label">Status</span>
-                    <span className="value">{getStatusText(selectedSlot.status)}</span>
-                  </div>
-                </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiUsers /></div>
-                  <div className="detail-info">
-                    <span className="label">Reserved By</span>
-                    <span className="value">{selectedSlot.reservedBy || 'None'}</span>
-                  </div>
-                </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiEdit2 /></div>
-                  <div className="detail-info">
-                    <span className="label">Notes</span>
-                    <span className="value">{selectedSlot.notes || 'No notes provided.'}</span>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    <span className={`status-badge-btn static-badge status-${selectedSlot.status === 'AVAILABLE' || selectedSlot.status === 0 ? 'available' : selectedSlot.status === 'RESERVED' || selectedSlot.status === 1 ? 'reserved' : 'unavailable'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: (selectedSlot.status === 'AVAILABLE' || selectedSlot.status === 0) ? '#dcfce7' : (selectedSlot.status === 'RESERVED' || selectedSlot.status === 1) ? '#fef3c7' : '#fee2e2', color: (selectedSlot.status === 'AVAILABLE' || selectedSlot.status === 0) ? '#166534' : (selectedSlot.status === 'RESERVED' || selectedSlot.status === 1) ? '#b45309' : '#991b1b' }}>
+                      <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
+                      {getStatusText(selectedSlot.status)}
+                    </span>
                   </div>
                 </div>
               </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiUser /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Reserved By</span>
+                  <span className="premium-info-value">{selectedSlot.reservedBy || 'None'}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiFileText /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Notes</span>
+                  <span className="premium-info-value">{selectedSlot.notes || 'No notes provided.'}</span>
+                </div>
+              </div>
             </div>
-            <div className="user-modal-footer">
-              <button className="btn-modal-close" onClick={() => setSelectedSlot(null)}>Close</button>
+            
+            <div className="premium-modal-footer">
+              <button className="btn-premium-close" onClick={() => setSelectedSlot(null)}>Close</button>
             </div>
           </div>
         </div>

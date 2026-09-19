@@ -552,90 +552,88 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Review Modal */}
+      {/* Review Modal (Premium Design) */}
       {reviewModal.isOpen && reviewModal.prosumer && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content review-modal" style={{ maxWidth: '600px' }}>
-            <div className="user-modal-header">
-              <div>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <LuUsers />
+              </div>
+              <div className="premium-modal-title-group">
                 <h2>Prosumer Details</h2>
-                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-                  View detailed information about this prosumer account.
-                </p>
+                <p>View detailed information about this prosumer account.</p>
               </div>
-              <button className="user-modal-close" onClick={() => setReviewModal({ isOpen: false, prosumer: null })}><FiX /></button>
+              <button className="premium-modal-close-btn" onClick={() => setReviewModal({ isOpen: false, prosumer: null })}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body" style={{ background: '#f8fafc', padding: '24px' }}>
-              
-              <div className="review-prosumer-header" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-                <div style={{ width: '70px', height: '70px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', fontSize: '2rem' }}>
-                  <LuUsers />
-                </div>
-                <div>
-                  <h3 style={{ margin: '0 0 4px', fontSize: '1.25rem', color: '#0f172a' }}>{reviewModal.prosumer.name}</h3>
-                  <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '500', display: 'inline-block', borderBottom: '2px solid #10b981', paddingBottom: '2px' }}>Registered Prosumer</span>
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><LuUser /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Full Name</span>
+                  <span className="premium-info-value">{reviewModal.prosumer.name}</span>
                 </div>
               </div>
-
-              <div className="review-details-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <div className="detail-card">
-                  <div className="detail-icon"><LuUser /></div>
-                  <div className="detail-info">
-                    <span className="label">FULL NAME</span>
-                    <span className="value">{reviewModal.prosumer.name}</span>
-                  </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><LuCreditCard /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">NIC Number</span>
+                  <span className="premium-info-value">{reviewModal.prosumer.nic}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><LuMail /></div>
-                  <div className="detail-info">
-                    <span className="label">EMAIL ADDRESS</span>
-                    <span className="value">{reviewModal.prosumer.email}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><LuMail /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Email Address</span>
+                  <span className="premium-info-value">{reviewModal.prosumer.email}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><LuPhone /></div>
-                  <div className="detail-info">
-                    <span className="label">PHONE NUMBER</span>
-                    <span className="value">{reviewModal.prosumer.phone}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><LuPhone /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Phone Number</span>
+                  <span className="premium-info-value">{reviewModal.prosumer.phone}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><LuCreditCard /></div>
-                  <div className="detail-info">
-                    <span className="label">NIC NUMBER</span>
-                    <span className="value">{reviewModal.prosumer.nic}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><LuMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Address</span>
+                  <span className="premium-info-value">{reviewModal.prosumer.address}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><LuShieldCheck /></div>
-                  <div className="detail-info">
-                    <span className="label">ACCOUNT STATUS</span>
-                    <span className="value" style={{ display: 'flex', alignItems: 'center' }}>
-                      <span className="badge pending-badge" style={{ marginTop: '2px', display: 'flex', alignItems: 'center', padding: '4px 12px', borderRadius: '20px' }}>
-                        <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#ca8a04', borderRadius: '50%', marginRight: '6px' }}></span>
-                        {reviewModal.prosumer.status}
-                      </span>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><LuShieldCheck /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    <span className="status-badge-btn static-badge status-pending" style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: '#fef3c7', color: '#b45309' }}>
+                      <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
+                      {reviewModal.prosumer.status}
                     </span>
                   </div>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><LuMapPin /></div>
-                  <div className="detail-info">
-                    <span className="label">ADDRESS</span>
-                    <span className="value">{reviewModal.prosumer.address}</span>
-                  </div>
-                </div>
-                <div className="detail-card" style={{ gridColumn: '1 / -1' }}>
-                  <div className="detail-icon"><LuCalendar /></div>
-                  <div className="detail-info">
-                    <span className="label">CREATED AT</span>
-                    <span className="value">{reviewModal.prosumer.createdAtStr}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><LuCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Created At</span>
+                  <span className="premium-info-value">{reviewModal.prosumer.createdAtStr}</span>
                 </div>
               </div>
             </div>
-            <div className="user-modal-footer" style={{ padding: '20px 24px', background: 'white', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #f1f5f9' }}>
-              <button className="btn-modal-cancel" onClick={() => setReviewModal({ isOpen: false, prosumer: null })}>Close</button>
+            
+            <div className="premium-modal-footer">
+              <button className="btn-premium-close" onClick={() => setReviewModal({ isOpen: false, prosumer: null })}>Close</button>
             </div>
           </div>
         </div>

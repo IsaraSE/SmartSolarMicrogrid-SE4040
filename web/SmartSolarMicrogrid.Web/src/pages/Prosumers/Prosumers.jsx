@@ -327,69 +327,88 @@ const Prosumers = () => {
         </div>
       </div>
 
-      {/* View Prosumer Modal */}
+      {/* View Prosumer Modal (Premium Design) */}
       {selectedProsumer && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in">
-            <div className="user-modal-header">
-              <h2>Prosumer Details</h2>
-              <button className="user-modal-close" onClick={() => setSelectedProsumer(null)}>&times;</button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <FiUsers />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>Prosumer Details</h2>
+                <p>View detailed information about this prosumer.</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setSelectedProsumer(null)}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiUser /></div>
-                  <div className="detail-info">
-                    <span className="label">Full Name</span>
-                    <span className="value">{selectedProsumer.fullName}</span>
-                  </div>
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiUser /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Full Name</span>
+                  <span className="premium-info-value">{selectedProsumer.fullName}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiCreditCard /></div>
-                  <div className="detail-info">
-                    <span className="label">NIC Number</span>
-                    <span className="value">{selectedProsumer.nic}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCreditCard /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">NIC Number</span>
+                  <span className="premium-info-value">{selectedProsumer.nic}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiMail /></div>
-                  <div className="detail-info">
-                    <span className="label">Email Address</span>
-                    <span className="value">{selectedProsumer.email}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiMail /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Email Address</span>
+                  <span className="premium-info-value">{selectedProsumer.email}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiPhone /></div>
-                  <div className="detail-info">
-                    <span className="label">Phone Number</span>
-                    <span className="value">{selectedProsumer.phone}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiPhone /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Phone Number</span>
+                  <span className="premium-info-value">{selectedProsumer.phone}</span>
                 </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiMapPin /></div>
-                  <div className="detail-info">
-                    <span className="label">Address</span>
-                    <span className="value">{selectedProsumer.address || 'None'}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Address</span>
+                  <span className="premium-info-value">{selectedProsumer.address || 'Colombo'}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiActivity /></div>
-                  <div className="detail-info">
-                    <span className="label">Status</span>
-                    <span className="value">{selectedProsumer.accountStatus === 'ACTIVE' ? 'Active' : selectedProsumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}</span>
-                  </div>
-                </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiCalendar /></div>
-                  <div className="detail-info">
-                    <span className="label">Created At</span>
-                    <span className="value">{selectedProsumer.createdAt ? new Date(selectedProsumer.createdAt).toLocaleString() : 'N/A'}</span>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    <span className={`status-badge-btn static-badge status-${selectedProsumer.accountStatus?.toLowerCase() || 'unknown'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: (selectedProsumer.accountStatus === 'ACTIVE' || selectedProsumer.accountStatus === 1) ? '#dcfce7' : (selectedProsumer.accountStatus === 'PENDING' || selectedProsumer.accountStatus === 0) ? '#fef3c7' : '#fee2e2', color: (selectedProsumer.accountStatus === 'ACTIVE' || selectedProsumer.accountStatus === 1) ? '#166534' : (selectedProsumer.accountStatus === 'PENDING' || selectedProsumer.accountStatus === 0) ? '#b45309' : '#991b1b' }}>
+                      <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
+                      {(selectedProsumer.accountStatus === 'ACTIVE' || selectedProsumer.accountStatus === 1) ? 'Active' : (selectedProsumer.accountStatus === 'PENDING' || selectedProsumer.accountStatus === 0) ? 'Pending' : 'Deactivated'}
+                    </span>
                   </div>
                 </div>
               </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Created At</span>
+                  <span className="premium-info-value">{selectedProsumer.createdAt ? new Date(selectedProsumer.createdAt).toLocaleString() : 'N/A'}</span>
+                </div>
+              </div>
             </div>
-            <div className="user-modal-footer">
-              <button className="btn-modal-close" onClick={() => setSelectedProsumer(null)}>Close</button>
+            
+            <div className="premium-modal-footer">
+              <button className="btn-premium-close" onClick={() => setSelectedProsumer(null)}>Close</button>
             </div>
           </div>
         </div>

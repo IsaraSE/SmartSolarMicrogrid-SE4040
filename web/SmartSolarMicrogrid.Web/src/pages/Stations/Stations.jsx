@@ -22,7 +22,9 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiActivity,
-  FiPlus
+  FiPlus,
+  FiX,
+  FiCopy
 } from 'react-icons/fi';
 import { 
   PieChart, 
@@ -433,76 +435,105 @@ const Stations = () => {
         </div>
       </div>
 
-      {/* View Station Modal */}
+      {/* View Station Modal (Premium Design) */}
       {selectedStation && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in">
-            <div className="user-modal-header">
-              <h2>Station Details</h2>
-              <button className="user-modal-close" onClick={() => setSelectedStation(null)}>&times;</button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <PiSunLight />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>Station Details</h2>
+                <p>View detailed information about this solar station.</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setSelectedStation(null)}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiHome /></div>
-                  <div className="detail-info">
-                    <span className="label">Station Name</span>
-                    <span className="value">{selectedStation.stationName}</span>
-                  </div>
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiHome /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Station Name</span>
+                  <span className="premium-info-value">{selectedStation.stationName}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiHash /></div>
-                  <div className="detail-info">
-                    <span className="label">Station ID</span>
-                    <span className="value" style={{ fontSize: '0.8rem' }}>{selectedStation.stationId}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiHash /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Station ID</span>
+                  <span className="premium-info-value text-muted">
+                    {selectedStation.stationId}
+                    <button style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => navigator.clipboard.writeText(selectedStation.stationId)} title="Copy ID">
+                      <FiCopy />
+                    </button>
+                  </span>
                 </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiMapPin /></div>
-                  <div className="detail-info">
-                    <span className="label">Address</span>
-                    <span className="value">{selectedStation.address}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Address</span>
+                  <span className="premium-info-value">{selectedStation.address}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiPower /></div>
-                  <div className="detail-info">
-                    <span className="label">Capacity</span>
-                    <span className="value">{selectedStation.capacity} MW</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiPower /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Capacity</span>
+                  <span className="premium-info-value">{selectedStation.capacity} MW</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiBattery /></div>
-                  <div className="detail-info">
-                    <span className="label">Battery Slots</span>
-                    <span className="value">{selectedStation.batterySlotCount}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiBattery /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Battery Slots</span>
+                  <span className="premium-info-value">{selectedStation.batterySlotCount}</span>
                 </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiClock /></div>
-                  <div className="detail-info">
-                    <span className="label">Operating Hours</span>
-                    <span className="value">{selectedStation.operatingStartTime} - {selectedStation.operatingEndTime}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiClock /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Operating Hours</span>
+                  <span className="premium-info-value">{selectedStation.operatingStartTime} - {selectedStation.operatingEndTime}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiActivity /></div>
-                  <div className="detail-info">
-                    <span className="label">Status</span>
-                    <span className="value">{selectedStation.status === 'ACTIVE' || selectedStation.status === 0 ? 'Active' : 'Deactivated'}</span>
-                  </div>
-                </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiFileText /></div>
-                  <div className="detail-info">
-                    <span className="label">Description</span>
-                    <span className="value">{selectedStation.description || 'None'}</span>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    <span className={`status-badge-btn static-badge status-${selectedStation.status === 'ACTIVE' || selectedStation.status === 0 ? 'active' : 'inactive'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: (selectedStation.status === 'ACTIVE' || selectedStation.status === 0) ? '#dcfce7' : '#fee2e2', color: (selectedStation.status === 'ACTIVE' || selectedStation.status === 0) ? '#166534' : '#991b1b' }}>
+                      <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
+                      {(selectedStation.status === 'ACTIVE' || selectedStation.status === 0) ? 'Active' : 'Deactivated'}
+                    </span>
                   </div>
                 </div>
               </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiFileText /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Description</span>
+                  <span className="premium-info-value">{selectedStation.description || 'None'}</span>
+                </div>
+              </div>
             </div>
-            <div className="user-modal-footer">
-              <button className="btn-modal-close" onClick={() => setSelectedStation(null)}>Close</button>
+            
+            <div className="premium-modal-footer has-info">
+              <div className="premium-footer-info">
+                <PiSunLight style={{ fontSize: '18px' }} />
+                <span>HelioGrid - Smart Energy Platform</span>
+              </div>
+              <button className="btn-premium-close" onClick={() => setSelectedStation(null)}>Close</button>
             </div>
           </div>
         </div>

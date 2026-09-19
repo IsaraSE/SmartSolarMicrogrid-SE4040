@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiRefreshCw, FiPlus, FiEdit2, FiChevronDown, FiUser, FiMail, FiPhone, FiShield, FiActivity, FiMapPin, FiFileText, FiCalendar, FiUserCheck, FiUserX, FiHash, FiMoreVertical } from 'react-icons/fi';
+import { FiSearch, FiRefreshCw, FiPlus, FiEdit2, FiChevronDown, FiUser, FiMail, FiPhone, FiShield, FiActivity, FiMapPin, FiFileText, FiCalendar, FiUserCheck, FiUserX, FiHash, FiMoreVertical, FiX } from 'react-icons/fi';
 import userService from '../../services/userService';
 import './Users.css';
 
@@ -330,83 +330,104 @@ const Users = () => {
         </div>
       </div>
 
-      {/* View User Modal */}
+      {/* View User Modal (Premium Design) */}
       {viewUser && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in">
-            <div className="user-modal-header">
-              <h2>User Details</h2>
-              <button className="user-modal-close" onClick={() => setViewUser(null)}>&times;</button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <FiUser />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>User Details</h2>
+                <p>View detailed information about this user.</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setViewUser(null)}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiUser /></div>
-                  <div className="detail-info">
-                    <span className="label">Full Name</span>
-                    <span className="value">{viewUser.fullName}</span>
-                  </div>
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiUser /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Full Name</span>
+                  <span className="premium-info-value">{viewUser.fullName}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiMail /></div>
-                  <div className="detail-info">
-                    <span className="label">Email Address</span>
-                    <span className="value">{viewUser.email}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiMail /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Email Address</span>
+                  <span className="premium-info-value">{viewUser.email}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiPhone /></div>
-                  <div className="detail-info">
-                    <span className="label">Phone Number</span>
-                    <span className="value">{viewUser.phone}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiPhone /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Phone Number</span>
+                  <span className="premium-info-value">{viewUser.phone}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiShield /></div>
-                  <div className="detail-info">
-                    <span className="label">Role</span>
-                    <span className="value">{viewUser.role}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiShield /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Role</span>
+                  <span className="premium-info-value">{viewUser.role}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiActivity /></div>
-                  <div className="detail-info">
-                    <span className="label">Status</span>
-                    <span className="value">{viewUser.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</span>
-                  </div>
-                </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiHash /></div>
-                  <div className="detail-info">
-                    <span className="label">User ID</span>
-                    <span className="value text-muted" style={{ fontSize: '0.8rem' }}>{viewUser.userId}</span>
-                  </div>
-                </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiMapPin /></div>
-                  <div className="detail-info">
-                    <span className="label">Address</span>
-                    <span className="value">{viewUser.address || 'None'}</span>
-                  </div>
-                </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiFileText /></div>
-                  <div className="detail-info">
-                    <span className="label">Additional Information</span>
-                    <span className="value">{viewUser.additionalInfo || 'None'}</span>
-                  </div>
-                </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiCalendar /></div>
-                  <div className="detail-info">
-                    <span className="label">Created At</span>
-                    <span className="value">{viewUser.createdAt ? new Date(viewUser.createdAt).toLocaleString() : 'N/A'}</span>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    <span className={`status-badge-btn static-badge status-${viewUser.accountStatus?.toLowerCase() || 'unknown'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: viewUser.accountStatus === 'ACTIVE' ? '#dcfce7' : '#fee2e2', color: viewUser.accountStatus === 'ACTIVE' ? '#166534' : '#991b1b' }}>
+                      <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
+                      {viewUser.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}
+                    </span>
                   </div>
                 </div>
               </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiHash /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">User ID</span>
+                  <span className="premium-info-value text-muted">{viewUser.userId}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Address</span>
+                  <span className="premium-info-value">{viewUser.address || 'System'}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiFileText /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Additional Information</span>
+                  <span className="premium-info-value">{viewUser.additionalInfo || 'None'}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Created At</span>
+                  <span className="premium-info-value">{viewUser.createdAt ? new Date(viewUser.createdAt).toLocaleString() : 'N/A'}</span>
+                </div>
+              </div>
             </div>
-            <div className="user-modal-footer">
-              <button className="btn-modal-close" onClick={() => setViewUser(null)}>Close</button>
+            
+            <div className="premium-modal-footer">
+              <button className="btn-premium-close" onClick={() => setViewUser(null)}>Close</button>
             </div>
           </div>
         </div>

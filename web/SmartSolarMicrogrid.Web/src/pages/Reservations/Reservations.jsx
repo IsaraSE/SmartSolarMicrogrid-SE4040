@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight, FiCheck, FiHash, FiUser, FiMapPin, FiActivity, FiClock, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiInfo, FiCalendar, FiEdit2, FiX, FiSearch, FiArrowRight, FiRefreshCcw, FiFilter, FiEye, FiTrash2, FiChevronLeft, FiChevronRight, FiCheck, FiHash, FiUser, FiMapPin, FiActivity, FiClock, FiCheckCircle, FiXCircle, FiGrid, FiCopy } from 'react-icons/fi';
 import { reservationService } from '../../services/reservationService';
 import { stationService } from '../../services/stationService';
 import { useAuth } from '../../context/AuthContext';
@@ -389,76 +389,116 @@ const Reservations = () => {
         </div>
       </div>
 
-      {/* View Modal */}
+      {/* View Reservation Modal (Premium Design) */}
       {showViewModal && selectedReservation && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in">
-            <div className="user-modal-header">
-              <h2>Reservation Details</h2>
-              <button className="user-modal-close" onClick={() => setShowViewModal(false)}>&times;</button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <FiCalendar />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>Reservation Details</h2>
+                <p>View complete reservation information and status</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setShowViewModal(false)}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiHash /></div>
-                  <div className="detail-info">
-                    <span className="label">Reservation ID</span>
-                    <span className="value">{selectedReservation.reservationNumber || selectedReservation.reservationId}</span>
-                  </div>
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiHash /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Reservation ID</span>
+                  <span className="premium-info-value">{selectedReservation.reservationNumber || selectedReservation.reservationId}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiUser /></div>
-                  <div className="detail-info">
-                    <span className="label">Prosumer NIC</span>
-                    <span className="value">{selectedReservation.prosumerNic}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiUser /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Prosumer NIC</span>
+                  <span className="premium-info-value">{selectedReservation.prosumerNic}</span>
                 </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiMapPin /></div>
-                  <div className="detail-info">
-                    <span className="label">Station / Slot</span>
-                    <span className="value">{getStationName(selectedReservation.stationId)} - {selectedReservation.slotName || 'Unknown Slot'}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Station / Slot</span>
+                  <span className="premium-info-value">{getStationName(selectedReservation.stationId)} - {selectedReservation.slotName || 'Unknown Slot'}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiCalendar /></div>
-                  <div className="detail-info">
-                    <span className="label">Start Date & Time</span>
-                    <span className="value">{formatDate(selectedReservation.scheduledStartDateTime)} at {formatTime(selectedReservation.scheduledStartDateTime)}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Start Date & Time</span>
+                  <span className="premium-info-value">{formatDate(selectedReservation.scheduledStartDateTime)} at {formatTime(selectedReservation.scheduledStartDateTime)}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiCalendar /></div>
-                  <div className="detail-info">
-                    <span className="label">End Date & Time</span>
-                    <span className="value">{formatDate(selectedReservation.scheduledEndDateTime)} at {formatTime(selectedReservation.scheduledEndDateTime)}</span>
-                  </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">End Date & Time</span>
+                  <span className="premium-info-value">{formatDate(selectedReservation.scheduledEndDateTime)} at {formatTime(selectedReservation.scheduledEndDateTime)}</span>
                 </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiActivity /></div>
-                  <div className="detail-info">
-                    <span className="label">Status</span>
-                    <span className="value">{mapStatusToBadge(selectedReservation.status)}</span>
-                  </div>
-                </div>
-                <div className="detail-card">
-                  <div className="detail-icon"><FiClock /></div>
-                  <div className="detail-info">
-                    <span className="label">Created At</span>
-                    <span className="value">{formatDate(selectedReservation.createdAt)} {formatTime(selectedReservation.createdAt)}</span>
-                  </div>
-                </div>
-                <div className="detail-card" style={{ gridColumn: 'span 2' }}>
-                  <div className="detail-icon"><FiInfo /></div>
-                  <div className="detail-info">
-                    <span className="label">QR Reference</span>
-                    <span className="value" style={{ fontFamily: 'monospace' }}>{selectedReservation.qrReference || selectedReservation.reservationId}</span>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    {mapStatusToBadge(selectedReservation.status)}
                   </div>
                 </div>
               </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiClock /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Created At</span>
+                  <span className="premium-info-value">{formatDate(selectedReservation.createdAt)} {formatTime(selectedReservation.createdAt)}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiGrid /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">QR Reference</span>
+                  <span className="premium-info-value">
+                    {selectedReservation.qrReference || selectedReservation.reservationId}
+                    <button style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }} onClick={() => navigator.clipboard.writeText(selectedReservation.qrReference || selectedReservation.reservationId)} title="Copy QR Reference">
+                      <FiCopy />
+                    </button>
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="user-modal-footer">
-              <button className="btn-modal-close" onClick={() => setShowViewModal(false)}>Close</button>
+            
+            <div className="premium-modal-footer has-info">
+              <div className="premium-footer-info">
+                {selectedReservation.status === 2 || selectedReservation.status === 'CANCELLED' ? (
+                  <>
+                    <FiInfo style={{ fontSize: '16px' }} />
+                    <span>This reservation was cancelled and is no longer active.</span>
+                  </>
+                ) : selectedReservation.status === 0 || selectedReservation.status === 'PENDING' ? (
+                  <>
+                    <FiInfo style={{ fontSize: '16px' }} />
+                    <span>This reservation is pending approval.</span>
+                  </>
+                ) : (
+                  <>
+                    <FiInfo style={{ fontSize: '16px', opacity: 0 }} />
+                    <span></span>
+                  </>
+                )}
+              </div>
+              <button className="btn-premium-close" onClick={() => setShowViewModal(false)}>Close</button>
             </div>
           </div>
         </div>
