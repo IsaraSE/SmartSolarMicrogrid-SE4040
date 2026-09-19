@@ -87,9 +87,18 @@ public class ReservationService : IReservationService
             return (false, "Reservation date must be within the next 7 days.", null);
         }
 
-        // Update slot status
-        slot.Status = SlotStatus.RESERVED;
-        await _slotRepository.UpdateAsync(slot.SlotId!, slot);
+        // Check if the slot is already booked by another active reservation (PENDING or APPROVED)
+        var allReservations = await _reservationRepository.GetAllAsync();
+        var isSlotBooked = allReservations.Any(r => 
+            r.SlotId == request.SlotId && 
+            (r.Status == ReservationStatus.PENDING || r.Status == ReservationStatus.APPROVED));
+            
+        if (isSlotBooked)
+        {
+            return (false, "This slot is already pending approval or booked by another prosumer.", null);
+        }
+
+        // Note: We do NOT update the slot status to RESERVED here. It remains AVAILABLE while PENDING.
 
         var reservationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var resNumber = "RES-" + new Random().Next(10000, 99999);
@@ -158,13 +167,26 @@ public class ReservationService : IReservationService
             return (false, "New selected slot is not available.", null);
         }
         
-        // Revert old slot
-        oldSlot.Status = SlotStatus.AVAILABLE;
-        await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
+        // Check if the new slot is already booked by another active reservation
+        var allReservations = await _reservationRepository.GetAllAsync();
+        var isSlotBooked = allReservations.Any(r => 
+            r.SlotId == request.SlotId && 
+            (r.Status == ReservationStatus.PENDING || r.Status == ReservationStatus.APPROVED));
+            
+        if (isSlotBooked)
+        {
+            return (false, "The selected slot is already pending approval or booked by another prosumer.", null);
+        }
+        
+        // If the reservation is already approved, update the slot statuses accordingly
+        if (reservation.Status == ReservationStatus.APPROVED)
+        {
+            oldSlot.Status = SlotStatus.AVAILABLE;
+            await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
 
-        // Update new slot
-        newSlot.Status = SlotStatus.RESERVED;
-        await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
+            newSlot.Status = SlotStatus.RESERVED;
+            await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
+        }
 
         reservation.SlotId = request.SlotId;
         reservation.ScheduledStartDateTime = newSlot.StartDateTime;
@@ -238,6 +260,24 @@ public class ReservationService : IReservationService
         if (newStatus == ReservationStatus.COMPLETED)
         {
             reservation.CompletedAt = DateTime.UtcNow;
+            
+            // Release the slot back to AVAILABLE
+            var slotToRelease = await _slotRepository.GetByIdAsync(reservation.SlotId);
+            if (slotToRelease != null && slotToRelease.Status == SlotStatus.RESERVED)
+            {
+                slotToRelease.Status = SlotStatus.AVAILABLE;
+                await _slotRepository.UpdateAsync(slotToRelease.SlotId!, slotToRelease);
+            }
+        }
+        else if (newStatus == ReservationStatus.APPROVED)
+        {
+            // Reserve the slot physically now that it's approved
+            var slotToReserve = await _slotRepository.GetByIdAsync(reservation.SlotId);
+            if (slotToReserve != null && slotToReserve.Status == SlotStatus.AVAILABLE)
+            {
+                slotToReserve.Status = SlotStatus.RESERVED;
+                await _slotRepository.UpdateAsync(slotToReserve.SlotId!, slotToReserve);
+            }
         }
 
         await _reservationRepository.UpdateAsync(id, reservation);
