@@ -44,8 +44,9 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.apiService.getStations()
-                if (response.isSuccessful && response.body() != null) {
-                    stationListState = StationListState.Loaded(response.body()!!)
+                val stations = response.body()?.data
+                if (response.isSuccessful && stations != null) {
+                    stationListState = StationListState.Loaded(stations)
                 } else {
                     stationListState = StationListState.Error("Could not load stations")
                 }
@@ -61,8 +62,9 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.apiService.getAvailableSlots(station.stationId)
-                if (response.isSuccessful && response.body() != null) {
-                    slotListState = SlotListState.Loaded(response.body()!!)
+                val slots = response.body()?.data
+                if (response.isSuccessful && slots != null) {
+                    slotListState = SlotListState.Loaded(slots)
                 } else {
                     slotListState = SlotListState.Error("Could not load slots")
                 }

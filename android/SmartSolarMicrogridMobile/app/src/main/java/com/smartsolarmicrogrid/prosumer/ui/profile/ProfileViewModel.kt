@@ -44,8 +44,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.apiService.getProsumer(nic)
-                if (response.isSuccessful && response.body() != null) {
-                    profileState = ProfileState.Loaded(response.body()!!)
+                val prosumer = response.body()?.data
+                if (response.isSuccessful && prosumer != null) {
+                    profileState = ProfileState.Loaded(prosumer)
                 } else {
                     profileState = ProfileState.Error("Could not load profile")
                 }
@@ -87,6 +88,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val response = RetrofitClient.apiService.deactivateProsumer(nic)
                 if (response.isSuccessful) {
                     sessionDb.clearSession()
+                    RetrofitClient.authToken = null
                     onDone()
                 }
             } catch (e: Exception) {
