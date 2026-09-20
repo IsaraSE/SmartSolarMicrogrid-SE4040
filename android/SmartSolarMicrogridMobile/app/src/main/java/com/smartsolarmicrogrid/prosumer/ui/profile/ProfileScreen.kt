@@ -168,13 +168,13 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         OutlinedButton(
-                            onClick = { showDeactivateDialog = true },
+                            onClick = { profileViewModel.logout(onDone = onDeactivated) },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.6f)),
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth().height(50.dp)
                         ) {
-                            Text("Request Deactivation")
+                            Text("Logout")
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))

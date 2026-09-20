@@ -109,4 +109,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+
+    fun logout(onDone: () -> Unit) {
+        sessionDb.clearSession()
+        RetrofitClient.authToken = null
+        onDone()
+    }
 }
