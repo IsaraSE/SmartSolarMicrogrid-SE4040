@@ -4,9 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,10 +25,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+
+private val SolarGreen = Color(0xFF2E7D32)
+private val BackgroundTop = Color(0xFF1B5E20)
 
 @Composable
 fun RegisterScreen(
@@ -33,6 +46,12 @@ fun RegisterScreen(
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    
+    var localError by remember { mutableStateOf<String?>(null) }
 
     val state = registerViewModel.registerState
 
@@ -47,7 +66,7 @@ fun RegisterScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFFF5F5F5)),
+                    colors = listOf(BackgroundTop, SolarGreen, Color(0xFFF5F5F5)),
                     startY = 0f,
                     endY = 700f
                 )
@@ -58,21 +77,31 @@ fun RegisterScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start
         ) {
             Spacer(modifier = Modifier.height(48.dp))
 
-            Text(
-                text = "Create Prosumer Account",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
+            // Top bar
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onNavigateBackToLogin, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Register a New Account",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
             Text(
                 text = "Join the Smart Solar Microgrid network",
                 color = Color.White.copy(alpha = 0.85f),
-                fontSize = 13.sp
+                fontSize = 13.sp,
+                modifier = Modifier.padding(start = 40.dp)
             )
 
             Spacer(modifier = Modifier.height(28.dp))
@@ -113,7 +142,7 @@ fun RegisterScreen(
                     RegisterField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = "Phone",
+                        label = "Phone Number",
                         icon = Icons.Filled.Phone,
                         keyboardType = KeyboardType.Phone
                     )
@@ -132,22 +161,55 @@ fun RegisterScreen(
                         onValueChange = { password = it },
                         label = { Text("Password") },
                         leadingIcon = {
-                            Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFF2E7D32))
+                            Icon(Icons.Filled.Lock, contentDescription = null, tint = SolarGreen)
+                        },
+                        trailingIcon = {
+                            val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password", tint = Color.Gray)
+                            }
                         },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2E7D32),
-                            focusedLabelColor = Color(0xFF2E7D32)
+                            focusedBorderColor = SolarGreen,
+                            focusedLabelColor = SolarGreen
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirm Password") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Lock, contentDescription = null, tint = SolarGreen)
+                        },
+                        trailingIcon = {
+                            val image = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(imageVector = image, contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password", tint = Color.Gray)
+                            }
+                        },
+                        singleLine = true,
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SolarGreen,
+                            focusedLabelColor = SolarGreen
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    if (state is RegisterState.Error) {
+                    val displayError = localError ?: (state as? RegisterState.Error)?.message
+                    
+                    if (displayError != null) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = state.message,
+                            text = displayError,
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 13.sp
                         )
@@ -157,11 +219,16 @@ fun RegisterScreen(
 
                     Button(
                         onClick = {
-                            registerViewModel.register(nic, fullName, email, phone, address, password)
+                            localError = null
+                            if (password != confirmPassword) {
+                                localError = "Passwords do not match."
+                            } else {
+                                registerViewModel.register(nic, fullName, email, phone, address, password)
+                            }
                         },
                         enabled = state !is RegisterState.Loading,
                         shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                        colors = ButtonDefaults.buttonColors(containerColor = SolarGreen),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
@@ -173,18 +240,8 @@ fun RegisterScreen(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("Register", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Create Account", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    TextButton(
-                        onClick = onNavigateBackToLogin,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Already have an account? ", color = Color.Gray, fontSize = 13.sp)
-                        Text("Login", color = Color(0xFF2E7D32), fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                     }
                 }
             }
@@ -210,7 +267,7 @@ private fun RegisterField(
             Icon(icon, contentDescription = null, tint = Color(0xFF2E7D32))
         },
         singleLine = true,
-        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color(0xFF2E7D32),
@@ -218,10 +275,4 @@ private fun RegisterField(
         ),
         modifier = Modifier.fillMaxWidth()
     )
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-fun RegisterScreenPreview() {
-    RegisterScreen(onRegisterSuccess = {}, onNavigateBackToLogin = {})
 }

@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,17 +30,19 @@ private val BackgroundTop = Color(0xFF1B5E20)
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (role: String) -> Unit,
+    onLoginSuccess: (role: String, status: String) -> Unit,
     onNavigateToRegister: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(true) }
     val state = authViewModel.loginState
 
     LaunchedEffect(state) {
         if (state is LoginState.Success) {
-            onLoginSuccess(state.role)
+            onLoginSuccess(state.role, state.accountStatus)
         }
     }
 
@@ -140,8 +145,14 @@ fun LoginScreen(
                         leadingIcon = {
                             Icon(Icons.Filled.Lock, contentDescription = null, tint = SolarGreen)
                         },
+                        trailingIcon = {
+                            val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password", tint = Color.Gray)
+                            }
+                        },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = SolarGreen,
@@ -149,6 +160,26 @@ fun LoginScreen(
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = rememberMe,
+                                onCheckedChange = { rememberMe = it },
+                                colors = CheckboxDefaults.colors(checkedColor = SolarGreen)
+                            )
+                            Text("Remember me", fontSize = 13.sp, color = Color.Gray)
+                        }
+                        TextButton(onClick = { /* TODO */ }, contentPadding = PaddingValues(0.dp)) {
+                            Text("Forgot password?", fontSize = 13.sp, color = SolarGreen, fontWeight = FontWeight.Medium)
+                        }
+                    }
 
                     if (state is LoginState.Error) {
                         Spacer(modifier = Modifier.height(12.dp))
@@ -201,5 +232,5 @@ fun LoginScreen(
 @androidx.compose.ui.tooling.preview.Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    LoginScreen(onLoginSuccess = {}, onNavigateToRegister = {})
+    LoginScreen(onLoginSuccess = { _, _ -> }, onNavigateToRegister = {})
 }
