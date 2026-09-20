@@ -33,35 +33,22 @@ import {
   Cell, 
   ResponsiveContainer
 } from 'recharts';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { useJsApiLoader, GoogleMap, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { useAuth } from '../../context/AuthContext';
 import { stationService } from '../../services/stationService';
 import './Stations.css';
 
-// Fix for default marker icons in react-leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom icons for map markers
-const createCustomIcon = (color) => {
-  return new L.Icon({
-    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+  borderRadius: '12px'
 };
 
-const activeIcon = createCustomIcon('green');
-const inactiveIcon = createCustomIcon('red');
+const fullMapContainerStyle = {
+  width: '100%',
+  height: '70vh',
+  borderRadius: '12px'
+};
 
 // Sparkline Mock SVG component
 const Sparkline = ({ color }) => (
@@ -83,6 +70,13 @@ const Stations = () => {
   const [selectedStation, setSelectedStation] = useState(null);
   const [statusConfirm, setStatusConfirm] = useState(null);
   const [infoMsg, setInfoMsg] = useState(null);
+  const [showFullMap, setShowFullMap] = useState(false);
+  const [activeMarkerId, setActiveMarkerId] = useState(null);
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  });
 
   useEffect(() => {
     fetchStations();
@@ -155,7 +149,7 @@ const Stations = () => {
   ];
 
   // Map center (Sri Lanka approximate center)
-  const mapCenter = [7.8731, 80.7718];
+  const mapCenter = { lat: 7.8731, lng: 80.7718 };
 
   const filteredStations = stations.filter(s => {
     const searchMatch = 
@@ -206,36 +200,63 @@ const Stations = () => {
             <h3><FiMapPin /> Station Locations</h3>
           </div>
           <div className="map-container">
-            <MapContainer 
-              center={mapCenter} 
-              zoom={7} 
-              scrollWheelZoom={false} 
-              zoomControl={false}
-              style={{ height: '100%', width: '100%', borderRadius: '12px' }}
-            >
-              <ZoomControl position="bottomright" />
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {stations.map(station => (
-                <Marker 
-                  key={station.stationId} 
-                  position={[station.latitude, station.longitude]}
-                  icon={station.status === 'ACTIVE' || station.status === 0 ? activeIcon : inactiveIcon}
-                >
-                  <Popup>
-                    <strong>{station.stationName}</strong>
-                  </Popup>
-                </Marker>
-              ))}
-              
-              {/* Floating Map Legend */}
-              <div className="map-legend">
-                <div className="legend-item"><span className="legend-dot green"></span> Active Station</div>
-                <div className="legend-item"><span className="legend-dot red"></span> Deactivated Station</div>
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={mapCenter}
+                zoom={7}
+                options={{ disableDefaultUI: true, zoomControl: true }}
+              >
+                {stations.map(station => {
+                  const isActive = station.status === 'ACTIVE' || station.status === 0;
+                  return (
+                    <MarkerF 
+                      key={station.stationId}
+                      position={{ lat: station.latitude, lng: station.longitude }}
+                      icon={{
+                        url: `http://maps.google.com/mapfiles/ms/icons/${isActive ? 'green' : 'red'}-dot.png`
+                      }}
+                      onClick={() => setActiveMarkerId(station.stationId)}
+                    >
+                      {activeMarkerId === station.stationId && (
+                        <InfoWindowF position={{ lat: station.latitude, lng: station.longitude }} onCloseClick={() => setActiveMarkerId(null)}>
+                          <div className="custom-map-popup">
+                            <div className="popup-header">
+                              <div className={`popup-status-indicator ${isActive ? 'active' : 'deactivated'}`}></div>
+                              <h4 className="popup-title">{station.stationName}</h4>
+                            </div>
+                            <div className="popup-body">
+                              <div className="popup-detail">
+                                <FiPower className="popup-icon" /> <span>{station.capacity} MW</span>
+                              </div>
+                              <div className="popup-detail">
+                                <FiMapPin className="popup-icon" /> <span>{station.address}</span>
+                              </div>
+                            </div>
+                            <div className="popup-footer">
+                              <span className={`popup-badge ${isActive ? 'active' : 'deactivated'}`}>
+                                {isActive ? 'Online' : 'Offline'}
+                              </span>
+                              <button className="popup-action-btn" onClick={() => setSelectedStation(station)}>View Details</button>
+                            </div>
+                          </div>
+                        </InfoWindowF>
+                      )}
+                    </MarkerF>
+                  );
+                })}
+              </GoogleMap>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                Loading Map...
               </div>
-            </MapContainer>
+            )}
+              
+            {/* Floating Map Legend */}
+            <div className="map-legend">
+              <div className="legend-item"><span className="legend-dot green"></span> Active Station</div>
+              <div className="legend-item"><span className="legend-dot red"></span> Deactivated Station</div>
+            </div>
           </div>
         </div>
 
@@ -243,7 +264,7 @@ const Stations = () => {
         <div className="chart-card">
           <div className="card-header">
             <h3><FiBarChart2 /> Station Distribution</h3>
-            <button className="text-btn">View Full Map</button>
+            <button className="text-btn" onClick={() => setShowFullMap(true)}>View Full Map</button>
           </div>
           <div className="chart-body">
             <div className="chart-side-by-side">
@@ -609,6 +630,74 @@ const Stations = () => {
             </div>
             <div className="user-modal-footer" style={{ borderTop: 'none', justifyContent: 'flex-end', padding: '20px', paddingTop: '0' }}>
               <button className="btn-modal-confirm" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={() => setInfoMsg(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Map Modal */}
+      {showFullMap && (
+        <div className="user-modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="user-modal-content fade-in" style={{ maxWidth: '90vw', width: '1200px' }}>
+            <div className="user-modal-header">
+              <h2><FiMapPin style={{ marginRight: '8px' }} /> Full Network Map</h2>
+              <button className="user-modal-close" onClick={() => setShowFullMap(false)}>&times;</button>
+            </div>
+            <div className="user-modal-body" style={{ padding: '0', position: 'relative' }}>
+              {isLoaded ? (
+                <GoogleMap
+                  mapContainerStyle={fullMapContainerStyle}
+                  center={mapCenter}
+                  zoom={7}
+                  options={{ mapTypeControl: true, streetViewControl: true }}
+                >
+                  {stations.map(station => {
+                    const isActive = station.status === 'ACTIVE' || station.status === 0;
+                    return (
+                      <MarkerF 
+                        key={station.stationId}
+                        position={{ lat: station.latitude, lng: station.longitude }}
+                        icon={{
+                          url: `http://maps.google.com/mapfiles/ms/icons/${isActive ? 'green' : 'red'}-dot.png`
+                        }}
+                        onClick={() => setActiveMarkerId(station.stationId)}
+                      >
+                        {activeMarkerId === station.stationId && (
+                          <InfoWindowF position={{ lat: station.latitude, lng: station.longitude }} onCloseClick={() => setActiveMarkerId(null)}>
+                            <div className="custom-map-popup">
+                              <div className="popup-header">
+                                <div className={`popup-status-indicator ${isActive ? 'active' : 'deactivated'}`}></div>
+                                <h4 className="popup-title">{station.stationName}</h4>
+                              </div>
+                              <div className="popup-body">
+                                <div className="popup-detail">
+                                  <FiPower className="popup-icon" /> <span>{station.capacity} MW</span>
+                                </div>
+                                <div className="popup-detail">
+                                  <FiMapPin className="popup-icon" /> <span>{station.address}</span>
+                                </div>
+                              </div>
+                              <div className="popup-footer">
+                                <span className={`popup-badge ${isActive ? 'active' : 'deactivated'}`}>
+                                  {isActive ? 'Online' : 'Offline'}
+                                </span>
+                                <button className="popup-action-btn" onClick={() => {
+                                  setSelectedStation(station);
+                                  setShowFullMap(false);
+                                }}>View Details</button>
+                              </div>
+                            </div>
+                          </InfoWindowF>
+                        )}
+                      </MarkerF>
+                    );
+                  })}
+                </GoogleMap>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
+                  Loading Map...
+                </div>
+              )}
             </div>
           </div>
         </div>
