@@ -22,6 +22,7 @@ import {
   FiHash,
   FiCheckCircle,
   FiXCircle,
+  FiAlertTriangle,
   FiActivity,
   FiPlus,
   FiX,
@@ -227,7 +228,7 @@ const Stations = () => {
                             </div>
                             <div className="popup-body">
                               <div className="popup-detail">
-                                <FiPower className="popup-icon" /> <span>{station.capacity} MW</span>
+                                <FiPower className="popup-icon" /> <span>{station.capacity} kW</span>
                               </div>
                               <div className="popup-detail">
                                 <FiMapPin className="popup-icon" /> <span>{station.address}</span>
@@ -314,7 +315,7 @@ const Stations = () => {
             <div className="chart-footer-card">
                <div className="footer-icon-leaf">🌿</div>
                <div className="footer-info">
-                 <h4>{totalCapacity} MW</h4>
+                 <h4>{totalCapacity} kW</h4>
                  <p>Total installed capacity</p>
                </div>
                <div className="footer-trend positive">
@@ -393,7 +394,7 @@ const Stations = () => {
                   <tr key={station.stationId}>
                     <td className="font-semibold">{station.stationName}</td>
                     <td className="address-col" title={station.address}>{station.address}</td>
-                    <td>{station.capacity} MW</td>
+                    <td>{station.capacity} kW</td>
                     <td style={{textAlign: 'center'}}>{station.batterySlotCount}</td>
                     <td>{station.operatingStartTime} - {station.operatingEndTime}</td>
                     <td style={{textAlign: 'center'}}>
@@ -514,7 +515,7 @@ const Stations = () => {
                 <div className="premium-info-icon"><FiPower /></div>
                 <div className="premium-info-content">
                   <span className="premium-info-label">Capacity</span>
-                  <span className="premium-info-value">{selectedStation.capacity} MW</span>
+                  <span className="premium-info-value">{selectedStation.capacity} kW</span>
                 </div>
               </div>
               
@@ -582,7 +583,7 @@ const Stations = () => {
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{statusConfirm.station.stationName}</h3>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Capacity: {statusConfirm.station.capacity} MW</p>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Capacity: {statusConfirm.station.capacity} kW</p>
                 </div>
               </div>
               <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
@@ -618,18 +619,48 @@ const Stations = () => {
       {/* Info / Error Modal */}
       {infoMsg && (
         <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in" style={{ maxWidth: '400px' }}>
-            <div className="user-modal-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
-              <h2 style={{ color: infoMsg.type === 'error' ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {infoMsg.type === 'error' ? '⚠️' : '✅'} {infoMsg.title}
-              </h2>
+          <div className="user-modal-content status-confirm-modal fade-in">
+            <div className="user-modal-header">
+              <h2>{infoMsg.type === 'error' ? 'System Error' : 'Notification'}</h2>
               <button className="user-modal-close" onClick={() => setInfoMsg(null)}>&times;</button>
             </div>
-            <div className="user-modal-body" style={{ padding: '20px', paddingTop: '10px' }}>
-              <p style={{ margin: 0, color: '#475569', lineHeight: '1.5' }}>{infoMsg.message}</p>
+            <div className="user-modal-body">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                <div className="detail-icon" style={{ backgroundColor: infoMsg.type === 'error' ? '#fef2f2' : '#f0fdf4', color: infoMsg.type === 'error' ? '#ef4444' : '#10b981' }}>
+                  {infoMsg.type === 'error' ? <FiAlertTriangle /> : <FiCheckCircle />}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>
+                    {infoMsg.title || (infoMsg.type === 'error' ? 'Operation Failed' : 'Success')}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>System Notification</p>
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  {infoMsg.type === 'error' ? (
+                    <FiXCircle style={{ color: '#ef4444', fontSize: '1.5rem' }} />
+                  ) : (
+                    <FiCheckCircle style={{ color: '#10b981', fontSize: '1.5rem' }} />
+                  )}
+                  <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                    {infoMsg.type === 'error' ? 'Error Details' : 'Action Completed'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', lineHeight: '1.5' }}>
+                  {infoMsg.message}
+                </p>
+              </div>
             </div>
-            <div className="user-modal-footer" style={{ borderTop: 'none', justifyContent: 'flex-end', padding: '20px', paddingTop: '0' }}>
-              <button className="btn-modal-confirm" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={() => setInfoMsg(null)}>Close</button>
+            <div className="user-modal-footer">
+              <button className="btn-modal-cancel" style={{ visibility: 'hidden' }}>Cancel</button>
+              <button 
+                className="btn-modal-confirm" 
+                style={{ backgroundColor: '#0f172a' }}
+                onClick={() => setInfoMsg(null)}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
@@ -671,7 +702,7 @@ const Stations = () => {
                               </div>
                               <div className="popup-body">
                                 <div className="popup-detail">
-                                  <FiPower className="popup-icon" /> <span>{station.capacity} MW</span>
+                                  <FiPower className="popup-icon" /> <span>{station.capacity} kW</span>
                                 </div>
                                 <div className="popup-detail">
                                   <FiMapPin className="popup-icon" /> <span>{station.address}</span>
