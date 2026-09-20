@@ -435,14 +435,8 @@
   color: #475569;
   background-color: white;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 14px;
 }
 .sort-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4'%3E%3C/path%3E%3C/svg%3E");
-  background-size: 14px;
 }
 
 .table-responsive {
@@ -579,4 +573,101 @@
 .pill-btn.btn-activate {
   background-color: #f0fdf4;
   color: #16a34a;
+}
+
+/* Premium Map Popup Styles */
+.custom-map-popup {
+  padding: 8px;
+  font-family: 'Inter', sans-serif;
+  min-width: 200px;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.popup-status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.popup-status-indicator.active {
+  background-color: #10b981;
+  box-shadow: 0 0 0 3px #d1fae5;
+}
+
+.popup-status-indicator.deactivated {
+  background-color: #ef4444;
+  box-shadow: 0 0 0 3px #fee2e2;
+}
+
+.popup-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.popup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.popup-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.popup-icon {
+  color: #3b82f6;
+  font-size: 1rem;
+}
+
+.popup-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.popup-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.popup-badge.active {
+  background-color: #f0fdf4;
+  color: #166534;
+}
+
+.popup-badge.deactivated {
+  background-color: #fef2f2;
+  color: #991b1b;
+}
+
+.popup-action-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.popup-action-btn:hover {
+  text-decoration: underline;
 }

@@ -143,7 +143,7 @@ public class UserService : IUserService
         var existingPhone = await _userRepository.GetByPhoneAsync(request.Phone);
         if (existingPhone != null && existingPhone.UserId != userId)
         {
-            errors.Add("Phone", new[] { "This phone number is already taken by another account." });
+            errors.Add("Phone", new[] { $"This phone number is already taken by another account. (Existing: {existingPhone.UserId ?? "null"}, Current: {userId})" });
         }
 
         if (errors.Any())

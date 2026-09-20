@@ -13,6 +13,7 @@ namespace SmartSolarMicrogrid.Api.Services.Stations;
 
 public interface ISlotService
 {
+    Task<IEnumerable<SlotDto>> GetAllSlotsAsync();
     Task<IEnumerable<SlotDto>> GetSlotsByStationIdAsync(string stationId);
     Task<IEnumerable<SlotDto>> GetAvailableSlotsByStationIdAsync(string stationId);
     Task<SlotDto> CreateSlotAsync(CreateSlotDto request);

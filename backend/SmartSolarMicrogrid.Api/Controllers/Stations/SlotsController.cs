@@ -27,6 +27,17 @@ public class SlotsController : ControllerBase
     }
 
     /// <summary>
+    /// Gets all slots across all stations.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR")]
+    public async Task<IActionResult> GetAllSlots()
+    {
+        var slots = await _slotService.GetAllSlotsAsync();
+        return Ok(ApiResponse<IEnumerable<SlotDto>>.SuccessResponse("All slots retrieved successfully.", slots));
+    }
+
+    /// <summary>
     /// Gets all slots for a station.
     /// </summary>
     [HttpGet("station/{stationId}")]
