@@ -205,7 +205,7 @@ public class ReservationsController : ControllerBase
     /// Cancels a reservation. Prosumers can only cancel their own.
     /// </summary>
     [HttpPut("{id}/cancel")]
-    [Authorize(Roles = "PROSUMER,GRID_OPERATOR,BACKOFFICE")]
+    [Authorize(Roles = "PROSUMER,GRID_OPERATOR")]
     public async Task<IActionResult> CancelReservation(string id)
     {
         var userNic = User.FindFirstValue("nic") ?? "";
@@ -226,10 +226,10 @@ public class ReservationsController : ControllerBase
     }
 
     /// <summary>
-    /// Updates the status of a reservation (Admin/Operator).
+    /// Updates the status of a reservation (Operator).
     /// </summary>
     [HttpPut("{id}/status")]
-    [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR")]
+    [Authorize(Roles = "GRID_OPERATOR")]
     public async Task<IActionResult> UpdateReservationStatus(string id, [FromBody] UpdateReservationStatusDto request)
     {
         if (!ModelState.IsValid)

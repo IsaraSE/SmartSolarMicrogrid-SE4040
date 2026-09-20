@@ -39,6 +39,13 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
         loadStations()
     }
 
+    var selectedSlot by mutableStateOf<Slot?>(null)
+        private set
+
+    fun selectSlot(slot: Slot) {
+        selectedSlot = slot
+    }
+
     fun loadStations() {
         stationListState = StationListState.Loading
         viewModelScope.launch {
@@ -66,11 +73,51 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
                 if (response.isSuccessful && slots != null) {
                     slotListState = SlotListState.Loaded(slots)
                 } else {
-                    slotListState = SlotListState.Error("Could not load slots")
+                    slotListState =
+                        SlotListState.Loaded(getMockSlots(station.stationId)) // TODO: remove before submission
                 }
             } catch (e: Exception) {
-                slotListState = SlotListState.Error("Network error: ${e.message}")
+                slotListState =
+                    SlotListState.Loaded(getMockSlots(station.stationId)) // TODO: remove before submission
             }
         }
+    }
+
+    // TODO: remove this function before final submission — for UI preview only, no real backend yet
+    private fun getMockSlots(stationId: String): List<Slot> {
+        return listOf(
+            Slot(
+                slotId = "SL001",
+                stationId = stationId,
+                date = "2026-09-20",
+                startTime = "08:00",
+                endTime = "10:00",
+                status = "AVAILABLE"
+            ),
+            Slot(
+                slotId = "SL002",
+                stationId = stationId,
+                date = "2026-09-20",
+                startTime = "10:00",
+                endTime = "12:00",
+                status = "AVAILABLE"
+            ),
+            Slot(
+                slotId = "SL003",
+                stationId = stationId,
+                date = "2026-09-21",
+                startTime = "14:00",
+                endTime = "16:00",
+                status = "AVAILABLE"
+            ),
+            Slot(
+                slotId = "SL004",
+                stationId = stationId,
+                date = "2026-09-22",
+                startTime = "09:00",
+                endTime = "11:00",
+                status = "AVAILABLE"
+            )
+        )
     }
 }
