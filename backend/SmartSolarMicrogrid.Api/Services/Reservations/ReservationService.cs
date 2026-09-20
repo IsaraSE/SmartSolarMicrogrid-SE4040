@@ -55,6 +55,46 @@ public class ReservationService : IReservationService
         return dtos;
     }
 
+    /// <summary>
+    /// Gets the prosumer's current bookings: APPROVED reservations that have not yet started.
+    /// </summary>
+    public async Task<IEnumerable<ReservationDto>> GetCurrentReservationsByNicAsync(string nic)
+    {
+        var reservations = await GetReservationsAsync(nic, null, null, null);
+        var now = DateTime.UtcNow;
+        return reservations
+            .Where(r => r.Status == ReservationStatus.APPROVED && r.ScheduledStartDateTime >= now)
+            .OrderBy(r => r.ScheduledStartDateTime)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets the prosumer's pending bookings awaiting approval.
+    /// </summary>
+    public async Task<IEnumerable<ReservationDto>> GetPendingReservationsByNicAsync(string nic)
+    {
+        var reservations = await GetReservationsAsync(nic, null, null, null);
+        return reservations
+            .Where(r => r.Status == ReservationStatus.PENDING)
+            .OrderBy(r => r.ScheduledStartDateTime)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets the prosumer's booking history: completed, cancelled, or past reservations.
+    /// </summary>
+    public async Task<IEnumerable<ReservationDto>> GetHistoryReservationsByNicAsync(string nic)
+    {
+        var reservations = await GetReservationsAsync(nic, null, null, null);
+        var now = DateTime.UtcNow;
+        return reservations
+            .Where(r => r.Status == ReservationStatus.COMPLETED
+                        || r.Status == ReservationStatus.CANCELLED
+                        || r.ScheduledStartDateTime < now)
+            .OrderByDescending(r => r.ScheduledStartDateTime)
+            .ToList();
+    }
+
     public async Task<ReservationDto?> GetReservationByIdAsync(string id)
     {
         var reservation = await _reservationRepository.GetByIdAsync(id);

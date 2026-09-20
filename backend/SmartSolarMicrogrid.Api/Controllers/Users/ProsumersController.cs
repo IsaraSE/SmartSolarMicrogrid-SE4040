@@ -27,6 +27,48 @@ public class ProsumersController : ControllerBase
     }
 
     /// <summary>
+    /// Registers a new prosumer from the mobile app (public, no authentication required).
+    /// </summary>
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<IActionResult> RegisterProsumer([FromBody] RegisterProsumerDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
+        }
+
+        var (success, message, prosumer) = await _prosumerService.RegisterProsumerAsync(request);
+        if (!success)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+        }
+
+        return CreatedAtAction(nameof(GetProsumerByNic), new { nic = prosumer!.Nic }, ApiResponse<UserDto>.SuccessResponse(message, prosumer));
+    }
+
+    /// <summary>
+    /// Updates a prosumer's own profile details. Allowed for the prosumer themselves or Backoffice.
+    /// </summary>
+    [HttpPut("{nic}")]
+    [Authorize(Roles = "PROSUMER,BACKOFFICE")]
+    public async Task<IActionResult> UpdateProsumerProfile(string nic, [FromBody] UpdateProsumerDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
+        }
+
+        var (success, message, prosumer) = await _prosumerService.UpdateProsumerProfileAsync(nic, request);
+        if (!success)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+        }
+
+        return Ok(ApiResponse<UserDto>.SuccessResponse(message, prosumer));
+    }
+
+    /// <summary>
     /// Gets all prosumers.
     /// </summary>
     [HttpGet]
