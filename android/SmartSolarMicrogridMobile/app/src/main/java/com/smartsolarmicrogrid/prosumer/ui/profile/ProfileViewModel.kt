@@ -44,8 +44,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     return@launch
                 }
                 val response = RetrofitClient.apiService.getProsumer(nic)
-                if (response.isSuccessful && response.body() != null) {
-                    profileState = ProfileState.Loaded(response.body()!!)
+                val prosumer = response.body()?.data
+                if (response.isSuccessful && prosumer != null) {
+                    profileState = ProfileState.Loaded(prosumer)
                 } else {
                     profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
                 }
@@ -100,6 +101,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val response = RetrofitClient.apiService.deactivateProsumer(nic)
                 if (response.isSuccessful) {
                     sessionDb.clearSession()
+                    RetrofitClient.authToken = null
                     onDone()
                 }
             } catch (e: Exception) {

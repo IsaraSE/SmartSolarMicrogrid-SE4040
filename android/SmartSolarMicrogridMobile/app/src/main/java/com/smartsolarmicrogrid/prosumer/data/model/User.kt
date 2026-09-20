@@ -1,7 +1,7 @@
 package com.smartsolarmicrogrid.prosumer.data.model
 
 data class LoginRequest(
-    val username: String,   // email or NIC, per your team's login API
+    val email: String,   // the backend authenticates by email (LoginRequestDto.Email)
     val password: String
 )
 
@@ -9,7 +9,8 @@ data class LoginResponse(
     val userId: String,
     val fullName: String,
     val role: String,
-    val accountStatus: String
+    val accountStatus: String,
+    val token: String? = null
 )
 
 data class RegisterRequest(

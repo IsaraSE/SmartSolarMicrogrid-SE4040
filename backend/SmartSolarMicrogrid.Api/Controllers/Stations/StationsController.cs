@@ -20,10 +20,12 @@ namespace SmartSolarMicrogrid.Api.Controllers.Stations;
 public class StationsController : ControllerBase
 {
     private readonly IStationService _stationService;
+    private readonly ISlotService _slotService;
 
-    public StationsController(IStationService stationService)
+    public StationsController(IStationService stationService, ISlotService slotService)
     {
         _stationService = stationService;
+        _slotService = slotService;
     }
 
     /// <summary>
@@ -48,6 +50,16 @@ public class StationsController : ControllerBase
             return NotFound(ApiResponse<object>.ErrorResponse("Station not found."));
         }
         return Ok(ApiResponse<StationDto>.SuccessResponse("Station retrieved successfully.", station));
+    }
+
+    /// <summary>
+    /// Gets available slots for a station (used by the mobile app when creating a booking).
+    /// </summary>
+    [HttpGet("{id}/available-slots")]
+    public async Task<IActionResult> GetAvailableSlots(string id)
+    {
+        var slots = await _slotService.GetAvailableSlotsByStationIdAsync(id);
+        return Ok(ApiResponse<IEnumerable<SlotDto>>.SuccessResponse("Available slots retrieved successfully.", slots));
     }
 
     /// <summary>

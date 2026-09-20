@@ -28,16 +28,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         loginState = LoginState.Loading
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.apiService.login(LoginRequest(username, password))
-                if (response.isSuccessful && response.body() != null) {
-                    val body = response.body()!!
+                val response = RetrofitClient.apiService.login(LoginRequest(email = username, password = password))
+                val user = response.body()?.data
+                if (response.isSuccessful && user != null) {
+                    // Make the JWT available to the interceptor for authenticated requests,
+                    // and persist it (with the rest of the session) in SQLite.
+                    RetrofitClient.authToken = user.token
                     sessionDb.saveSession(
-                        nic = body.userId,
-                        fullName = body.fullName,
-                        role = body.role,
-                        accountStatus = body.accountStatus
+                        nic = user.userId,
+                        fullName = user.fullName,
+                        role = user.role,
+                        accountStatus = user.accountStatus,
+                        token = user.token
                     )
-                    loginState = LoginState.Success(body.role)
+                    loginState = LoginState.Success(user.role)
                 } else {
                     loginState = LoginState.Error("Invalid username or password")
                 }

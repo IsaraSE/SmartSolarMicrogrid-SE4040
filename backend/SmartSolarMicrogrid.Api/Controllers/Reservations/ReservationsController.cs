@@ -47,6 +47,68 @@ public class ReservationsController : ControllerBase
     }
 
     /// <summary>
+    /// Gets a prosumer's current (approved, upcoming) bookings.
+    /// </summary>
+    [HttpGet("current/{prosumerNic}")]
+    [Authorize(Roles = "PROSUMER,BACKOFFICE,GRID_OPERATOR")]
+    public async Task<IActionResult> GetCurrentReservations(string prosumerNic)
+    {
+        if (!IsOwnNicOrPrivileged(prosumerNic))
+        {
+            return Forbid();
+        }
+
+        var reservations = await _reservationService.GetCurrentReservationsByNicAsync(prosumerNic);
+        return Ok(ApiResponse<IEnumerable<ReservationDto>>.SuccessResponse("Current reservations retrieved successfully.", reservations));
+    }
+
+    /// <summary>
+    /// Gets a prosumer's pending bookings awaiting approval.
+    /// </summary>
+    [HttpGet("pending/{prosumerNic}")]
+    [Authorize(Roles = "PROSUMER,BACKOFFICE,GRID_OPERATOR")]
+    public async Task<IActionResult> GetPendingReservations(string prosumerNic)
+    {
+        if (!IsOwnNicOrPrivileged(prosumerNic))
+        {
+            return Forbid();
+        }
+
+        var reservations = await _reservationService.GetPendingReservationsByNicAsync(prosumerNic);
+        return Ok(ApiResponse<IEnumerable<ReservationDto>>.SuccessResponse("Pending reservations retrieved successfully.", reservations));
+    }
+
+    /// <summary>
+    /// Gets a prosumer's booking history (completed, cancelled, or past).
+    /// </summary>
+    [HttpGet("history/{prosumerNic}")]
+    [Authorize(Roles = "PROSUMER,BACKOFFICE,GRID_OPERATOR")]
+    public async Task<IActionResult> GetReservationHistory(string prosumerNic)
+    {
+        if (!IsOwnNicOrPrivileged(prosumerNic))
+        {
+            return Forbid();
+        }
+
+        var reservations = await _reservationService.GetHistoryReservationsByNicAsync(prosumerNic);
+        return Ok(ApiResponse<IEnumerable<ReservationDto>>.SuccessResponse("Reservation history retrieved successfully.", reservations));
+    }
+
+    /// <summary>
+    /// Ensures a PROSUMER can only read their own bookings, while Backoffice/Operator can read any.
+    /// </summary>
+    private bool IsOwnNicOrPrivileged(string prosumerNic)
+    {
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (role == "BACKOFFICE" || role == "GRID_OPERATOR")
+        {
+            return true;
+        }
+        var userNic = User.FindFirstValue("nic");
+        return !string.IsNullOrEmpty(userNic) && userNic == prosumerNic;
+    }
+
+    /// <summary>
     /// Gets a specific reservation by ID.
     /// </summary>
     [HttpGet("{id}")]
