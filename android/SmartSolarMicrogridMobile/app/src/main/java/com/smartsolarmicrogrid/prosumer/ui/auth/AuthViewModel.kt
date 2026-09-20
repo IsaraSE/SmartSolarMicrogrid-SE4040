@@ -13,7 +13,7 @@ import com.smartsolarmicrogrid.prosumer.data.local.SessionDbHelper
 sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()
-    data class Success(val role: String) : LoginState()
+    data class Success(val role: String, val accountStatus: String) : LoginState()
     data class Error(val message: String) : LoginState()
 }
 
@@ -41,9 +41,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         accountStatus = user.accountStatus,
                         token = user.token
                     )
-                    loginState = LoginState.Success(user.role)
+                    loginState = LoginState.Success(user.role, user.accountStatus)
                 } else {
-                    loginState = LoginState.Error("Invalid username or password")
+                    val msg = response.errorBody()?.string()?.let { 
+                        org.json.JSONObject(it).optString("message", "Invalid username or password") 
+                    } ?: "Invalid username or password"
+                    loginState = LoginState.Error(msg)
                 }
             } catch (e: Exception) {
                 loginState = LoginState.Error("Network error: ${e.message}")

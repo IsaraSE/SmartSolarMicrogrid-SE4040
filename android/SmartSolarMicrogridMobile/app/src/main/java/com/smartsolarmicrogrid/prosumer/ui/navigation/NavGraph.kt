@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.smartsolarmicrogrid.prosumer.ui.auth.LoginScreen
 import com.smartsolarmicrogrid.prosumer.ui.auth.RegisterScreen
+import com.smartsolarmicrogrid.prosumer.ui.auth.PendingActivationScreen
 import com.smartsolarmicrogrid.prosumer.ui.booking.BookingSummaryScreen
 import com.smartsolarmicrogrid.prosumer.ui.booking.BookingViewModel
 import com.smartsolarmicrogrid.prosumer.ui.booking.CancelBookingScreen
@@ -47,6 +48,7 @@ const val SOURCE_LIST = "list"
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
+    object PendingActivation : Screen("pending_activation")
     object Profile : Screen("profile")
     object EditProfile : Screen("edit_profile")
     object Stations : Screen("stations")
@@ -80,15 +82,21 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
 
         composable(Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess = { role ->
-                    // The role decides which home screen the user lands on.
-                    val home = if (role == "GRID_OPERATOR") {
-                        Screen.OperatorHome.route
+                onLoginSuccess = { role, status ->
+                    if (status == "PENDING") {
+                        navController.navigate(Screen.PendingActivation.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     } else {
-                        Screen.Dashboard.route
-                    }
-                    navController.navigate(home) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        // The role decides which home screen the user lands on.
+                        val home = if (role == "GRID_OPERATOR") {
+                            Screen.OperatorHome.route
+                        } else {
+                            Screen.Dashboard.route
+                        }
+                        navController.navigate(home) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
                     }
                 },
                 onNavigateToRegister = { navController.navigate(Screen.Register.route) }
@@ -97,8 +105,22 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
 
         composable(Screen.Register.route) {
             RegisterScreen(
-                onRegisterSuccess = { navController.popBackStack() },
+                onRegisterSuccess = { 
+                    navController.navigate(Screen.PendingActivation.route) {
+                        popUpTo(Screen.Login.route) { inclusive = false }
+                    }
+                },
                 onNavigateBackToLogin = { navController.popBackStack() }
+            )
+        }
+        
+        composable(Screen.PendingActivation.route) {
+            PendingActivationScreen(
+                onBackToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true } // Clear entire backstack
+                    }
+                }
             )
         }
 
