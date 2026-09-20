@@ -58,8 +58,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 val pendingResponse = RetrofitClient.apiService.getPendingReservations(nic)
                 val currentResponse = RetrofitClient.apiService.getCurrentReservations(nic)
 
-                val pending = if (pendingResponse.isSuccessful) pendingResponse.body() else null
-                val current = if (currentResponse.isSuccessful) currentResponse.body() else null
+                val pending = if (pendingResponse.isSuccessful) pendingResponse.body()?.data ?: emptyList() else null
+                val current = if (currentResponse.isSuccessful) currentResponse.body()?.data ?: emptyList() else null
 
                 if (pending != null && current != null) {
                     dashboardState = DashboardState.Loaded(buildData(name, pending, current))

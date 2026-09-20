@@ -61,8 +61,8 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         startTime = startTime
                     )
                 )
-                if (response.isSuccessful && response.body() != null) {
-                    createBookingState = CreateBookingState.Success(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    createBookingState = CreateBookingState.Success(response.body()!!.data!!)
                 } else if (response.code() == 400) {
                     createBookingState = CreateBookingState.Error(
                         "Booking date must be within 7 days. Please choose a different slot."
@@ -92,8 +92,8 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         startTime = startTime
                     )
                 )
-                if (response.isSuccessful && response.body() != null) {
-                    updateBookingState = UpdateBookingState.Success(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    updateBookingState = UpdateBookingState.Success(response.body()!!.data!!)
                 } else if (response.code() == 400) {
                     updateBookingState = UpdateBookingState.Error(
                         "Updates require at least 12 hours' notice before the booking starts."

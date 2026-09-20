@@ -131,8 +131,8 @@ class BookingListViewModel(application: Application) : AndroidViewModel(applicat
                     keyword = searchQuery.ifBlank { null },
                     status = statusFilter
                 )
-                if (response.isSuccessful && response.body() != null) {
-                    searchState = BookingListState.Loaded(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    searchState = BookingListState.Loaded(response.body()!!.data!!)
                 } else {
                     // TODO: remove mock fallback before submission
                     searchState = BookingListState.Loaded(filterLocally(getMockReservations()))
@@ -155,8 +155,8 @@ class BookingListViewModel(application: Application) : AndroidViewModel(applicat
                     BookingTab.PENDING -> RetrofitClient.apiService.getPendingReservations(nic)
                     BookingTab.HISTORY -> RetrofitClient.apiService.getReservationHistory(nic)
                 }
-                if (response.isSuccessful && response.body() != null) {
-                    listState = BookingListState.Loaded(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    listState = BookingListState.Loaded(response.body()!!.data!!)
                 } else {
                     // TODO: remove mock fallback before submission
                     listState = BookingListState.Loaded(mockForTab(tab))
