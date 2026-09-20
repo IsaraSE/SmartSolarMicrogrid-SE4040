@@ -223,8 +223,10 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
         composable(Screen.Dashboard.route) {
             WithBottomBar(navController, Screen.Dashboard.route) {
                 DashboardScreen(
-                    onViewAllBookings = { navController.navigate(Screen.BookingList.route) },
-                    onBack = null
+                    onNavigateToStations = { navController.navigate(Screen.Stations.route) },
+                    onNavigateToBookings = { navController.navigate(Screen.BookingList.route) },
+                    onNavigateToMap = { navController.navigate(Screen.Stations.route) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
                 )
             }
         }

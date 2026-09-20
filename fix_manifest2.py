@@ -1,4 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
+import os
+
+path = "/Users/isara/4Y_2S/EAD/SmartSolarMicrogrid-SE4040/android/SmartSolarMicrogridMobile/app/src/main/AndroidManifest.xml"
+
+# We just write out the correct manifest from scratch since it's short.
+content = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -32,4 +37,8 @@
         </activity>
     </application>
 
-</manifest>
+</manifest>"""
+
+with open(path, "w") as f:
+    f.write(content)
+print("AndroidManifest.xml fixed")

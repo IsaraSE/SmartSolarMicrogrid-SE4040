@@ -1,4 +1,8 @@
-package com.smartsolarmicrogrid.prosumer.ui.station
+import os
+
+path = "/Users/isara/4Y_2S/EAD/SmartSolarMicrogrid-SE4040/android/SmartSolarMicrogridMobile/app/src/main/java/com/smartsolarmicrogrid/prosumer/ui/station/StationListScreen.kt"
+
+content = """package com.smartsolarmicrogrid.prosumer.ui.station
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -397,3 +401,8 @@ fun NetworkImage(url: String, modifier: Modifier) {
         Box(modifier = modifier.background(Color.LightGray)) // placeholder
     }
 }
+"""
+
+with open(path, "w") as f:
+    f.write(content)
+print("StationListScreen.kt updated successfully.")

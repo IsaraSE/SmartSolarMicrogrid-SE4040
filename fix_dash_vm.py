@@ -1,4 +1,8 @@
-package com.smartsolarmicrogrid.prosumer.ui.dashboard
+import os
+
+path = "/Users/isara/4Y_2S/EAD/SmartSolarMicrogrid-SE4040/android/SmartSolarMicrogridMobile/app/src/main/java/com/smartsolarmicrogrid/prosumer/ui/dashboard/Dashboardviewmode.kt"
+
+content = """package com.smartsolarmicrogrid.prosumer.ui.dashboard
 
 import android.app.Application
 import androidx.compose.runtime.getValue
@@ -158,3 +162,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 }
+"""
+
+with open(path, "w") as f:
+    f.write(content)
+print("DashboardViewModel updated for new UI requirements.")

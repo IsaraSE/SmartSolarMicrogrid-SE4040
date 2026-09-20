@@ -1,4 +1,8 @@
-package com.smartsolarmicrogrid.prosumer.ui.dashboard
+import os
+
+path = "/Users/isara/4Y_2S/EAD/SmartSolarMicrogrid-SE4040/android/SmartSolarMicrogridMobile/app/src/main/java/com/smartsolarmicrogrid/prosumer/ui/dashboard/DashboardScreen.kt"
+
+content = """package com.smartsolarmicrogrid.prosumer.ui.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -152,7 +156,7 @@ fun DashboardScreen(
                             StatCardV2(
                                 icon = Icons.Filled.AccessTime,
                                 value = data.pendingCount.toString(),
-                                label = "Pending\nReservations",
+                                label = "Pending\\nReservations",
                                 bgColor = SolarAmberLight,
                                 iconColor = Color.White,
                                 iconBgColor = SolarAmber,
@@ -161,7 +165,7 @@ fun DashboardScreen(
                             StatCardV2(
                                 icon = Icons.Filled.Event,
                                 value = data.upcomingCount.toString(),
-                                label = "Upcoming\nReservations",
+                                label = "Upcoming\\nReservations",
                                 bgColor = SolarGreenLight,
                                 iconColor = Color.White,
                                 iconBgColor = SolarGreen,
@@ -170,7 +174,7 @@ fun DashboardScreen(
                             StatCardV2(
                                 icon = Icons.Filled.Check,
                                 value = data.completedCount.toString(),
-                                label = "Completed\nReservations",
+                                label = "Completed\\nReservations",
                                 bgColor = SolarBlueLight,
                                 iconColor = Color.White,
                                 iconBgColor = SolarBlue,
@@ -371,3 +375,8 @@ fun ActivityRowV2(item: ActivityItem) {
         Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.LightGray)
     }
 }
+"""
+
+with open(path, "w") as f:
+    f.write(content)
+print("DashboardScreen completely rewritten to match v3 mockup")
