@@ -8,10 +8,11 @@
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;
+using System.Threading.Tasks;
 
 namespace SmartSolarMicrogrid.Api.Services.Users;
 
 public interface IAuthService
 {
-    Task<LoginResponseDto?> LoginAsync(LoginRequestDto request);
+    Task<(bool Success, string Message, LoginResponseDto? Data)> LoginAsync(LoginRequestDto request);
 }
