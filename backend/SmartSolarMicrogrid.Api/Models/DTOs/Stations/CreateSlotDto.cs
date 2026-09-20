@@ -17,8 +17,14 @@ public class CreateSlotDto
     public string StationId { get; set; } = null!;
 
     [Required]
+    public string SlotName { get; set; } = null!;
+
+    [Required]
     public DateTime StartDateTime { get; set; }
 
     [Required]
     public DateTime EndDateTime { get; set; }
+
+    [MaxLength(500)]
+    public string? Notes { get; set; }
 }

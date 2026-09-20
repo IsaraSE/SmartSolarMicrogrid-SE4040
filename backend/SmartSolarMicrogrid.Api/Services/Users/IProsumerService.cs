@@ -13,10 +13,13 @@ namespace SmartSolarMicrogrid.Api.Services.Users;
 
 public interface IProsumerService
 {
+    Task<(bool Success, string Message, UserDto? Prosumer)> RegisterProsumerAsync(RegisterProsumerDto request);
+    Task<(bool Success, string Message, UserDto? Prosumer)> UpdateProsumerProfileAsync(string nic, UpdateProsumerDto request);
     Task<IEnumerable<UserDto>> GetAllProsumersAsync();
     Task<UserDto?> GetProsumerByNicAsync(string nic);
     Task<IEnumerable<UserDto>> GetPendingProsumersAsync();
     Task<UserDto?> ActivateProsumerAsync(string nic);
     Task<IEnumerable<UserDto>> GetDeactivatedProsumersAsync();
     Task<UserDto?> ReactivateProsumerAsync(string nic);
+    Task<UserDto?> DeactivateProsumerAsync(string nic);
 }

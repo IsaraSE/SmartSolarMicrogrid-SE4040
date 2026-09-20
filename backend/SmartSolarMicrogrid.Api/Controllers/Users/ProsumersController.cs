@@ -27,6 +27,48 @@ public class ProsumersController : ControllerBase
     }
 
     /// <summary>
+    /// Registers a new prosumer from the mobile app (public, no authentication required).
+    /// </summary>
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<IActionResult> RegisterProsumer([FromBody] RegisterProsumerDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
+        }
+
+        var (success, message, prosumer) = await _prosumerService.RegisterProsumerAsync(request);
+        if (!success)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+        }
+
+        return CreatedAtAction(nameof(GetProsumerByNic), new { nic = prosumer!.Nic }, ApiResponse<UserDto>.SuccessResponse(message, prosumer));
+    }
+
+    /// <summary>
+    /// Updates a prosumer's own profile details. Allowed for the prosumer themselves or Backoffice.
+    /// </summary>
+    [HttpPut("{nic}")]
+    [Authorize(Roles = "PROSUMER,BACKOFFICE")]
+    public async Task<IActionResult> UpdateProsumerProfile(string nic, [FromBody] UpdateProsumerDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
+        }
+
+        var (success, message, prosumer) = await _prosumerService.UpdateProsumerProfileAsync(nic, request);
+        if (!success)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+        }
+
+        return Ok(ApiResponse<UserDto>.SuccessResponse(message, prosumer));
+    }
+
+    /// <summary>
     /// Gets all prosumers.
     /// </summary>
     [HttpGet]
@@ -96,5 +138,18 @@ public class ProsumersController : ControllerBase
             return BadRequest(ApiResponse<object>.ErrorResponse("Prosumer not found or not in deactivated status."));
         }
         return Ok(ApiResponse<UserDto>.SuccessResponse("Prosumer reactivated successfully.", reactivatedProsumer));
+    }
+    /// <summary>
+    /// Deactivates an active prosumer.
+    /// </summary>
+    [HttpPut("{nic}/deactivate")]
+    public async Task<IActionResult> DeactivateProsumer(string nic)
+    {
+        var deactivatedProsumer = await _prosumerService.DeactivateProsumerAsync(nic);
+        if (deactivatedProsumer == null)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse("Prosumer not found or not in active status."));
+        }
+        return Ok(ApiResponse<UserDto>.SuccessResponse("Prosumer deactivated successfully.", deactivatedProsumer));
     }
 }

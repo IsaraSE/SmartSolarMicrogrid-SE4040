@@ -9,7 +9,9 @@
 
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using SmartSolarMicrogrid.Api.Models.DTOs;
+using SmartSolarMicrogrid.Api.Exceptions;
 
 namespace SmartSolarMicrogrid.Api.Middlewares;
 
@@ -47,6 +49,21 @@ public class ExceptionHandlingMiddleware
         // Default to Internal Server Error
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
         var message = "An internal server error occurred.";
+
+        if (exception is AppValidationException validationEx)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            
+            var problemDetails = new ValidationProblemDetails(validationEx.Errors)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "One or more validation errors occurred."
+            };
+
+            var problemJson = JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            await context.Response.WriteAsync(problemJson);
+            return;
+        }
 
         if (exception is ArgumentException argEx)
         {

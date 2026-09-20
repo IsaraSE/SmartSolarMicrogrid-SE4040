@@ -43,13 +43,68 @@ public class ReservationService : IReservationService
         if (date.HasValue)
             filtered = filtered.Where(r => r.ScheduledStartDateTime.Date == date.Value.Date);
 
-        return filtered.Select(MapToDto);
+        var dtos = filtered.Select(MapToDto).ToList();
+        
+        var allSlots = await _slotRepository.GetAllAsync();
+        foreach(var dto in dtos)
+        {
+            var slot = allSlots.FirstOrDefault(s => s.SlotId == dto.SlotId);
+            dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        }
+        
+        return dtos;
+    }
+
+    /// <summary>
+    /// Gets the prosumer's current bookings: APPROVED reservations that have not yet started.
+    /// </summary>
+    public async Task<IEnumerable<ReservationDto>> GetCurrentReservationsByNicAsync(string nic)
+    {
+        var reservations = await GetReservationsAsync(nic, null, null, null);
+        var now = DateTime.UtcNow;
+        return reservations
+            .Where(r => r.Status == ReservationStatus.APPROVED && r.ScheduledStartDateTime >= now)
+            .OrderBy(r => r.ScheduledStartDateTime)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets the prosumer's pending bookings awaiting approval.
+    /// </summary>
+    public async Task<IEnumerable<ReservationDto>> GetPendingReservationsByNicAsync(string nic)
+    {
+        var reservations = await GetReservationsAsync(nic, null, null, null);
+        return reservations
+            .Where(r => r.Status == ReservationStatus.PENDING)
+            .OrderBy(r => r.ScheduledStartDateTime)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets the prosumer's booking history: completed, cancelled, or past reservations.
+    /// </summary>
+    public async Task<IEnumerable<ReservationDto>> GetHistoryReservationsByNicAsync(string nic)
+    {
+        var reservations = await GetReservationsAsync(nic, null, null, null);
+        var now = DateTime.UtcNow;
+        return reservations
+            .Where(r => r.Status == ReservationStatus.COMPLETED
+                        || r.Status == ReservationStatus.CANCELLED
+                        || r.ScheduledStartDateTime < now)
+            .OrderByDescending(r => r.ScheduledStartDateTime)
+            .ToList();
     }
 
     public async Task<ReservationDto?> GetReservationByIdAsync(string id)
     {
         var reservation = await _reservationRepository.GetByIdAsync(id);
-        return reservation != null ? MapToDto(reservation) : null;
+        if (reservation == null) return null;
+        
+        var dto = MapToDto(reservation);
+        var slot = await _slotRepository.GetByIdAsync(dto.SlotId);
+        dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        
+        return dto;
     }
 
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> CreateReservationAsync(string prosumerNic, CreateReservationDto request)
@@ -72,13 +127,26 @@ public class ReservationService : IReservationService
             return (false, "Reservation date must be within the next 7 days.", null);
         }
 
-        // Update slot status
-        slot.Status = SlotStatus.RESERVED;
-        await _slotRepository.UpdateAsync(slot.SlotId!, slot);
+        // Check if the slot is already booked by another active reservation (PENDING or APPROVED)
+        var allReservations = await _reservationRepository.GetAllAsync();
+        var isSlotBooked = allReservations.Any(r => 
+            r.SlotId == request.SlotId && 
+            (r.Status == ReservationStatus.PENDING || r.Status == ReservationStatus.APPROVED));
+            
+        if (isSlotBooked)
+        {
+            return (false, "This slot is already pending approval or booked by another prosumer.", null);
+        }
+
+        // Note: We do NOT update the slot status to RESERVED here. It remains AVAILABLE while PENDING.
+
+        var reservationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
+        var resNumber = "RES-" + new Random().Next(10000, 99999);
 
         var reservation = new EnergyReservation
         {
-            ReservationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            ReservationId = reservationId,
+            ReservationNumber = resNumber,
             ProsumerNic = prosumerNic,
             StationId = request.StationId,
             SlotId = request.SlotId,
@@ -91,7 +159,11 @@ public class ReservationService : IReservationService
         };
 
         await _reservationRepository.CreateAsync(reservation);
-        return (true, "Reservation created successfully.", MapToDto(reservation));
+        
+        var dto = MapToDto(reservation);
+        dto.SlotName = slot.SlotName;
+        
+        return (true, "Reservation created successfully.", dto);
     }
 
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationAsync(string id, string prosumerNic, string role, UpdateReservationDto request)
@@ -135,13 +207,26 @@ public class ReservationService : IReservationService
             return (false, "New selected slot is not available.", null);
         }
         
-        // Revert old slot
-        oldSlot.Status = SlotStatus.AVAILABLE;
-        await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
+        // Check if the new slot is already booked by another active reservation
+        var allReservations = await _reservationRepository.GetAllAsync();
+        var isSlotBooked = allReservations.Any(r => 
+            r.SlotId == request.SlotId && 
+            (r.Status == ReservationStatus.PENDING || r.Status == ReservationStatus.APPROVED));
+            
+        if (isSlotBooked)
+        {
+            return (false, "The selected slot is already pending approval or booked by another prosumer.", null);
+        }
+        
+        // If the reservation is already approved, update the slot statuses accordingly
+        if (reservation.Status == ReservationStatus.APPROVED)
+        {
+            oldSlot.Status = SlotStatus.AVAILABLE;
+            await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
 
-        // Update new slot
-        newSlot.Status = SlotStatus.RESERVED;
-        await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
+            newSlot.Status = SlotStatus.RESERVED;
+            await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
+        }
 
         reservation.SlotId = request.SlotId;
         reservation.ScheduledStartDateTime = newSlot.StartDateTime;
@@ -149,8 +234,11 @@ public class ReservationService : IReservationService
         reservation.UpdatedAt = DateTime.UtcNow;
         
         await _reservationRepository.UpdateAsync(id, reservation);
+        
+        var dto = MapToDto(reservation);
+        dto.SlotName = newSlot.SlotName;
 
-        return (true, "Reservation updated successfully.", MapToDto(reservation));
+        return (true, "Reservation updated successfully.", dto);
     }
 
     public async Task<(bool Success, string Message)> CancelReservationAsync(string id, string prosumerNic, string role)
@@ -212,11 +300,33 @@ public class ReservationService : IReservationService
         if (newStatus == ReservationStatus.COMPLETED)
         {
             reservation.CompletedAt = DateTime.UtcNow;
+            
+            // Release the slot back to AVAILABLE
+            var slotToRelease = await _slotRepository.GetByIdAsync(reservation.SlotId);
+            if (slotToRelease != null && slotToRelease.Status == SlotStatus.RESERVED)
+            {
+                slotToRelease.Status = SlotStatus.AVAILABLE;
+                await _slotRepository.UpdateAsync(slotToRelease.SlotId!, slotToRelease);
+            }
+        }
+        else if (newStatus == ReservationStatus.APPROVED)
+        {
+            // Reserve the slot physically now that it's approved
+            var slotToReserve = await _slotRepository.GetByIdAsync(reservation.SlotId);
+            if (slotToReserve != null && slotToReserve.Status == SlotStatus.AVAILABLE)
+            {
+                slotToReserve.Status = SlotStatus.RESERVED;
+                await _slotRepository.UpdateAsync(slotToReserve.SlotId!, slotToReserve);
+            }
         }
 
         await _reservationRepository.UpdateAsync(id, reservation);
+        
+        var dto = MapToDto(reservation);
+        var slot = await _slotRepository.GetByIdAsync(reservation.SlotId);
+        dto.SlotName = slot?.SlotName ?? "Unknown Slot";
 
-        return (true, "Reservation status updated successfully.", MapToDto(reservation));
+        return (true, "Reservation status updated successfully.", dto);
     }
 
     private static ReservationDto MapToDto(EnergyReservation reservation)
@@ -224,6 +334,7 @@ public class ReservationService : IReservationService
         return new ReservationDto
         {
             ReservationId = reservation.ReservationId!,
+            ReservationNumber = reservation.ReservationNumber,
             ProsumerNic = reservation.ProsumerNic,
             StationId = reservation.StationId,
             SlotId = reservation.SlotId,

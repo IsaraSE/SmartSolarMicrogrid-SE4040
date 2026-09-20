@@ -1,6 +1,104 @@
-@SmartSolarMicrogrid.Api_HostAddress = http://localhost:5235
+@host = http://localhost:5235
 
-GET {{SmartSolarMicrogrid.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+###############################################################################
+# HOW TO USE
+# 1. Start the API (dotnet run) with MongoDB running.
+# 2. Click "Send Request" above each request, top to bottom.
+# 3. Run "Login (prosumer)" FIRST — every protected request below reuses its
+#    token automatically via {{login.response.body.$.data.token}}.
+###############################################################################
 
-###
+
+### Login (prosumer) — run this first to get a token
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+
+
+### Login (backoffice) — alternative login
+# @name loginBackoffice
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "backoffice@smartsolar.com",
+  "password": "backoffice123"
+}
+
+
+### Get all stations (also captures the first station's id for the calls below)
+# @name stations
+GET {{host}}/api/stations
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+
+### Get available slots for the first station
+# @name slots
+GET {{host}}/api/stations/{{stations.response.body.$.data[0].stationId}}/available-slots
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+
+### Get this prosumer's profile
+GET {{host}}/api/prosumers/123456789V
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+
+### Current bookings (APPROVED, upcoming)
+GET {{host}}/api/reservations/current/123456789V
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+
+### Pending bookings
+GET {{host}}/api/reservations/pending/123456789V
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+
+### Booking history (completed / cancelled / past)
+GET {{host}}/api/reservations/history/123456789V
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+
+### Create a booking (uses the first available slot from the "slots" request above)
+POST {{host}}/api/reservations
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+{
+  "prosumerNic": "123456789V",
+  "stationId": "{{stations.response.body.$.data[0].stationId}}",
+  "slotId": "{{slots.response.body.$.data[0].slotId}}",
+  "bookingDate": "",
+  "startTime": ""
+}
+
+
+### Register a brand-new prosumer (public — no token needed)
+POST {{host}}/api/prosumers/register
+Content-Type: application/json
+
+{
+  "nic": "990011223V",
+  "fullName": "Test Prosumer",
+  "email": "testprosumer@example.com",
+  "phone": "0770000000",
+  "address": "Colombo",
+  "password": "password123"
+}
+
+
+### Update this prosumer's profile
+PUT {{host}}/api/prosumers/123456789V
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.$.data.token}}
+
+{
+  "fullName": "John Doe Updated",
+  "email": "john@example.com",
+  "phone": "0771234567",
+  "address": "Kandy"
+}
