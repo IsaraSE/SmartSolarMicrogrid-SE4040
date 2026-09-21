@@ -54,11 +54,8 @@ public class SlotService : ISlotService
             .Select(r => r.SlotId)
             .ToHashSet();
 
-        // A slot is available if its status is AVAILABLE and it is not currently booked/pending
-        var availableSlots = slots.Where(s => 
-            s.Status == SlotStatus.AVAILABLE && 
-            !bookedSlotIds.Contains(s.SlotId) &&
-            s.StartDateTime > DateTime.UtcNow); // Also ensure we don't show past slots
+        // A slot is available if its status is AVAILABLE and it is not already booked
+        var availableSlots = slots.Where(s => s.Status == SlotStatus.AVAILABLE && !bookedSlotIds.Contains(s.SlotId));
 
         return availableSlots.Select(MapToDto);
     }
@@ -91,6 +88,7 @@ public class SlotService : ISlotService
             StationId = request.StationId,
             StartDateTime = request.StartDateTime,
             EndDateTime = request.EndDateTime,
+            Capacity = request.Capacity,
             Notes = request.Notes,
             Status = SlotStatus.AVAILABLE
         };
@@ -106,6 +104,7 @@ public class SlotService : ISlotService
 
         slot.StartDateTime = request.StartDateTime;
         slot.EndDateTime = request.EndDateTime;
+        slot.Capacity = request.Capacity;
         slot.Status = request.Status;
         slot.Notes = request.Notes;
 
@@ -136,6 +135,7 @@ public class SlotService : ISlotService
             StationId = slot.StationId,
             StartDateTime = slot.StartDateTime,
             EndDateTime = slot.EndDateTime,
+            Capacity = slot.Capacity,
             Status = slot.Status,
             ReservedBy = slot.ReservedBy,
             Notes = slot.Notes

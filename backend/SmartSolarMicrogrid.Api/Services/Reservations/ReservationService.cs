@@ -138,8 +138,9 @@ public class ReservationService : IReservationService
             return (false, "This slot is already pending approval or booked by another prosumer.", null);
         }
 
-        // Note: We do NOT update the slot status to RESERVED here. It remains AVAILABLE while PENDING.
-
+        // Note: We update the slot status to PENDING so it is no longer available.
+        slot.Status = SlotStatus.PENDING;
+        await _slotRepository.UpdateAsync(slot.SlotId!, slot);
         var reservationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString();
         var resNumber = "RES-" + new Random().Next(10000, 99999);
 
@@ -155,7 +156,8 @@ public class ReservationService : IReservationService
             Status = ReservationStatus.PENDING,
             QrReference = Guid.NewGuid().ToString("N"), // Generate unique QR ref
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            Notes = request.Notes
         };
 
         await _reservationRepository.CreateAsync(reservation);
@@ -225,6 +227,14 @@ public class ReservationService : IReservationService
             await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
 
             newSlot.Status = SlotStatus.RESERVED;
+            await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
+        }
+        else if (reservation.Status == ReservationStatus.PENDING)
+        {
+            oldSlot.Status = SlotStatus.AVAILABLE;
+            await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
+
+            newSlot.Status = SlotStatus.PENDING;
             await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
         }
 
@@ -303,7 +313,7 @@ public class ReservationService : IReservationService
             
             // Release the slot back to AVAILABLE
             var slotToRelease = await _slotRepository.GetByIdAsync(reservation.SlotId);
-            if (slotToRelease != null && slotToRelease.Status == SlotStatus.RESERVED)
+            if (slotToRelease != null && (slotToRelease.Status == SlotStatus.RESERVED || slotToRelease.Status == SlotStatus.PENDING))
             {
                 slotToRelease.Status = SlotStatus.AVAILABLE;
                 await _slotRepository.UpdateAsync(slotToRelease.SlotId!, slotToRelease);
@@ -313,7 +323,7 @@ public class ReservationService : IReservationService
         {
             // Reserve the slot physically now that it's approved
             var slotToReserve = await _slotRepository.GetByIdAsync(reservation.SlotId);
-            if (slotToReserve != null && slotToReserve.Status == SlotStatus.AVAILABLE)
+            if (slotToReserve != null && (slotToReserve.Status == SlotStatus.AVAILABLE || slotToReserve.Status == SlotStatus.PENDING))
             {
                 slotToReserve.Status = SlotStatus.RESERVED;
                 await _slotRepository.UpdateAsync(slotToReserve.SlotId!, slotToReserve);
@@ -344,7 +354,8 @@ public class ReservationService : IReservationService
             QrReference = reservation.QrReference,
             CreatedAt = reservation.CreatedAt,
             UpdatedAt = reservation.UpdatedAt,
-            CompletedAt = reservation.CompletedAt
+            CompletedAt = reservation.CompletedAt,
+            Notes = reservation.Notes
         };
     }
 }
