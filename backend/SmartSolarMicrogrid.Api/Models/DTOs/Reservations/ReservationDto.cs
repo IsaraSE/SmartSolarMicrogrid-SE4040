@@ -18,12 +18,17 @@ public class ReservationDto
     public string ProsumerNic { get; set; } = null!;
     public string StationId { get; set; } = null!;
     public string SlotId { get; set; } = null!;
-    public string? SlotName { get; set; }
+    public string? SlotName { get; set; } // Enriched from Slot
+
     public DateTime ScheduledStartDateTime { get; set; }
     public DateTime ScheduledEndDateTime { get; set; }
+
     public ReservationStatus Status { get; set; }
     public string QrReference { get; set; } = null!;
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+
+    public string? Notes { get; set; }
 }

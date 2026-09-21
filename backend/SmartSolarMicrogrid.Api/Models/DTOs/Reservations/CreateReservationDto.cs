@@ -19,6 +19,14 @@ public class CreateReservationDto
     [Required]
     public string SlotId { get; set; } = null!;
 
+    [Required]
+    public string BookingDate { get; set; } = null!;
+
+    [Required(ErrorMessage = "Start time is required.")]
+    public string StartTime { get; set; } = null!;
+
+    public string? Notes { get; set; }
+
     // Optional: Used when an Admin creates a reservation on behalf of a Prosumer
     public string? ProsumerNic { get; set; }
 }
