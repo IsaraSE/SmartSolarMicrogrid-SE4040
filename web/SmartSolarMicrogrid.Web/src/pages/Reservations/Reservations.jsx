@@ -477,6 +477,16 @@ const Reservations = () => {
               </div>
 
               <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Additional Notes</span>
+                  <span className="premium-info-value" style={{ whiteSpace: 'pre-wrap', color: selectedReservation.notes ? '#0f172a' : '#94a3b8' }}>
+                    {selectedReservation.notes || "No additional notes provided."}
+                  </span>
+                </div>
+              </div>
+
+              <div className="premium-info-card full-width">
                 <div className="premium-info-icon"><FiGrid /></div>
                 <div className="premium-info-content">
                   <span className="premium-info-label">QR Reference</span>
