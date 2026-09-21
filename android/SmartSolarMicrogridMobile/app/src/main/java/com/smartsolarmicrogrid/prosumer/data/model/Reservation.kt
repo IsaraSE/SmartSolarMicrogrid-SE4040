@@ -11,7 +11,8 @@ data class Reservation(
     val qrReference: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
-    val completedAt: String? = null
+    val completedAt: String? = null,
+    val notes: String? = null
 )
 
 data class CreateReservationRequest(
@@ -19,5 +20,6 @@ data class CreateReservationRequest(
     val stationId: String,
     val slotId: String,
     val bookingDate: String,
-    val startTime: String
+    val startTime: String,
+    val notes: String? = null
 )

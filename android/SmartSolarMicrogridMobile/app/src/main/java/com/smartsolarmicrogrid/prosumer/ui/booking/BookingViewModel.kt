@@ -46,7 +46,7 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
     var cancelBookingState by mutableStateOf<CancelBookingState>(CancelBookingState.Idle)
         private set
 
-    fun createBooking(stationId: String, slotId: String, bookingDate: String, startTime: String) {
+    fun createBooking(stationId: String, slotId: String, bookingDate: String, startTime: String, notes: String?) {
         val nic = sessionDb.getSession()?.nic ?: "MOCK-NIC-000" // TODO: remove mock fallback before submission
 
         createBookingState = CreateBookingState.Loading
@@ -58,7 +58,8 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         stationId = stationId,
                         slotId = slotId,
                         bookingDate = bookingDate,
-                        startTime = startTime
+                        startTime = startTime,
+                        notes = notes
                     )
                 )
                 if (response.isSuccessful && response.body()?.data != null) {
@@ -133,13 +134,14 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun resetState() {
-        createBookingState = CreateBookingState.Idle
-        updateBookingState = UpdateBookingState.Idle
+    fun resetCancelState() {
         cancelBookingState = CancelBookingState.Idle
     }
 
-    // TODO: remove this function before final submission — for UI preview only, no real backend yet
+    fun resetState() {
+        createBookingState = CreateBookingState.Idle
+    }
+
     private fun getMockReservation(stationId: String, slotId: String, bookingDate: String, startTime: String): Reservation {
         return Reservation(
             reservationId = "RES-MOCK-001",
@@ -152,7 +154,8 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
             qrReference = null,
             createdAt = null,
             updatedAt = null,
-            completedAt = null
+            completedAt = null,
+            notes = "Mock note"
         )
     }
 }
