@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 sealed class RegisterState {
     object Idle : RegisterState()
     object Loading : RegisterState()
-    object Success : RegisterState()
+    data class Success(val nic: String) : RegisterState()
     data class Error(val message: String) : RegisterState()
 }
 
@@ -44,7 +44,7 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
                     )
                 )
                 if (response.isSuccessful) {
-                    registerState = RegisterState.Success
+                    registerState = RegisterState.Success(nic)
                 } else {
                     registerState = RegisterState.Error("Registration failed. Please check your details.")
                 }

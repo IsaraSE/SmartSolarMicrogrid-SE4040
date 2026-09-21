@@ -38,6 +38,7 @@ import com.smartsolarmicrogrid.prosumer.ui.qr.BookingQrScreen
 import com.smartsolarmicrogrid.prosumer.ui.profile.EditProfileScreen
 import com.smartsolarmicrogrid.prosumer.ui.profile.ProfileScreen
 import com.smartsolarmicrogrid.prosumer.ui.station.SlotListScreen
+import com.smartsolarmicrogrid.prosumer.ui.station.StationDetailsScreen
 import com.smartsolarmicrogrid.prosumer.ui.station.StationListScreen
 import com.smartsolarmicrogrid.prosumer.ui.station.StationViewModel
 
@@ -48,10 +49,13 @@ const val SOURCE_LIST = "list"
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
-    object PendingActivation : Screen("pending_activation")
+    object PendingActivation : Screen("pending_activation/{nic}") {
+        fun createRoute(nic: String) = "pending_activation/$nic"
+    }
     object Profile : Screen("profile")
     object EditProfile : Screen("edit_profile")
     object Stations : Screen("stations")
+    object StationDetails : Screen("station_details")
     object Slots : Screen("slots")
     object CreateBooking : Screen("create_booking")
     object BookingSummary : Screen("booking_summary")
@@ -76,15 +80,17 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun NavGraph(navController: NavHostController = rememberNavController()) {
-    // TODO: set back to Screen.Login.route before final submission
-    NavHost(navController = navController, startDestination = Screen.Dashboard.route) {
+fun NavGraph(
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = Screen.Login.route
+) {
+    NavHost(navController = navController, startDestination = startDestination) {
 
         composable(Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess = { role, status ->
+                onLoginSuccess = { nic, role, status ->
                     if (status == "PENDING") {
-                        navController.navigate(Screen.PendingActivation.route) {
+                        navController.navigate(Screen.PendingActivation.createRoute(nic)) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     } else {
@@ -105,8 +111,8 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
 
         composable(Screen.Register.route) {
             RegisterScreen(
-                onRegisterSuccess = { 
-                    navController.navigate(Screen.PendingActivation.route) {
+                onRegisterSuccess = { nic -> 
+                    navController.navigate(Screen.PendingActivation.createRoute(nic)) {
                         popUpTo(Screen.Login.route) { inclusive = false }
                     }
                 },
@@ -114,8 +120,10 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
             )
         }
         
-        composable(Screen.PendingActivation.route) {
+        composable(Screen.PendingActivation.route) { backStackEntry ->
+            val nic = backStackEntry.arguments?.getString("nic") ?: ""
             PendingActivationScreen(
+                nic = nic,
                 onBackToLogin = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true } // Clear entire backstack
@@ -151,12 +159,24 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                 StationListScreen(
                     onStationSelected = { station ->
                         stationViewModel.selectStationAndLoadSlots(station)
-                        navController.navigate(Screen.Slots.route)
+                        navController.navigate(Screen.StationDetails.route)
                     },
                     onBack = { navController.popBackStack() },
                     stationViewModel = stationViewModel
                 )
             }
+        }
+
+        composable(Screen.StationDetails.route) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Screen.Stations.route)
+            }
+            val stationViewModel: StationViewModel = viewModel(parentEntry)
+            StationDetailsScreen(
+                onNavigateToSlots = { navController.navigate(Screen.Slots.route) },
+                onBack = { navController.popBackStack() },
+                stationViewModel = stationViewModel
+            )
         }
 
         composable(Screen.Slots.route) { backStackEntry ->
@@ -214,7 +234,7 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                         navController.navigate(Screen.ModifyBooking.createRoute(SOURCE_CREATE))
                     },
                     onCancel = {
-                        navController.navigate(Screen.CancelBooking.createRoute(SOURCE_CREATE))
+                        navController.popBackStack(Screen.Dashboard.route, inclusive = false)
                     }
                 )
             }

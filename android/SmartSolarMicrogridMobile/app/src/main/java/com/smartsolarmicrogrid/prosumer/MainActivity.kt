@@ -14,19 +14,33 @@ import com.smartsolarmicrogrid.prosumer.data.local.SessionDbHelper
 import com.smartsolarmicrogrid.prosumer.ui.navigation.NavGraph
 import com.smartsolarmicrogrid.prosumer.ui.theme.SmartSolarMicrogridMobileTheme
 
+import com.smartsolarmicrogrid.prosumer.ui.navigation.Screen
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Restore a previously stored JWT so authenticated requests work after an app restart.
-        RetrofitClient.authToken = SessionDbHelper(this).getToken()
+        // Restore a previously stored session so authenticated requests work after an app restart.
+        val sessionDb = SessionDbHelper(this)
+        val session = sessionDb.getSession()
+        RetrofitClient.authToken = session?.token
+
+        val initialRoute = if (session != null && session.token != null) {
+            when {
+                session.accountStatus == "PENDING" -> Screen.PendingActivation.createRoute(session.nic)
+                session.role == "GRID_OPERATOR" -> Screen.OperatorHome.route
+                else -> Screen.Dashboard.route
+            }
+        } else {
+            Screen.Login.route
+        }
 
         enableEdgeToEdge()
         setContent {
             SmartSolarMicrogridMobileTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        NavGraph()
+                        NavGraph(startDestination = initialRoute)
                     }
                 }
             }

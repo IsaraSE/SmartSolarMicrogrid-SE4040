@@ -30,7 +30,7 @@ private val BackgroundTop = Color(0xFF1B5E20)
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (role: String, status: String) -> Unit,
+    onLoginSuccess: (nic: String, role: String, status: String) -> Unit,
     onNavigateToRegister: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
@@ -42,7 +42,7 @@ fun LoginScreen(
 
     LaunchedEffect(state) {
         if (state is LoginState.Success) {
-            onLoginSuccess(state.role, state.accountStatus)
+            onLoginSuccess(state.nic, state.role, state.accountStatus)
         }
     }
 
@@ -232,5 +232,5 @@ fun LoginScreen(
 @androidx.compose.ui.tooling.preview.Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    LoginScreen(onLoginSuccess = { _, _ -> }, onNavigateToRegister = {})
+    LoginScreen(onLoginSuccess = { _, _, _ -> }, onNavigateToRegister = {})
 }

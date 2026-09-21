@@ -36,7 +36,7 @@ private val BackgroundTop = Color(0xFF1B5E20)
 
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (nic: String) -> Unit,
     onNavigateBackToLogin: () -> Unit,
     registerViewModel: RegisterViewModel = viewModel()
 ) {
@@ -57,7 +57,7 @@ fun RegisterScreen(
 
     LaunchedEffect(state) {
         if (state is RegisterState.Success) {
-            onRegisterSuccess()
+            onRegisterSuccess(state.nic)
         }
     }
 

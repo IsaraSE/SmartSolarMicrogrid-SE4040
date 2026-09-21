@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -51,7 +52,7 @@ fun StationListScreen(
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("All") }
-    val filterOptions = listOf("All", "Colombo", "Kandy", "Galle", "More")
+    val filterOptions = listOf("All", "Near Me", "Available")
     var isMapView by remember { mutableStateOf(false) }
 
     Box(
@@ -136,37 +137,21 @@ fun StationListScreen(
                     ) {
                         items(filterOptions) { option ->
                             val isSelected = selectedFilter == option
-                            val isMore = option == "More"
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
-                                    .background(if (isSelected) SolarGreenLight else Color.Transparent)
-                                    .border(1.dp, if (isSelected) SolarGreenLight else Color(0xFFEEEEEE), RoundedCornerShape(20.dp))
-                                    .clickable { if (!isMore) selectedFilter = option }
+                                    .background(if (isSelected) SolarGreenDark else Color.Transparent)
+                                    .border(1.dp, if (isSelected) SolarGreenDark else Color(0xFFEEEEEE), RoundedCornerShape(20.dp))
+                                    .clickable { selectedFilter = option }
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    if (!isMore) {
-                                        Icon(
-                                            Icons.Filled.LocationOn,
-                                            contentDescription = null,
-                                            tint = if (isSelected) SolarGreenDark else Color.Gray,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                    }
-                                    Text(
-                                        option,
-                                        color = if (isSelected) SolarGreenDark else Color.DarkGray,
-                                        fontSize = 13.sp,
-                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                                    )
-                                    if (isMore) {
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = Color.DarkGray, modifier = Modifier.size(16.dp))
-                                    }
-                                }
+                                Text(
+                                    option,
+                                    color = if (isSelected) Color.White else Color.DarkGray,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+                                )
                             }
                         }
                     }
@@ -241,8 +226,22 @@ fun StationListScreen(
                         is StationListState.Loaded -> {
                             val stations = state.stations.filter {
                                 val matchesSearch = it.stationName.contains(searchQuery, ignoreCase = true) || it.address.contains(searchQuery, ignoreCase = true)
-                                val matchesFilter = if (selectedFilter == "All") true else it.address.contains(selectedFilter, ignoreCase = true) || it.stationName.contains(selectedFilter, ignoreCase = true)
+                                
+                                val isActive = it.status.uppercase() == "ACTIVE" || it.status.uppercase() == "AVAILABLE" || it.status == "0"
+                                
+                                // Mock available slots for filtering
+                                val mockReserved = (it.stationName.length) % (it.batterySlotCount + 1)
+                                val availableSlots = it.batterySlotCount - mockReserved
+                                
+                                val matchesFilter = when (selectedFilter) {
+                                    "Near Me" -> it.stationId == "ST001" || it.stationId == "ST002" // Mock "Near Me" condition
+                                    "Available" -> availableSlots > 0 && isActive
+                                    else -> true
+                                }
+                                
                                 matchesSearch && matchesFilter
+                            }.sortedByDescending { 
+                                it.status.uppercase() == "ACTIVE" || it.status.uppercase() == "AVAILABLE" || it.status == "0"
                             }
 
                             if (isMapView) {
@@ -251,18 +250,31 @@ fun StationListScreen(
                                 val cameraPositionState = rememberCameraPositionState {
                                     position = CameraPosition.fromLatLngZoom(sriLanka, 7f)
                                 }
+                                val context = androidx.compose.ui.platform.LocalContext.current
                                 Box(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp).padding(bottom = 24.dp).clip(RoundedCornerShape(16.dp))) {
                                     GoogleMap(
                                         modifier = Modifier.fillMaxSize(),
                                         cameraPositionState = cameraPositionState
                                     ) {
                                         stations.forEach { station ->
+                                            val isStationActive = station.status.uppercase() == "ACTIVE" || station.status.uppercase() == "AVAILABLE" || station.status == "0"
+                                            val isMaintenance = station.status.uppercase() == "MAINTENANCE"
+                                            val isAvailable = isStationActive && !isMaintenance
+
                                             Marker(
                                                 state = MarkerState(position = LatLng(station.latitude, station.longitude)),
                                                 title = station.stationName,
-                                                snippet = "${station.capacity} kWh • ${station.batterySlotCount} slots",
+                                                snippet = if (isAvailable) "${station.capacity} kWh • ${station.batterySlotCount} slots" else "Currently Unavailable",
+                                                icon = com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker(
+                                                    if (isAvailable) com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_GREEN 
+                                                    else com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_RED
+                                                ),
                                                 onClick = {
-                                                    onStationSelected(station)
+                                                    if (isAvailable) {
+                                                        onStationSelected(station)
+                                                    } else {
+                                                        android.widget.Toast.makeText(context, "This station is currently under maintenance or inactive.", android.widget.Toast.LENGTH_SHORT).show()
+                                                    }
                                                     true
                                                 }
                                             )
@@ -297,75 +309,101 @@ fun StationListScreen(
 
 @Composable
 private fun StationCardV2(station: Station, onClick: () -> Unit) {
+    val isStationActive = station.status.uppercase() == "ACTIVE" || station.status.uppercase() == "AVAILABLE" || station.status == "0"
+    
     Card(
-        onClick = onClick,
+        onClick = { if (isStationActive) onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFFF0F0F0), RoundedCornerShape(16.dp))
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isStationActive) 2.dp else 0.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color(0xFFF0F0F0), RoundedCornerShape(16.dp))
+            .alpha(if (isStationActive) 1f else 0.5f)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Image Placeholder (Fetching a solar panel image)
+            // Image Placeholder (Using local drawable images)
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(72.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color.LightGray)
             ) {
-                // Using different sample images based on station ID for demo purposes
-                val imgUrl = when(station.stationId) {
-                    "ST001" -> "https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=400&auto=format&fit=crop"
-                    "ST002" -> "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=400&auto=format&fit=crop"
-                    "ST003" -> "https://images.unsplash.com/photo-1521618755572-156ae0cdd74d?q=80&w=400&auto=format&fit=crop"
-                    else -> "https://images.unsplash.com/photo-1548611635-b6e7827d7d4a?q=80&w=400&auto=format&fit=crop"
+                val idHash = kotlin.math.abs(station.stationId.hashCode()) % 7
+                val imgRes = when(idHash) {
+                    0 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_1
+                    1 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_2
+                    2 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_3
+                    3 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_4
+                    4 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_5
+                    5 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_6
+                    else -> com.smartsolarmicrogrid.prosumer.R.drawable.station_7
                 }
-                NetworkImage(url = imgUrl, modifier = Modifier.fillMaxSize())
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(id = imgRes),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
             }
             
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                    Text(station.stationName, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
-                    // Mock distance
-                    val distance = when(station.stationId) {
-                        "ST001" -> "1.2 km"
-                        "ST002" -> "102 km"
-                        "ST003" -> "119 km"
-                        else -> "10 km"
-                    }
-                    Text(distance, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    station.stationName, 
+                    fontWeight = FontWeight.Bold, 
+                    fontSize = 16.sp, 
+                    color = Color(0xFF1E293B),
+                    maxLines = 1
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    val city = station.address.split(",").firstOrNull() ?: station.address
+                    Text(city, fontSize = 13.sp, color = Color(0xFF64748B), maxLines = 1)
+                    Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(18.dp))
                 }
                 
                 Spacer(modifier = Modifier.height(4.dp))
                 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(12.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(station.address, fontSize = 12.sp, color = Color.Gray, maxLines = 1)
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        val isAvailable = station.status.uppercase() != "MAINTENANCE"
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(if (isAvailable) SolarGreen else SolarAmber))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (isAvailable) "Available" else "Limited", fontSize = 12.sp, color = if (isAvailable) SolarGreenDark else SolarAmber, fontWeight = FontWeight.SemiBold)
-                        Text("  •  ${station.batterySlotCount - 2} / ${station.batterySlotCount} slots", fontSize = 11.sp, color = Color.Gray) // Mocking available slots
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    val distance = when(station.stationId) {
+                        "ST001" -> "1.2 km"
+                        "ST002" -> "10.2 km"
+                        "ST003" -> "11.9 km"
+                        else -> "2.1 km" // Mock distance matching the UI reference
+                    }
+                    Text(distance, fontSize = 13.sp, color = Color(0xFF64748B))
+                    
+                    val isMaintenance = station.status.uppercase() == "MAINTENANCE"
+                    val mockReserved = (station.stationName.length) % (station.batterySlotCount + 1)
+                    val availableSlots = if (isMaintenance || !isStationActive) 0 else (station.batterySlotCount - mockReserved)
+                    
+                    val (statusText, bgColor, textColor) = when {
+                        !isStationActive -> Triple("Unavailable", Color(0xFFF1F5F9), Color(0xFF64748B)) // Gray
+                        isMaintenance -> Triple("Maintenance", Color(0xFFF1F5F9), Color(0xFF64748B)) // Gray
+                        availableSlots == 0 -> Triple("Fully Booked", Color(0xFFFFEBEE), Color(0xFFC62828)) // Red
+                        availableSlots <= 2 -> Triple("Almost Full", Color(0xFFFFF3E0), SolarAmber) // Amber
+                        else -> Triple("Available", SolarGreenLight, SolarGreen) // Green
                     }
                     
                     Box(
-                        modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(SolarGreenLight).padding(horizontal = 10.dp, vertical = 4.dp)
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(bgColor)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("View Slots", color = SolarGreenDark, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = SolarGreenDark, modifier = Modifier.size(14.dp))
-                        }
+                        Text(
+                            statusText, 
+                            color = textColor, 
+                            fontSize = 11.sp, 
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }

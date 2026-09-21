@@ -16,7 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartSolarMicrogridMobile">
         
-        <meta-data android:name="com.google.android.geo.API_KEY" android:value="mock-api-key" />
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyB2Nca1bKHhBgSKC6Mk4S5JfKGWp7iPNlM" />
 
         <activity
             android:name=".MainActivity"
