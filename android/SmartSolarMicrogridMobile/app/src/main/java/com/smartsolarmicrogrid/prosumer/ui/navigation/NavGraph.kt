@@ -199,7 +199,7 @@ fun NavGraph(
                 navController.getBackStackEntry(Screen.Stations.route)
             }
             val stationViewModel: StationViewModel = viewModel(parentEntry)
-            val bookingViewModel: BookingViewModel = viewModel(backStackEntry)
+            val bookingViewModel: BookingViewModel = viewModel(parentEntry)
 
             val station = stationViewModel.selectedStation
             val slot = stationViewModel.selectedSlot
@@ -208,7 +208,9 @@ fun NavGraph(
                 CreateBookingScreen(
                     station = station,
                     slot = slot,
-                    onBookingConfirmed = { navController.navigate(Screen.BookingSummary.route) },
+                    onBookingConfirmed = { 
+                        navController.navigate(Screen.BookingSummary.route)
+                    },
                     onBack = { navController.popBackStack() },
                     bookingViewModel = bookingViewModel
                 )
@@ -216,24 +218,29 @@ fun NavGraph(
         }
 
         composable(Screen.BookingSummary.route) { backStackEntry ->
-            val createBookingEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(Screen.CreateBooking.route)
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Screen.Stations.route)
             }
-            val bookingViewModel: BookingViewModel = viewModel(createBookingEntry)
+            val stationViewModel: StationViewModel = viewModel(parentEntry)
+            val bookingViewModel: BookingViewModel = viewModel(parentEntry)
             val state = bookingViewModel.createBookingState
 
-            if (state is CreateBookingState.Success) {
+            val station = stationViewModel.selectedStation
+            val slot = stationViewModel.selectedSlot
+
+            if (state is CreateBookingState.Success && station != null && slot != null) {
                 BookingSummaryScreen(
                     reservation = state.reservation,
+                    station = station,
+                    slot = slot,
                     onDone = {
+                        bookingViewModel.resetState()
                         navController.navigate(Screen.BookingList.route) {
                             popUpTo(Screen.Dashboard.route)
                         }
                     },
-                    onModify = {
-                        navController.navigate(Screen.ModifyBooking.createRoute(SOURCE_CREATE))
-                    },
-                    onCancel = {
+                    onBackToHome = {
+                        bookingViewModel.resetState()
                         navController.popBackStack(Screen.Dashboard.route, inclusive = false)
                     }
                 )

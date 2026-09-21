@@ -67,9 +67,9 @@ fun CreateBookingScreen(
                         bookingViewModel.createBooking(
                             stationId = station.stationId,
                             slotId = slot.slotId,
-                            bookingDate = slot.date,
-                            startTime = slot.startTime
-                            // Assume purpose and notes are handled inside or ignored for demo
+                            bookingDate = slot.startDateTime.substringBefore("T"),
+                            startTime = slot.startDateTime.substringAfter("T").substringBefore("Z"),
+                            notes = notes.takeIf { it.isNotBlank() }
                         )
                     },
                     enabled = state !is CreateBookingState.Loading,
@@ -104,37 +104,20 @@ fun CreateBookingScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     DetailTextRow("Station", station.stationName)
                     Spacer(modifier = Modifier.height(12.dp))
-                    DetailTextRow("Date", slot.date)
+                    if (!slot.slotName.isNullOrEmpty()) {
+                        DetailTextRow("Slot Name", slot.slotName)
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    DetailTextRow("Date", slot.getFormattedDate())
                     Spacer(modifier = Modifier.height(12.dp))
-                    DetailTextRow("Time", "${slot.startTime} - ${slot.endTime}")
+                    DetailTextRow("Time", "${slot.getFormattedStartTime()} - ${slot.getFormattedEndTime()}")
                     Spacer(modifier = Modifier.height(12.dp))
-                    DetailTextRow("Energy Amount", "5 kWh")
+                    val displayCapacity = if (slot.capacity > 0.0) slot.capacity else 5.0
+                    DetailTextRow("Energy Amount", "$displayCapacity kWh")
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Purpose Section
-            Text("Purpose", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(
-                    selected = purpose == "Sell Energy (Feed to Grid)",
-                    onClick = { purpose = "Sell Energy (Feed to Grid)" },
-                    colors = RadioButtonDefaults.colors(selectedColor = SolarGreen)
-                )
-                Text("Sell Energy (Feed to Grid)", fontSize = 14.sp)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(
-                    selected = purpose == "Charge Battery",
-                    onClick = { purpose = "Charge Battery" },
-                    colors = RadioButtonDefaults.colors(selectedColor = SolarGreen)
-                )
-                Text("Charge Battery", fontSize = 14.sp)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Notes Section
             Text("Notes (Optional)", fontSize = 16.sp, fontWeight = FontWeight.Bold)
