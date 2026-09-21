@@ -9,7 +9,7 @@ object RetrofitClient {
 
     // Emulator note: 10.0.2.2 is how the Android emulator reaches your PC's "localhost".
     // The C# API runs on port 5235 (see backend Properties/launchSettings.json).
-    private const val BASE_URL = "http://10.0.2.2:5235/"
+    private const val BASE_URL = "http://172.20.10.4:5235/"
 
     // JWT bearer token for authenticated requests. Set on login and restored from
     // SQLite when the app starts (see MainActivity / AuthViewModel).
