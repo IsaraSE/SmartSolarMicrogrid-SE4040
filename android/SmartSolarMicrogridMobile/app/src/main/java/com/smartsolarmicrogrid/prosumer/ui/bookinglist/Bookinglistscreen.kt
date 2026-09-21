@@ -1,7 +1,7 @@
 package com.smartsolarmicrogrid.prosumer.ui.bookinglist
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,56 +14,18 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smartsolarmicrogrid.prosumer.data.model.Reservation
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 private val SolarGreen = Color(0xFF2E7D32)
 private val SurfaceGray = Color(0xFFF5F5F5)
-
-// Define dummy reservations to match the mockup
-private val demoReservations = listOf(
-    Reservation(
-        reservationId = "RES-20260922-001",
-        prosumerNic = "123456789V",
-        stationId = "Colombo Solar Hub",
-        slotId = "slot1",
-        bookingDate = "22 Sep 2026",
-        startTime = "08:00 AM - 10:00 AM",
-        status = "PENDING"
-    ),
-    Reservation(
-        reservationId = "RES-20260918-002",
-        prosumerNic = "123456789V",
-        stationId = "Kandy Solar Hub",
-        slotId = "slot2",
-        bookingDate = "18 Sep 2026",
-        startTime = "10:00 AM - 12:00 PM",
-        status = "APPROVED"
-    ),
-    Reservation(
-        reservationId = "RES-20260910-003",
-        prosumerNic = "123456789V",
-        stationId = "Galle Solar Hub",
-        slotId = "slot3",
-        bookingDate = "10 Sep 2026",
-        startTime = "02:00 PM - 04:00 PM",
-        status = "COMPLETED"
-    ),
-    Reservation(
-        reservationId = "RES-20260905-004",
-        prosumerNic = "123456789V",
-        stationId = "Jaffna Solar Hub",
-        slotId = "slot4",
-        bookingDate = "05 Sep 2026",
-        startTime = "04:00 PM - 06:00 PM",
-        status = "CANCELLED"
-    )
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,16 +34,8 @@ fun BookingListScreen(
     onBack: () -> Unit,
     bookingListViewModel: BookingListViewModel = viewModel()
 ) {
-    val tabs = listOf("All", "Pending", "Approved", "Completed")
-    var selectedTabIndex by remember { mutableStateOf(1) } // Default to "Pending"
-
-    val filteredList = when (selectedTabIndex) {
-        0 -> demoReservations
-        1 -> demoReservations.filter { it.status == "PENDING" }
-        2 -> demoReservations.filter { it.status == "APPROVED" }
-        3 -> demoReservations.filter { it.status == "COMPLETED" }
-        else -> demoReservations
-    }
+    val selectedTabIndex = bookingListViewModel.selectedTab.ordinal
+    val listState = bookingListViewModel.listState
 
     Scaffold(
         topBar = {
@@ -99,7 +53,7 @@ fun BookingListScreen(
                 )
             )
         },
-        containerColor = SurfaceGray
+        containerColor = Color.White
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -111,7 +65,8 @@ fun BookingListScreen(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = Color.White,
                 contentColor = SolarGreen,
-                edgePadding = 8.dp,
+                edgePadding = 16.dp,
+                divider = {},
                 indicator = { tabPositions ->
                     if (selectedTabIndex < tabPositions.size) {
                         TabRowDefaults.Indicator(
@@ -122,35 +77,59 @@ fun BookingListScreen(
                     }
                 }
             ) {
-                tabs.forEachIndexed { index, title ->
+                BookingTab.values().forEachIndexed { index, tab ->
                     Tab(
                         selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index },
+                        onClick = { bookingListViewModel.onTabSelected(tab) },
                         text = {
                             Text(
-                                title,
+                                tab.label,
                                 fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-                                color = if (selectedTabIndex == index) SolarGreen else Color.Gray
+                                color = if (selectedTabIndex == index) SolarGreen else Color.Gray,
+                                fontSize = 15.sp
                             )
                         }
                     )
                 }
             }
+            
+            Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
 
             // List
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(filteredList) { reservation ->
-                    BookingCard(
-                        reservation = reservation,
-                        onClick = {
-                            bookingListViewModel.selectReservation(reservation)
-                            onBookingSelected(reservation)
+            when (listState) {
+                is BookingListState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = SolarGreen)
+                    }
+                }
+                is BookingListState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(listState.message, color = Color.Red)
+                    }
+                }
+                is BookingListState.Loaded -> {
+                    val filteredList = listState.reservations
+                    if (filteredList.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("No bookings found.", color = Color.Gray)
                         }
-                    )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(filteredList) { reservation ->
+                                BookingCard(
+                                    reservation = reservation,
+                                    onClick = {
+                                        bookingListViewModel.selectReservation(reservation)
+                                        onBookingSelected(reservation)
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -161,8 +140,9 @@ fun BookingListScreen(
 private fun BookingCard(reservation: Reservation, onClick: () -> Unit) {
     Card(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFEEEEEE)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -172,46 +152,86 @@ private fun BookingCard(reservation: Reservation, onClick: () -> Unit) {
                 verticalAlignment = Alignment.Top
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.EventNote, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(24.dp))
-                    Spacer(modifier = Modifier.width(12.dp))
+                    // Status-colored icon background
+                    val statusColor = getStatusColor(reservation.status)
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(statusColor.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Filled.EventNote,
+                            contentDescription = null,
+                            tint = statusColor,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(16.dp))
+                    
                     Column {
-                        Text(reservation.stationId, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.Black)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(reservation.bookingDate, fontSize = 14.sp, color = Color.Gray)
-                        Text(reservation.startTime, fontSize = 14.sp, color = Color.Gray)
+                        Text(
+                            text = reservation.stationName ?: reservation.stationId,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            color = Color(0xFF263238)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        
+                        val formattedDate = try {
+                            LocalDate.parse(reservation.bookingDate).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                        } catch (e: Exception) {
+                            reservation.bookingDate
+                        }
+                        
+                        val formattedTime = try {
+                            val st = LocalTime.parse(reservation.startTime)
+                            // Assuming slots are 2 hours for now as in screenshot
+                            val et = st.plusHours(2)
+                            "${st.format(DateTimeFormatter.ofPattern("hh:mm a"))} – ${et.format(DateTimeFormatter.ofPattern("hh:mm a"))}"
+                        } catch (e: Exception) {
+                            reservation.startTime
+                        }
+
+                        Text(formattedDate, fontSize = 14.sp, color = Color(0xFF78909C), fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(formattedTime, fontSize = 14.sp, color = Color(0xFF78909C), fontWeight = FontWeight.Medium)
                     }
                 }
+                
                 StatusBadge(status = reservation.status)
             }
         }
     }
 }
 
+private fun getStatusColor(status: String): Color {
+    return when (status.uppercase()) {
+        "APPROVED" -> Color(0xFF66BB6A)
+        "PENDING" -> Color(0xFFFFB74D)
+        "COMPLETED" -> Color(0xFF90CAF9)
+        "CANCELLED" -> Color(0xFFEF5350)
+        else -> Color(0xFFBDBDBD)
+    }
+}
+
 @Composable
 fun StatusBadge(status: String) {
-    val backgroundColor = when (status) {
-        "APPROVED" -> Color(0xFFE8F5E9)
-        "PENDING" -> Color(0xFFFFF3E0)
-        "COMPLETED" -> Color(0xFFE3F2FD)
-        else -> Color(0xFFFFEBEE)
-    }
-    val textColor = when (status) {
-        "APPROVED" -> SolarGreen
-        "PENDING" -> Color(0xFFFFA726)
-        "COMPLETED" -> Color(0xFF1E88E5)
-        else -> Color(0xFFE53935)
-    }
+    val backgroundColor = getStatusColor(status).copy(alpha = 0.1f)
+    val textColor = getStatusColor(status)
 
     Box(
         modifier = Modifier
-            .background(backgroundColor, RoundedCornerShape(16.dp))
+            .background(backgroundColor, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
-            text = status,
-            fontSize = 12.sp,
+            text = status.uppercase(),
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = textColor
+            color = textColor,
+            letterSpacing = 0.5.sp
         )
     }
 }

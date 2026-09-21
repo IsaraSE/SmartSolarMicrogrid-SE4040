@@ -35,13 +35,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     // and persist it (with the rest of the session) in SQLite.
                     RetrofitClient.authToken = user.token
                     sessionDb.saveSession(
-                        nic = user.userId,
+                        nic = user.nic,
                         fullName = user.fullName,
                         role = user.role,
                         accountStatus = user.accountStatus,
                         token = user.token
                     )
-                    loginState = LoginState.Success(user.userId, user.role, user.accountStatus)
+                    loginState = LoginState.Success(user.nic, user.role, user.accountStatus)
                 } else {
                     val msg = response.errorBody()?.string()?.let { 
                         org.json.JSONObject(it).optString("message", "Invalid username or password") 

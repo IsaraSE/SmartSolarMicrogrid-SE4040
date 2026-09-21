@@ -7,6 +7,7 @@ data class LoginRequest(
 
 data class LoginResponse(
     val userId: String,
+    val nic: String,
     val fullName: String,
     val role: String,
     val accountStatus: String,

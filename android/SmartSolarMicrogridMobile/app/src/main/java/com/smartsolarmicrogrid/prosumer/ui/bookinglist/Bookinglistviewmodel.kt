@@ -20,10 +20,11 @@ import com.smartsolarmicrogrid.prosumer.data.model.Reservation
 import kotlinx.coroutines.launch
 
 /** The three booking views the Prosumer can switch between. */
-enum class BookingTab(val label: String) {
-    CURRENT("Current"),
-    PENDING("Pending"),
-    HISTORY("History")
+enum class BookingTab(val label: String, val status: String?) {
+    ALL("All", null),
+    PENDING("Pending", "PENDING"),
+    APPROVED("Approved", "APPROVED"),
+    COMPLETED("Completed", "COMPLETED")
 }
 
 /** Loading / loaded / error state for any reservation list shown on screen. */
@@ -38,7 +39,7 @@ class BookingListViewModel(application: Application) : AndroidViewModel(applicat
     private val sessionDb = SessionDbHelper(application)
 
     /** Currently selected tab. */
-    var selectedTab by mutableStateOf(BookingTab.CURRENT)
+    var selectedTab by mutableStateOf(BookingTab.ALL)
         private set
 
     /** State of the list belonging to the selected tab. */
@@ -66,7 +67,7 @@ class BookingListViewModel(application: Application) : AndroidViewModel(applicat
         private set
 
     init {
-        loadTab(BookingTab.CURRENT)
+        loadTab(BookingTab.ALL)
     }
 
     /** Reads the logged-in Prosumer's NIC from the local SQLite session table. */
@@ -134,102 +135,34 @@ class BookingListViewModel(application: Application) : AndroidViewModel(applicat
                 if (response.isSuccessful && response.body()?.data != null) {
                     searchState = BookingListState.Loaded(response.body()!!.data!!)
                 } else {
-                    // TODO: remove mock fallback before submission
-                    searchState = BookingListState.Loaded(filterLocally(getMockReservations()))
+                    searchState = BookingListState.Error(response.message() ?: "Error searching reservations")
                 }
             } catch (e: Exception) {
-                // TODO: remove mock fallback before submission
-                searchState = BookingListState.Loaded(filterLocally(getMockReservations()))
+                searchState = BookingListState.Error(e.message ?: "Failed to connect to server")
             }
         }
     }
 
-    /** Loads Current, Pending or History reservations for the logged-in Prosumer. */
+    /** Loads All, Pending, Approved, or Completed reservations for the logged-in Prosumer. */
     private fun loadTab(tab: BookingTab) {
         listState = BookingListState.Loading
         val nic = currentNic()
         viewModelScope.launch {
             try {
-                val response = when (tab) {
-                    BookingTab.CURRENT -> RetrofitClient.apiService.getCurrentReservations(nic)
-                    BookingTab.PENDING -> RetrofitClient.apiService.getPendingReservations(nic)
-                    BookingTab.HISTORY -> RetrofitClient.apiService.getReservationHistory(nic)
-                }
+                val response = RetrofitClient.apiService.searchReservations(
+                    nic = nic,
+                    status = tab.status
+                )
+                
                 if (response.isSuccessful && response.body()?.data != null) {
                     listState = BookingListState.Loaded(response.body()!!.data!!)
                 } else {
-                    // TODO: remove mock fallback before submission
-                    listState = BookingListState.Loaded(mockForTab(tab))
+                    listState = BookingListState.Error(response.message() ?: "Failed to fetch reservations")
                 }
             } catch (e: Exception) {
-                // TODO: remove mock fallback before submission
-                listState = BookingListState.Loaded(mockForTab(tab))
+                listState = BookingListState.Error(e.message ?: "Failed to connect to server")
             }
         }
     }
 
-    // TODO: remove this function before final submission - local filtering of mock data only
-    private fun filterLocally(all: List<Reservation>): List<Reservation> {
-        val keyword = searchQuery.trim().lowercase()
-        return all.filter { reservation ->
-            val matchesKeyword = keyword.isBlank() ||
-                    reservation.stationId.lowercase().contains(keyword) ||
-                    reservation.reservationId.lowercase().contains(keyword) ||
-                    reservation.bookingDate.lowercase().contains(keyword)
-            val matchesStatus = statusFilter == null || reservation.status == statusFilter
-            matchesKeyword && matchesStatus
-        }
-    }
-
-    // TODO: remove this function before final submission - for UI preview only, no real backend yet
-    private fun mockForTab(tab: BookingTab): List<Reservation> {
-        val all = getMockReservations()
-        return when (tab) {
-            BookingTab.CURRENT -> all.filter { it.status == "APPROVED" }
-            BookingTab.PENDING -> all.filter { it.status == "PENDING" }
-            BookingTab.HISTORY -> all.filter { it.status == "COMPLETED" || it.status == "CANCELLED" }
-        }
-    }
-
-    // TODO: remove this function before final submission - for UI preview only, no real backend yet
-    private fun getMockReservations(): List<Reservation> = listOf(
-        Reservation(
-            reservationId = "RES-1001",
-            prosumerNic = "MOCK-NIC-000",
-            stationId = "ST001",
-            slotId = "SL001",
-            bookingDate = "2026-09-20",
-            startTime = "08:00",
-            status = "APPROVED",
-            qrReference = "QR-RES-1001"
-        ),
-        Reservation(
-            reservationId = "RES-1002",
-            prosumerNic = "MOCK-NIC-000",
-            stationId = "ST002",
-            slotId = "SL004",
-            bookingDate = "2026-09-22",
-            startTime = "09:00",
-            status = "PENDING"
-        ),
-        Reservation(
-            reservationId = "RES-1003",
-            prosumerNic = "MOCK-NIC-000",
-            stationId = "ST001",
-            slotId = "SL003",
-            bookingDate = "2026-09-12",
-            startTime = "14:00",
-            status = "COMPLETED",
-            completedAt = "2026-09-12T16:05:00"
-        ),
-        Reservation(
-            reservationId = "RES-1004",
-            prosumerNic = "MOCK-NIC-000",
-            stationId = "ST003",
-            slotId = "SL007",
-            bookingDate = "2026-09-08",
-            startTime = "11:00",
-            status = "CANCELLED"
-        )
-    )
 }

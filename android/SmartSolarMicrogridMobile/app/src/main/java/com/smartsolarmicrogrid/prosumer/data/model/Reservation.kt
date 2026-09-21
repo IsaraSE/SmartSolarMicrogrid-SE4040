@@ -2,8 +2,10 @@ package com.smartsolarmicrogrid.prosumer.data.model
 
 data class Reservation(
     val reservationId: String,
+    val reservationNumber: String? = null,
     val prosumerNic: String,
     val stationId: String,
+    val stationName: String? = null,
     val slotId: String,
     val bookingDate: String,
     val startTime: String,
