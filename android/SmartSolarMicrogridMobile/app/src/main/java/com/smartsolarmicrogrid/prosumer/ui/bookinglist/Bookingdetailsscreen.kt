@@ -88,7 +88,7 @@ fun BookingDetailsScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                         DetailRow("Energy Amount", "5 kWh")
                         Spacer(modifier = Modifier.height(12.dp))
-                        DetailRow("Purpose", "Sell Energy")
+
                         
                         if (isPending) {
                             Spacer(modifier = Modifier.height(12.dp))
