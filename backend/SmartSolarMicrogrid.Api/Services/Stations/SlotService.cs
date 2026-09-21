@@ -65,15 +65,23 @@ public class SlotService : ISlotService
 
     public async Task<SlotDto> CreateSlotAsync(CreateSlotDto request)
     {
-        // Prevent duplicate time overlap for the same SlotName at the same Station
+        var station = await _stationRepository.GetByIdAsync(request.StationId);
+        if (station == null)
+            throw new InvalidOperationException("Station not found.");
+
         var existingSlots = await _slotRepository.GetByStationIdAsync(request.StationId);
-        var overlap = existingSlots.Any(s => 
-            s.SlotName == request.SlotName &&
-            (request.StartDateTime < s.EndDateTime && request.EndDateTime > s.StartDateTime));
         
-        if (overlap)
+        // Prevent duplicate SlotName for the same Station
+        var duplicateName = existingSlots.Any(s => s.SlotName == request.SlotName);
+        if (duplicateName)
         {
-            throw new InvalidOperationException($"Time overlap: Slot {request.SlotName} is already scheduled during this time.");
+            throw new InvalidOperationException($"Slot with name {request.SlotName} already exists for this station.");
+        }
+
+        // Prevent exceeding station capacity
+        if (existingSlots.Count() >= station.BatterySlotCount)
+        {
+            throw new InvalidOperationException($"Cannot create more slots. Station capacity ({station.BatterySlotCount}) reached.");
         }
 
         var slot = new EnergyBookingSlot
@@ -95,18 +103,6 @@ public class SlotService : ISlotService
     {
         var slot = await _slotRepository.GetByIdAsync(id);
         if (slot == null) return null;
-
-        // Prevent duplicate time overlap for the same SlotName at the same Station on update
-        var existingSlots = await _slotRepository.GetByStationIdAsync(slot.StationId);
-        var overlap = existingSlots.Any(s => 
-            s.SlotId != slot.SlotId && 
-            s.SlotName == slot.SlotName &&
-            (request.StartDateTime < s.EndDateTime && request.EndDateTime > s.StartDateTime));
-            
-        if (overlap)
-        {
-            throw new InvalidOperationException($"Time overlap: Slot {slot.SlotName} is already scheduled during this time.");
-        }
 
         slot.StartDateTime = request.StartDateTime;
         slot.EndDateTime = request.EndDateTime;
