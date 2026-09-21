@@ -11,6 +11,7 @@ using SmartSolarMicrogrid.Api.Models.DTOs;
 using SmartSolarMicrogrid.Api.Models.Entities;
 using SmartSolarMicrogrid.Api.Models.Enums;
 using SmartSolarMicrogrid.Api.Repositories;
+using SmartSolarMicrogrid.Api.Repositories.Stations;
 
 namespace SmartSolarMicrogrid.Api.Services.Reservations;
 
@@ -18,11 +19,13 @@ public class ReservationService : IReservationService
 {
     private readonly IEnergyReservationRepository _reservationRepository;
     private readonly IEnergyBookingSlotRepository _slotRepository;
+    private readonly ISolarStationInfoRepository _stationRepository;
 
-    public ReservationService(IEnergyReservationRepository reservationRepository, IEnergyBookingSlotRepository slotRepository)
+    public ReservationService(IEnergyReservationRepository reservationRepository, IEnergyBookingSlotRepository slotRepository, ISolarStationInfoRepository stationRepository)
     {
         _reservationRepository = reservationRepository;
         _slotRepository = slotRepository;
+        _stationRepository = stationRepository;
     }
 
     public async Task<IEnumerable<ReservationDto>> GetReservationsAsync(string? nic, string? stationId, string? status, DateTime? date)
@@ -46,10 +49,14 @@ public class ReservationService : IReservationService
         var dtos = filtered.Select(MapToDto).ToList();
         
         var allSlots = await _slotRepository.GetAllAsync();
+        var allStations = await _stationRepository.GetAllAsync();
         foreach(var dto in dtos)
         {
             var slot = allSlots.FirstOrDefault(s => s.SlotId == dto.SlotId);
             dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+            
+            var station = allStations.FirstOrDefault(s => s.StationId == dto.StationId);
+            dto.StationName = station?.StationName ?? "Unknown Station";
         }
         
         return dtos;
@@ -103,6 +110,9 @@ public class ReservationService : IReservationService
         var dto = MapToDto(reservation);
         var slot = await _slotRepository.GetByIdAsync(dto.SlotId);
         dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        
+        var station = await _stationRepository.GetByIdAsync(dto.StationId);
+        dto.StationName = station?.StationName ?? "Unknown Station";
         
         return dto;
     }
@@ -164,6 +174,9 @@ public class ReservationService : IReservationService
         
         var dto = MapToDto(reservation);
         dto.SlotName = slot.SlotName;
+        
+        var station = await _stationRepository.GetByIdAsync(reservation.StationId);
+        dto.StationName = station?.StationName ?? "Unknown Station";
         
         return (true, "Reservation created successfully.", dto);
     }
@@ -247,6 +260,9 @@ public class ReservationService : IReservationService
         
         var dto = MapToDto(reservation);
         dto.SlotName = newSlot.SlotName;
+        
+        var station = await _stationRepository.GetByIdAsync(reservation.StationId);
+        dto.StationName = station?.StationName ?? "Unknown Station";
 
         return (true, "Reservation updated successfully.", dto);
     }
@@ -335,6 +351,9 @@ public class ReservationService : IReservationService
         var dto = MapToDto(reservation);
         var slot = await _slotRepository.GetByIdAsync(reservation.SlotId);
         dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        
+        var station = await _stationRepository.GetByIdAsync(reservation.StationId);
+        dto.StationName = station?.StationName ?? "Unknown Station";
 
         return (true, "Reservation status updated successfully.", dto);
     }

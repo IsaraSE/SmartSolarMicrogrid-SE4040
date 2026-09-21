@@ -88,6 +88,7 @@ public class AuthService : IAuthService
         var response = new LoginResponseDto
         {
             UserId = user.UserId!,
+            Nic = user.Nic ?? "",
             FullName = user.FullName,
             Role = user.Role,
             AccountStatus = user.AccountStatus,
