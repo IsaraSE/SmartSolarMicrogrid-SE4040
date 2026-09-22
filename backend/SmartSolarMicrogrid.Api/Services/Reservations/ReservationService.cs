@@ -54,6 +54,7 @@ public class ReservationService : IReservationService
         {
             var slot = allSlots.FirstOrDefault(s => s.SlotId == dto.SlotId);
             dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+            dto.EnergyAmount = slot?.Capacity ?? 0;
             
             var station = allStations.FirstOrDefault(s => s.StationId == dto.StationId);
             dto.StationName = station?.StationName ?? "Unknown Station";
@@ -110,6 +111,7 @@ public class ReservationService : IReservationService
         var dto = MapToDto(reservation);
         var slot = await _slotRepository.GetByIdAsync(dto.SlotId);
         dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        dto.EnergyAmount = slot?.Capacity ?? 0;
         
         var station = await _stationRepository.GetByIdAsync(dto.StationId);
         dto.StationName = station?.StationName ?? "Unknown Station";
@@ -174,6 +176,7 @@ public class ReservationService : IReservationService
         
         var dto = MapToDto(reservation);
         dto.SlotName = slot.SlotName;
+        dto.EnergyAmount = slot.Capacity;
         
         var station = await _stationRepository.GetByIdAsync(reservation.StationId);
         dto.StationName = station?.StationName ?? "Unknown Station";
@@ -206,60 +209,79 @@ public class ReservationService : IReservationService
             return (false, "Only PENDING or APPROVED reservations can be updated.", null);
         }
 
-        if (reservation.SlotId == request.SlotId)
+        bool slotChanged = reservation.SlotId != request.SlotId;
+        bool noteChanged = reservation.Notes != request.Notes;
+
+        if (!slotChanged && !noteChanged)
         {
             return (true, "No changes made.", MapToDto(reservation));
         }
 
-        var oldSlot = await _slotRepository.GetByIdAsync(reservation.SlotId);
-        var newSlot = await _slotRepository.GetByIdAsync(request.SlotId);
-
-        if (oldSlot == null || newSlot == null)
-            return (false, "Invalid slot reference.", null);
-
-        if (newSlot.Status != SlotStatus.AVAILABLE)
+        EnergyBookingSlot? newSlot = null;
+        if (slotChanged)
         {
-            return (false, "New selected slot is not available.", null);
-        }
-        
-        // Check if the new slot is already booked by another active reservation
-        var allReservations = await _reservationRepository.GetAllAsync();
-        var isSlotBooked = allReservations.Any(r => 
-            r.SlotId == request.SlotId && 
-            (r.Status == ReservationStatus.PENDING || r.Status == ReservationStatus.APPROVED));
+            var oldSlot = await _slotRepository.GetByIdAsync(reservation.SlotId);
+            newSlot = await _slotRepository.GetByIdAsync(request.SlotId);
+
+            if (oldSlot == null || newSlot == null)
+                return (false, "Invalid slot reference.", null);
+
+            if (newSlot.Status != SlotStatus.AVAILABLE)
+            {
+                return (false, "New selected slot is not available.", null);
+            }
             
-        if (isSlotBooked)
-        {
-            return (false, "The selected slot is already pending approval or booked by another prosumer.", null);
-        }
-        
-        // If the reservation is already approved, update the slot statuses accordingly
-        if (reservation.Status == ReservationStatus.APPROVED)
-        {
-            oldSlot.Status = SlotStatus.AVAILABLE;
-            await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
+            // Check if the new slot is already booked by another active reservation
+            var allReservations = await _reservationRepository.GetAllAsync();
+            var isSlotBooked = allReservations.Any(r => 
+                r.SlotId == request.SlotId && 
+                (r.Status == ReservationStatus.PENDING || r.Status == ReservationStatus.APPROVED));
+                
+            if (isSlotBooked)
+            {
+                return (false, "The selected slot is already pending approval or booked by another prosumer.", null);
+            }
+            
+            // If the reservation is already approved, update the slot statuses accordingly
+            if (reservation.Status == ReservationStatus.APPROVED)
+            {
+                oldSlot.Status = SlotStatus.AVAILABLE;
+                await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
 
-            newSlot.Status = SlotStatus.RESERVED;
-            await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
-        }
-        else if (reservation.Status == ReservationStatus.PENDING)
-        {
-            oldSlot.Status = SlotStatus.AVAILABLE;
-            await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
+                newSlot.Status = SlotStatus.RESERVED;
+                await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
+            }
+            else if (reservation.Status == ReservationStatus.PENDING)
+            {
+                oldSlot.Status = SlotStatus.AVAILABLE;
+                await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
 
-            newSlot.Status = SlotStatus.PENDING;
-            await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
+                newSlot.Status = SlotStatus.PENDING;
+                await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
+            }
+
+            reservation.SlotId = request.SlotId;
+            reservation.ScheduledStartDateTime = newSlot.StartDateTime;
+            reservation.ScheduledEndDateTime = newSlot.EndDateTime;
         }
 
-        reservation.SlotId = request.SlotId;
-        reservation.ScheduledStartDateTime = newSlot.StartDateTime;
-        reservation.ScheduledEndDateTime = newSlot.EndDateTime;
+        reservation.Notes = request.Notes;
         reservation.UpdatedAt = DateTime.UtcNow;
         
         await _reservationRepository.UpdateAsync(id, reservation);
         
         var dto = MapToDto(reservation);
-        dto.SlotName = newSlot.SlotName;
+        if (newSlot != null)
+        {
+            dto.SlotName = newSlot.SlotName;
+            dto.EnergyAmount = newSlot.Capacity;
+        }
+        else 
+        {
+            var currentSlot = await _slotRepository.GetByIdAsync(reservation.SlotId);
+            dto.SlotName = currentSlot?.SlotName ?? "Unknown Slot";
+            dto.EnergyAmount = currentSlot?.Capacity ?? 0;
+        }
         
         var station = await _stationRepository.GetByIdAsync(reservation.StationId);
         dto.StationName = station?.StationName ?? "Unknown Station";
@@ -351,6 +373,7 @@ public class ReservationService : IReservationService
         var dto = MapToDto(reservation);
         var slot = await _slotRepository.GetByIdAsync(reservation.SlotId);
         dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        dto.EnergyAmount = slot?.Capacity ?? 0;
         
         var station = await _stationRepository.GetByIdAsync(reservation.StationId);
         dto.StationName = station?.StationName ?? "Unknown Station";

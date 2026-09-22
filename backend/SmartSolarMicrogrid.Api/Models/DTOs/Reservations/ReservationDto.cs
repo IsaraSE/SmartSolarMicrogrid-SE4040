@@ -38,4 +38,5 @@ public class ReservationDto
     public DateTime? CompletedAt { get; set; }
 
     public string? Notes { get; set; }
+    public double EnergyAmount { get; set; }
 }
