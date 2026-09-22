@@ -25,8 +25,9 @@ public class ReservationDto
     public DateTime ScheduledEndDateTime { get; set; }
 
     // Backwards compatibility for Android App
-    public string BookingDate => ScheduledStartDateTime.ToString("yyyy-MM-dd");
-    public string StartTime => ScheduledStartDateTime.ToString("HH:mm");
+    public string BookingDate => ScheduledStartDateTime.ToLocalTime().ToString("yyyy-MM-dd");
+    public string StartTime => ScheduledStartDateTime.ToLocalTime().ToString("HH:mm");
+    public string EndTime => ScheduledEndDateTime.ToLocalTime().ToString("HH:mm");
 
 
     public ReservationStatus Status { get; set; }

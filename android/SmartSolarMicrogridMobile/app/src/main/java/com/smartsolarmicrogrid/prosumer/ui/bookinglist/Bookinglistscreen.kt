@@ -187,11 +187,10 @@ private fun BookingCard(reservation: Reservation, onClick: () -> Unit) {
                         
                         val formattedTime = try {
                             val st = LocalTime.parse(reservation.startTime)
-                            // Assuming slots are 2 hours for now as in screenshot
-                            val et = st.plusHours(2)
+                            val et = LocalTime.parse(reservation.endTime)
                             "${st.format(DateTimeFormatter.ofPattern("hh:mm a"))} – ${et.format(DateTimeFormatter.ofPattern("hh:mm a"))}"
                         } catch (e: Exception) {
-                            reservation.startTime
+                            "${reservation.startTime} – ${reservation.endTime}"
                         }
 
                         Text(formattedDate, fontSize = 14.sp, color = Color(0xFF78909C), fontWeight = FontWeight.Medium)

@@ -84,7 +84,7 @@ fun BookingDetailsScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                         DetailRow("Date", reservation.bookingDate)
                         Spacer(modifier = Modifier.height(12.dp))
-                        DetailRow("Time", reservation.startTime)
+                        DetailRow("Time", "${reservation.startTime} - ${reservation.endTime}")
                         Spacer(modifier = Modifier.height(12.dp))
                         DetailRow("Energy Amount", "5 kWh")
                         Spacer(modifier = Modifier.height(12.dp))

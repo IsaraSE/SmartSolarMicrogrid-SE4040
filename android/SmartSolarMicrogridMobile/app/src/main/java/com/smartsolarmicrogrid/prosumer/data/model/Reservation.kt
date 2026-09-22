@@ -9,6 +9,7 @@ data class Reservation(
     val slotId: String,
     val bookingDate: String,
     val startTime: String,
+    val endTime: String? = null,
     val status: String,          // PENDING, APPROVED, CANCELLED, COMPLETED
     val qrReference: String? = null,
     val createdAt: String? = null,
