@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartsolarmicrogrid.prosumer.data.model.Reservation
-
+import androidx.compose.ui.graphics.asImageBitmap
 private val SolarGreen = Color(0xFF2E7D32)
 private val SurfaceGray = Color(0xFFF5F5F5)
 
@@ -185,12 +185,46 @@ fun BookingDetailsScreen(
                         }
                     } else if (isApproved) {
                         // QR Section
-                        Icon(
-                            Icons.Filled.QrCode2,
-                            contentDescription = "QR Code",
-                            modifier = Modifier.size(150.dp),
-                            tint = Color.Black
-                        )
+                        val qrBitmap = remember(displayRes.qrReference) {
+                            displayRes.qrReference?.let { qrText ->
+                                try {
+                                    val size = 512
+                                    val bitMatrix = com.google.zxing.qrcode.QRCodeWriter().encode(
+                                        qrText,
+                                        com.google.zxing.BarcodeFormat.QR_CODE,
+                                        size,
+                                        size
+                                    )
+                                    val width = bitMatrix.width
+                                    val height = bitMatrix.height
+                                    val bmp = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.RGB_565)
+                                    for (x in 0 until width) {
+                                        for (y in 0 until height) {
+                                            bmp.setPixel(x, y, if (bitMatrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+                                        }
+                                    }
+                                    bmp.asImageBitmap()
+                                } catch (e: Exception) {
+                                    null
+                                }
+                            }
+                        }
+
+                        if (qrBitmap != null) {
+                            androidx.compose.foundation.Image(
+                                bitmap = qrBitmap,
+                                contentDescription = "QR Code",
+                                modifier = Modifier.size(180.dp)
+                            )
+                        } else {
+                            Icon(
+                                Icons.Filled.QrCode2,
+                                contentDescription = "QR Code Error",
+                                modifier = Modifier.size(150.dp),
+                                tint = Color.LightGray
+                            )
+                        }
+                        
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Show this QR code to the Grid Operator at the station.",
@@ -198,17 +232,6 @@ fun BookingDetailsScreen(
                             color = Color.Gray,
                             textAlign = TextAlign.Center
                         )
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        Button(
-                            onClick = onShowQr, // Using onShowQr as Download for demo
-                            colors = ButtonDefaults.buttonColors(containerColor = SolarGreen),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.fillMaxWidth().height(48.dp)
-                        ) {
-                            Text("Download QR", fontWeight = FontWeight.Bold)
-                        }
                     }
                 }
             }
