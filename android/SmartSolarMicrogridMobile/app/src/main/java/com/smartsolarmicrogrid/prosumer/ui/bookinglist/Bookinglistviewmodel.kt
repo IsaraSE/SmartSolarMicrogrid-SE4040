@@ -24,7 +24,8 @@ enum class BookingTab(val label: String, val status: String?) {
     ALL("All", null),
     PENDING("Pending", "PENDING"),
     APPROVED("Approved", "APPROVED"),
-    COMPLETED("Completed", "COMPLETED")
+    COMPLETED("Completed", "COMPLETED"),
+    CANCELLED("Cancelled", "CANCELLED")
 }
 
 /** Loading / loaded / error state for any reservation list shown on screen. */
