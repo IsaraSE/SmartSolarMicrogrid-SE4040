@@ -15,7 +15,8 @@ data class Reservation(
     val createdAt: String? = null,
     val updatedAt: String? = null,
     val completedAt: String? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    val energyAmount: Double? = null
 )
 
 data class CreateReservationRequest(

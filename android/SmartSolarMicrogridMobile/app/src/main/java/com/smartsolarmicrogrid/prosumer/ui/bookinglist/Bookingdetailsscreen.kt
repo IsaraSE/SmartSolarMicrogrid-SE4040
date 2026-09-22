@@ -11,8 +11,10 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.smartsolarmicrogrid.prosumer.ui.booking.BookingViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -31,10 +33,17 @@ fun BookingDetailsScreen(
     onModify: () -> Unit,
     onCancel: () -> Unit,
     onShowQr: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    bookingViewModel: BookingViewModel = viewModel()
 ) {
-    val isPending = reservation.status == "PENDING"
-    val isApproved = reservation.status == "APPROVED"
+    LaunchedEffect(reservation.reservationId) {
+        bookingViewModel.loadReservation(reservation.reservationId)
+    }
+    
+    val displayRes = bookingViewModel.currentReservationState ?: reservation
+
+    val isPending = displayRes.status == "PENDING"
+    val isApproved = displayRes.status == "APPROVED"
 
     Scaffold(
         topBar = {
@@ -72,40 +81,42 @@ fun BookingDetailsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Status Badge Centered
-                    StatusBadge(status = reservation.status)
+                    StatusBadge(status = displayRes.status)
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     // Details List
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        DetailRow("Reservation ID", reservation.reservationNumber ?: reservation.reservationId)
+                        DetailRow("Reservation ID", displayRes.reservationNumber ?: displayRes.reservationId)
                         Spacer(modifier = Modifier.height(12.dp))
-                        DetailRow("Station", reservation.stationName ?: reservation.stationId)
+                        DetailRow("Station", displayRes.stationName ?: displayRes.stationId)
                         Spacer(modifier = Modifier.height(12.dp))
-                        DetailRow("Date", reservation.bookingDate)
+                        DetailRow("Date", displayRes.bookingDate)
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         val formattedTime = try {
-                            val st = java.time.LocalTime.parse(reservation.startTime)
-                            val et = java.time.LocalTime.parse(reservation.endTime)
+                            val st = java.time.LocalTime.parse(displayRes.startTime)
+                            val et = java.time.LocalTime.parse(displayRes.endTime)
                             "${st.format(java.time.format.DateTimeFormatter.ofPattern("hh:mm a"))} – ${et.format(java.time.format.DateTimeFormatter.ofPattern("hh:mm a"))}"
                         } catch (e: Exception) {
-                            "${reservation.startTime} – ${reservation.endTime}"
+                            "${displayRes.startTime} – ${displayRes.endTime}"
                         }
                         
                         DetailRow("Time", formattedTime)
                         Spacer(modifier = Modifier.height(12.dp))
-                        DetailRow("Energy Amount", "5 kWh")
+                        
+                        val energyText = displayRes.energyAmount?.let { "$it kWh" } ?: "5 kWh"
+                        DetailRow("Energy Amount", energyText)
                         Spacer(modifier = Modifier.height(12.dp))
                         
-                        DetailRow("Notes", reservation.notes ?: "-")
+                        DetailRow("Notes", displayRes.notes ?: "-")
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         val formattedRequestedOn = try {
-                            val parsedDate = java.time.ZonedDateTime.parse(reservation.createdAt).withZoneSameInstant(java.time.ZoneId.systemDefault())
+                            val parsedDate = java.time.ZonedDateTime.parse(displayRes.createdAt).withZoneSameInstant(java.time.ZoneId.systemDefault())
                             parsedDate.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
                         } catch (e: Exception) {
-                            reservation.createdAt ?: "N/A"
+                            displayRes.createdAt ?: "N/A"
                         }
                         
                         DetailRow("Requested On", formattedRequestedOn)
