@@ -78,30 +78,62 @@ fun BookingDetailsScreen(
                     
                     // Details List
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        DetailRow("Reservation ID", reservation.reservationId)
+                        DetailRow("Reservation ID", reservation.reservationNumber ?: reservation.reservationId)
                         Spacer(modifier = Modifier.height(12.dp))
-                        DetailRow("Station", reservation.stationId) // Assuming this is name for demo
+                        DetailRow("Station", reservation.stationName ?: reservation.stationId)
                         Spacer(modifier = Modifier.height(12.dp))
                         DetailRow("Date", reservation.bookingDate)
                         Spacer(modifier = Modifier.height(12.dp))
-                        DetailRow("Time", "${reservation.startTime} - ${reservation.endTime}")
+                        
+                        val formattedTime = try {
+                            val st = java.time.LocalTime.parse(reservation.startTime)
+                            val et = java.time.LocalTime.parse(reservation.endTime)
+                            "${st.format(java.time.format.DateTimeFormatter.ofPattern("hh:mm a"))} – ${et.format(java.time.format.DateTimeFormatter.ofPattern("hh:mm a"))}"
+                        } catch (e: Exception) {
+                            "${reservation.startTime} – ${reservation.endTime}"
+                        }
+                        
+                        DetailRow("Time", formattedTime)
                         Spacer(modifier = Modifier.height(12.dp))
                         DetailRow("Energy Amount", "5 kWh")
                         Spacer(modifier = Modifier.height(12.dp))
-
                         
-                        if (isPending) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            DetailRow("Notes", "-")
-                            Spacer(modifier = Modifier.height(12.dp))
-                            DetailRow("Requested On", "20 Sep 2026, 10:30 AM") // Demo hardcoded
+                        DetailRow("Notes", reservation.notes ?: "-")
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        val formattedRequestedOn = try {
+                            val parsedDate = java.time.ZonedDateTime.parse(reservation.createdAt).withZoneSameInstant(java.time.ZoneId.systemDefault())
+                            parsedDate.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
+                        } catch (e: Exception) {
+                            reservation.createdAt ?: "N/A"
                         }
+                        
+                        DetailRow("Requested On", formattedRequestedOn)
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     if (isPending) {
-                        // Info Box
+                        // Pending Status Explanation Box
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFE3F2FD), RoundedCornerShape(8.dp))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.Info, contentDescription = null, tint = Color(0xFF1976D2))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Your reservation is currently awaiting Grid Operator approval. Once approved, you will be issued a QR code for station access.",
+                                fontSize = 12.sp,
+                                color = Color(0xFF0D47A1)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // 12-Hour Policy Box
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
