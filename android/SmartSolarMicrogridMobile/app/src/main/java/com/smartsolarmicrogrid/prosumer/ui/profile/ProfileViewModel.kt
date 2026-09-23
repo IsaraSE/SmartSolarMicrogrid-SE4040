@@ -88,7 +88,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun deactivateAccount(onDone: () -> Unit) {
+    fun deactivateAccount(onDone: () -> Unit, onError: (String) -> Unit) {
         val nic = sessionDb.getSession()?.nic ?: return
         viewModelScope.launch {
             try {
@@ -97,9 +97,18 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     sessionDb.clearSession()
                     RetrofitClient.authToken = null
                     onDone()
+                } else {
+                    val msg = try {
+                        val errorStr = response.errorBody()?.string()
+                        if (errorStr != null) org.json.JSONObject(errorStr).getString("message")
+                        else "Deactivation failed"
+                    } catch (e: Exception) {
+                        "Deactivation failed"
+                    }
+                    onError(msg)
                 }
             } catch (e: Exception) {
-                // could add an error state for this too if needed
+                onError(e.message ?: "Network error")
             }
         }
     }

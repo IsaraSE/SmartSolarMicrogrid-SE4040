@@ -152,11 +152,11 @@ public class ProsumersController : ControllerBase
     [Authorize(Roles = "PROSUMER,BACKOFFICE")]
     public async Task<IActionResult> DeactivateProsumer(string nic)
     {
-        var deactivatedProsumer = await _prosumerService.DeactivateProsumerAsync(nic);
-        if (deactivatedProsumer == null)
+        var (success, message, deactivatedProsumer) = await _prosumerService.DeactivateProsumerAsync(nic);
+        if (!success)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse("Prosumer not found or not in active status."));
+            return BadRequest(ApiResponse<object>.ErrorResponse(message));
         }
-        return Ok(ApiResponse<UserDto>.SuccessResponse("Prosumer deactivated successfully.", deactivatedProsumer));
+        return Ok(ApiResponse<UserDto>.SuccessResponse(message, deactivatedProsumer));
     }
 }

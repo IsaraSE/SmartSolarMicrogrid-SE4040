@@ -44,6 +44,7 @@ fun ProfileScreen(
     val state = profileViewModel.profileState
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeactivateDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     if (showLogoutDialog) {
         AlertDialog(
@@ -77,7 +78,10 @@ fun ProfileScreen(
                 TextButton(
                     onClick = {
                         showDeactivateDialog = false
-                        profileViewModel.deactivateAccount(onDone = onDeactivated)
+                        profileViewModel.deactivateAccount(
+                            onDone = onDeactivated,
+                            onError = { err -> errorMessage = err }
+                        )
                     }
                 ) {
                     Text("Deactivate", color = MaterialTheme.colorScheme.error)
@@ -86,6 +90,19 @@ fun ProfileScreen(
             dismissButton = {
                 TextButton(onClick = { showDeactivateDialog = false }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+
+    errorMessage?.let { error ->
+        AlertDialog(
+            onDismissRequest = { errorMessage = null },
+            title = { Text("Cannot Deactivate") },
+            text = { Text(error) },
+            confirmButton = {
+                TextButton(onClick = { errorMessage = null }) {
+                    Text("OK")
                 }
             }
         )
