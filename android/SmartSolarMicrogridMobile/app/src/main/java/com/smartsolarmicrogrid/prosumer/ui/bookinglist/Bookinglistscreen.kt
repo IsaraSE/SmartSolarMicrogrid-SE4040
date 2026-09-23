@@ -44,15 +44,15 @@ fun BookingListScreen(
     onBack: () -> Unit,
     bookingListViewModel: BookingListViewModel = viewModel()
 ) {
+    LaunchedEffect(Unit) {
+        bookingListViewModel.refresh()
+    }
+
     val selectedTabIndex = bookingListViewModel.selectedTab.ordinal
     val listState = if (bookingListViewModel.isSearching) bookingListViewModel.searchState else bookingListViewModel.listState
     val tabs = BookingTab.values().filter { it != BookingTab.COMPLETED } // Match UI
     
-    var selectedStationFilter by remember { mutableStateOf("All Stations") }
-    var isStationDropdownExpanded by remember { mutableStateOf(false) }
-
     val reservations = (listState as? BookingListState.Loaded)?.reservations ?: emptyList()
-    val availableStations = listOf("All Stations") + reservations.mapNotNull { it.stationName }.distinct().sorted()
 
     Column(
         modifier = Modifier
@@ -72,7 +72,7 @@ fun BookingListScreen(
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                "Reservations",
+                "Bookings",
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
@@ -116,71 +116,6 @@ fun BookingListScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Station Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = isStationDropdownExpanded,
-                    onExpandedChange = { isStationDropdownExpanded = !isStationDropdownExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = selectedStationFilter,
-                        onValueChange = {},
-                        readOnly = true,
-                        leadingIcon = {
-                            Icon(Icons.Outlined.LocationOn, contentDescription = "Location", tint = Color(0xFF475569))
-                        },
-                        trailingIcon = {
-                            Icon(Icons.Default.UnfoldMore, contentDescription = "Expand", tint = Color(0xFF0F172A))
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFE2E8F0),
-                            unfocusedBorderColor = Color(0xFFE2E8F0),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedTextColor = Color(0xFF0F172A),
-                            unfocusedTextColor = Color(0xFF0F172A)
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor()
-                    )
-                    
-                    ExposedDropdownMenu(
-                        expanded = isStationDropdownExpanded,
-                        onDismissRequest = { isStationDropdownExpanded = false },
-                        modifier = Modifier.background(Color(0xFF475569))
-                    ) {
-                        availableStations.forEach { station ->
-                            val isSelected = station == selectedStationFilter
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = station,
-                                        color = Color.White,
-                                        fontSize = 15.sp
-                                    )
-                                },
-                                leadingIcon = {
-                                    if (isSelected) {
-                                        Icon(Icons.Default.Check, contentDescription = "Selected", tint = Color.White)
-                                    } else {
-                                        Spacer(modifier = Modifier.width(24.dp))
-                                    }
-                                },
-                                modifier = Modifier.background(
-                                    if (isSelected) Color(0xFF3B82F6) else Color.Transparent
-                                ),
-                                onClick = {
-                                    selectedStationFilter = station
-                                    isStationDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 // List
                 when (listState) {
                     is BookingListState.Loading -> {
@@ -195,15 +130,8 @@ fun BookingListScreen(
                     }
                     is BookingListState.Loaded -> {
                         val reservations = listState.reservations
-                        
-                        // Client-side filter to support real-time station filtering
-                        val filteredList = if (selectedStationFilter != "All Stations") {
-                            reservations.filter { it.stationName == selectedStationFilter }
-                        } else {
-                            reservations
-                        }
 
-                        if (filteredList.isEmpty()) {
+                        if (reservations.isEmpty()) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 Text("No reservations found.", color = Color.Gray)
                             }
@@ -213,7 +141,7 @@ fun BookingListScreen(
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                                 contentPadding = PaddingValues(bottom = 80.dp)
                             ) {
-                                items(filteredList) { reservation ->
+                                items(reservations) { reservation ->
                                     BookingCard(
                                         reservation = reservation,
                                         onClick = {
@@ -247,7 +175,7 @@ private fun BookingCard(reservation: Reservation, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Slot ${reservation.slotId}",
+                    text = reservation.reservationNumber ?: reservation.reservationId ?: "Unknown",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color(0xFF0F172A)
