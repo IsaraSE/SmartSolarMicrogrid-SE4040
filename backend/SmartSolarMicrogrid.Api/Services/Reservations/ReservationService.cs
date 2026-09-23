@@ -248,7 +248,7 @@ public class ReservationService : IReservationService
                 oldSlot.Status = SlotStatus.AVAILABLE;
                 await _slotRepository.UpdateAsync(oldSlot.SlotId!, oldSlot);
 
-                newSlot.Status = SlotStatus.RESERVED;
+                newSlot.Status = SlotStatus.PENDING;
                 await _slotRepository.UpdateAsync(newSlot.SlotId!, newSlot);
             }
             else if (reservation.Status == ReservationStatus.PENDING)
@@ -267,6 +267,11 @@ public class ReservationService : IReservationService
 
         reservation.Notes = request.Notes;
         reservation.UpdatedAt = DateTime.UtcNow;
+        
+        if (reservation.Status == ReservationStatus.APPROVED)
+        {
+            reservation.Status = ReservationStatus.PENDING;
+        }
         
         await _reservationRepository.UpdateAsync(id, reservation);
         

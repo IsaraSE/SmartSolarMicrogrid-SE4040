@@ -44,6 +44,20 @@ fun BookingDetailsScreen(
 
     val isPending = displayRes.status == "PENDING"
     val isApproved = displayRes.status == "APPROVED"
+    
+    val canModifyOrCancel = remember(displayRes.bookingDate, displayRes.startTime, displayRes.status) {
+        if (displayRes.status != "PENDING" && displayRes.status != "APPROVED") return@remember false
+        try {
+            val timeStr = if (displayRes.startTime.count { it == ':' } == 1) "${displayRes.startTime}:00" else displayRes.startTime
+            val dateTimeStr = "${displayRes.bookingDate} $timeStr"
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            val scheduledTime = java.time.LocalDateTime.parse(dateTimeStr, formatter)
+            val now = java.time.LocalDateTime.now()
+            java.time.Duration.between(now, scheduledTime).toHours() >= 12
+        } catch (e: Exception) {
+            true // fallback, backend will reject anyway
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -141,49 +155,10 @@ fun BookingDetailsScreen(
                                 color = Color(0xFF0D47A1)
                             )
                         }
-                        
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // 12-Hour Policy Box
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Filled.Info, contentDescription = null, tint = Color(0xFFFFA726))
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "You can modify or cancel this booking until 12 hours before the start time.",
-                                fontSize = 12.sp,
-                                color = Color(0xFFE65100)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            OutlinedButton(
-                                onClick = onModify,
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(1.dp, SolarGreen),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = SolarGreen)
-                            ) {
-                                Text("Modify", fontWeight = FontWeight.Bold)
-                            }
-                            OutlinedButton(
-                                onClick = onCancel,
-                                modifier = Modifier.weight(1f).height(48.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(1.dp, Color(0xFFD32F2F)),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F))
-                            ) {
-                                Text("Cancel", fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    } else if (isApproved) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                    
+                    if (isApproved) {
                         // QR Section
                         val qrBitmap = remember(displayRes.qrReference) {
                             displayRes.qrReference?.let { qrText ->
@@ -232,7 +207,51 @@ fun BookingDetailsScreen(
                             color = Color.Gray,
                             textAlign = TextAlign.Center
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
+
+                    if (canModifyOrCancel) {
+                        // 12-Hour Policy Box
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.Info, contentDescription = null, tint = Color(0xFFFFA726))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "You can modify or cancel this booking until 12 hours before the start time.",
+                                fontSize = 12.sp,
+                                color = Color(0xFFE65100)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedButton(
+                                onClick = onModify,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, SolarGreen),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = SolarGreen)
+                            ) {
+                                Text("Modify", fontWeight = FontWeight.Bold)
+                            }
+                            OutlinedButton(
+                                onClick = onCancel,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color(0xFFD32F2F)),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFD32F2F))
+                            ) {
+                                Text("Cancel", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
                 }
             }
         }
