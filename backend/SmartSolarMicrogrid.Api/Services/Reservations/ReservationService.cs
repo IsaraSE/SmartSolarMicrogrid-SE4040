@@ -336,9 +336,9 @@ public class ReservationService : IReservationService
 
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationStatusAsync(string id, ReservationStatus newStatus)
     {
-        if (newStatus == ReservationStatus.COMPLETED || newStatus == ReservationStatus.CANCELLED)
+        if (newStatus == ReservationStatus.CANCELLED)
         {
-            return (false, "Status must be updated via the dedicated cancellation endpoint or QR verification flow.", null);
+            return (false, "Status must be updated via the dedicated cancellation endpoint.", null);
         }
 
         var reservation = await _reservationRepository.GetByIdAsync(id);
@@ -404,5 +404,21 @@ public class ReservationService : IReservationService
             CompletedAt = reservation.CompletedAt,
             Notes = reservation.Notes
         };
+    }
+
+    public async Task<ReservationDto?> GetReservationByQrAsync(string qrReference)
+    {
+        var reservation = await _reservationRepository.GetByQrReferenceAsync(qrReference);
+        if (reservation == null) return null;
+        
+        var dto = MapToDto(reservation);
+        var slot = await _slotRepository.GetByIdAsync(dto.SlotId);
+        dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        dto.EnergyAmount = slot?.Capacity ?? 0;
+        
+        var station = await _stationRepository.GetByIdAsync(dto.StationId);
+        dto.StationName = station?.StationName ?? "Unknown Station";
+        
+        return dto;
     }
 }

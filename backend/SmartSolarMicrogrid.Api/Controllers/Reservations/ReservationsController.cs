@@ -247,4 +247,18 @@ public class ReservationsController : ControllerBase
 
         return Ok(ApiResponse<ReservationDto>.SuccessResponse(message, reservation));
     }
+
+    [HttpPut("{id}/complete")]
+    [Authorize(Roles = "GRID_OPERATOR,BACKOFFICE")]
+    public async Task<IActionResult> CompleteReservation(string id)
+    {
+        var (success, message, reservation) = await _reservationService.UpdateReservationStatusAsync(id, Models.Enums.Reservations.ReservationStatus.COMPLETED);
+        
+        if (!success)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+        }
+
+        return Ok(ApiResponse<ReservationDto>.SuccessResponse("Session completed successfully.", reservation));
+    }
 }

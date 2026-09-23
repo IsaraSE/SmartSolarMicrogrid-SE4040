@@ -23,4 +23,5 @@ public interface IReservationService
     Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationAsync(string id, string prosumerNic, string role, UpdateReservationDto request);
     Task<(bool Success, string Message)> CancelReservationAsync(string id, string prosumerNic, string role);
     Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationStatusAsync(string id, ReservationStatus newStatus);
+    Task<ReservationDto?> GetReservationByQrAsync(string qrReference);
 }
