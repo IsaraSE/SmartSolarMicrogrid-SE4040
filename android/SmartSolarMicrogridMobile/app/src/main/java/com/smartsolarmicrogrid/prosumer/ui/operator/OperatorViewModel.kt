@@ -141,7 +141,10 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
         actionMessage = null
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.apiService.approveReservation(reservation.reservationId)
+                val response = RetrofitClient.apiService.approveReservation(
+                    reservation.reservationId,
+                    com.smartsolarmicrogrid.prosumer.data.model.UpdateReservationStatusRequest(status = 1)
+                )
                 actionMessage = if (response.isSuccessful) {
                     "Reservation ${reservation.reservationNumber ?: reservation.reservationId} approved."
                 } else {
@@ -189,17 +192,24 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
                 val response = RetrofitClient.apiService.verifyQr(QrVerifyRequest(reference))
                 if (response.isSuccessful && response.body()?.data != null) {
                     verifyState = VerifyState.Result(response.body()!!.data!!)
-                } else if (response.code() == 404) {
-                    verifyState = VerifyState.Result(
-                        QrVerificationResult(valid = false, message = "No reservation matches this QR code.")
-                    )
                 } else {
-                    // TODO: remove mock fallback before submission
-                    verifyState = VerifyState.Result(getMockVerification(reference))
+                    val errorMessage = try {
+                        val errorJson = response.errorBody()?.string()
+                        if (errorJson != null) {
+                            val jsonObject = org.json.JSONObject(errorJson)
+                            jsonObject.optString("message", "Invalid QR code or action not allowed.")
+                        } else {
+                            "Verification failed. Please try again."
+                        }
+                    } catch (e: Exception) {
+                        "Verification failed."
+                    }
+                    verifyState = VerifyState.Result(
+                        QrVerificationResult(valid = false, message = errorMessage)
+                    )
                 }
             } catch (e: Exception) {
-                // TODO: remove mock fallback before submission
-                verifyState = VerifyState.Result(getMockVerification(reference))
+                verifyState = VerifyState.Error("Network error: ${e.localizedMessage}")
             }
         }
     }
@@ -271,9 +281,11 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
                 valid = true,
                 message = "Reservation verified.",
                 reservationId = reference.removePrefix("QR-"),
+                reservationNumber = "RES-9999",
                 prosumerNic = "200112345678",
                 prosumerName = "Mock Prosumer",
                 stationId = "ST001",
+                stationName = "Mock Solar Station",
                 slotId = "SL001",
                 bookingDate = "2026-09-20",
                 startTime = "08:00",

@@ -27,3 +27,6 @@ data class CreateReservationRequest(
     val startTime: String,
     val notes: String? = null
 )
+data class UpdateReservationStatusRequest(
+    val status: Int
+)

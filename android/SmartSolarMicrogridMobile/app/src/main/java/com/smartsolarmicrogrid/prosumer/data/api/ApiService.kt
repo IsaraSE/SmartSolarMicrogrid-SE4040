@@ -93,8 +93,11 @@ interface ApiService {
     suspend fun getOperatorPendingReservations(): Response<ApiResponse<List<Reservation>>>
 
     /** Operator approves a pending reservation, which issues its transaction QR. */
-    @PUT("api/reservations/{id}/approve")
-    suspend fun approveReservation(@Path("id") id: String): Response<ApiResponse<Reservation>>
+    @PUT("api/reservations/{id}/status")
+    suspend fun approveReservation(
+        @Path("id") id: String,
+        @Body request: com.smartsolarmicrogrid.prosumer.data.model.UpdateReservationStatusRequest
+    ): Response<ApiResponse<Reservation>>
 
     /** Verifies a scanned QR reference against the server. */
     @POST("api/qr/verify")
