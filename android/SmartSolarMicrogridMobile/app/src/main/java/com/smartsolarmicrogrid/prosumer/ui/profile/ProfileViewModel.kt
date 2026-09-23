@@ -40,7 +40,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             try {
                 if (nic == null) {
-                    profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
+                    profileState = ProfileState.Error("Session expired. Please log in again.")
                     return@launch
                 }
                 val response = RetrofitClient.apiService.getProsumer(nic)
@@ -48,25 +48,12 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 if (response.isSuccessful && prosumer != null) {
                     profileState = ProfileState.Loaded(prosumer)
                 } else {
-                    profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
+                    profileState = ProfileState.Error(response.message() ?: "Failed to fetch profile")
                 }
             } catch (e: Exception) {
-                profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
+                profileState = ProfileState.Error(e.message ?: "Network error")
             }
         }
-    }
-
-    // TODO: remove this function before final submission — for UI preview only, no real backend yet
-    private fun getMockProfile(): Prosumer {
-        return Prosumer(
-            nic = "200012345678",
-            fullName = "Juthmini Perera",
-            email = "juthmini@example.com",
-            phone = "0771234567",
-            address = "45 Galle Road, Colombo 03",
-            accountStatus = "ACTIVE",
-            createdAt = "2026-01-15"
-        )
     }
 
     fun updateProfile(fullName: String, email: String, phone: String, address: String) {
@@ -86,7 +73,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     updateState = UpdateState.Success
                     profileState = ProfileState.Loaded(updated)
                 } else {
-                    updateState = UpdateState.Error("Update failed")
+                    val msg = try {
+                        val errorStr = response.errorBody()?.string()
+                        if (errorStr != null) org.json.JSONObject(errorStr).getString("message")
+                        else "Update failed"
+                    } catch (e: Exception) {
+                        "Update failed"
+                    }
+                    updateState = UpdateState.Error(msg)
                 }
             } catch (e: Exception) {
                 updateState = UpdateState.Error("Network error: ${e.message}")

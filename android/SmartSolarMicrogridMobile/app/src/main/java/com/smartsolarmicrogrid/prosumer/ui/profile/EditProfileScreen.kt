@@ -31,6 +31,13 @@ fun EditProfileScreen(
     var address by remember { mutableStateOf("") }
     var initialized by remember { mutableStateOf(false) }
 
+    // Load profile when the screen starts
+    LaunchedEffect(Unit) {
+        if (state !is ProfileState.Loaded) {
+            profileViewModel.loadProfile()
+        }
+    }
+
     // Pre-fill fields once profile data is loaded
     if (!initialized && state is ProfileState.Loaded) {
         fullName = state.prosumer.fullName
@@ -55,6 +62,19 @@ fun EditProfileScreen(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
+
+        OutlinedTextField(
+            value = (state as? ProfileState.Loaded)?.prosumer?.nic ?: "",
+            onValueChange = { },
+            label = { Text("NIC Number") },
+            leadingIcon = { Icon(Icons.Filled.Badge, contentDescription = null, tint = Color.Gray) },
+            singleLine = true,
+            readOnly = true,
+            enabled = false, // Unclickable and uneditable as it acts as unique ID
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = fullName,

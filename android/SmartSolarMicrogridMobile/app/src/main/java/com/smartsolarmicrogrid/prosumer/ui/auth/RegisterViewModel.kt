@@ -46,7 +46,14 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
                 if (response.isSuccessful) {
                     registerState = RegisterState.Success(nic)
                 } else {
-                    registerState = RegisterState.Error("Registration failed. Please check your details.")
+                    val msg = try {
+                        val errorStr = response.errorBody()?.string()
+                        if (errorStr != null) org.json.JSONObject(errorStr).getString("message")
+                        else "Registration failed."
+                    } catch (e: Exception) {
+                        "Registration failed. Please check your details."
+                    }
+                    registerState = RegisterState.Error(msg)
                 }
             } catch (e: Exception) {
                 registerState = RegisterState.Error("Network error: ${e.message}")
