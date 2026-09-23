@@ -1,10 +1,6 @@
 /*
  * BottomNavBar.kt
  * Smart Solar Microgrid Trading System - Prosumer Mobile Application
- *
- * Bottom navigation for the four main sections of the prosumer app. Tab
- * switching keeps a single instance of each destination and restores its
- * previous state instead of stacking duplicates.
  */
 package com.smartsolarmicrogrid.prosumer.ui.navigation
 
@@ -12,8 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EventNote
-import androidx.compose.material.icons.filled.FactCheck
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SolarPower
@@ -33,7 +28,6 @@ import androidx.navigation.NavHostController
 
 private val SolarGreen = Color(0xFF2E7D32)
 
-/** One tab in the bottom bar. */
 private data class BottomNavItem(
     val route: String,
     val label: String,
@@ -48,16 +42,13 @@ private val bottomNavItems = listOf(
 )
 
 private val operatorNavItems = listOf(
-    BottomNavItem(Screen.OperatorHome.route, "Dashboard", Icons.Filled.SpaceDashboard),
-    BottomNavItem(Screen.OperatorReservations.route, "Reservations", Icons.Filled.FactCheck),
-    BottomNavItem(Screen.OperatorScan.route, "Scan", Icons.Filled.QrCodeScanner),
-    BottomNavItem(Screen.OperatorMap.route, "Map", Icons.Filled.Map)
+    BottomNavItem(Screen.OperatorHome.route, "Home", Icons.Filled.Home),
+    BottomNavItem(Screen.OperatorMap.route, "Stations", Icons.Filled.SolarPower),
+    BottomNavItem(Screen.OperatorScan.route, "Scan QR", Icons.Filled.QrCodeScanner),
+    BottomNavItem(Screen.OperatorReservations.route, "Bookings", Icons.Filled.EventNote),
+    BottomNavItem(Screen.Profile.route, "Profile", Icons.Filled.Person)
 )
 
-/**
- * Wraps a main screen with the bottom navigation bar.
- * currentRoute marks which tab is highlighted.
- */
 @Composable
 fun WithBottomBar(
     navController: NavHostController,
@@ -68,14 +59,12 @@ fun WithBottomBar(
         bottomBar = { AppBottomBar(navController, currentRoute, bottomNavItems, Screen.Dashboard.route) },
         containerColor = Color.Transparent
     ) { innerPadding ->
-        // Only bottom padding is applied so each screen's gradient still runs to the top.
         Box(modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())) {
             content()
         }
     }
 }
 
-/** Same wrapper for the grid operator sections. */
 @Composable
 fun WithOperatorBottomBar(
     navController: NavHostController,
@@ -107,7 +96,6 @@ private fun AppBottomBar(
                 onClick = {
                     if (!selected) {
                         navController.navigate(item.route) {
-                            // Keep the section home as the base of the stack and reuse screens.
                             popUpTo(homeRoute) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
