@@ -67,7 +67,7 @@ fun OperatorSlotListScreen(
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                "Time Slots",
+                "Slots Details",
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,

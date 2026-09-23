@@ -1,7 +1,5 @@
 package com.smartsolarmicrogrid.prosumer.ui.operator
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,7 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smartsolarmicrogrid.prosumer.data.model.CreateSlotRequest
@@ -27,6 +29,8 @@ import com.smartsolarmicrogrid.prosumer.ui.station.SlotListState
 import com.smartsolarmicrogrid.prosumer.ui.station.StationViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,9 +48,16 @@ fun OperatorAddSlotScreen(
         return
     }
 
-    var dateCal by remember { mutableStateOf(Calendar.getInstance()) }
-    var startTimeCal by remember { mutableStateOf(Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 8); set(Calendar.MINUTE, 0) }) }
-    var endTimeCal by remember { mutableStateOf(Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 10); set(Calendar.MINUTE, 0) }) }
+    var selectedDateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    var selectedStartHour by remember { mutableStateOf(8) }
+    var selectedStartMinute by remember { mutableStateOf(0) }
+    var selectedEndHour by remember { mutableStateOf(10) }
+    var selectedEndMinute by remember { mutableStateOf(0) }
+    
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
+
     var batterySlots by remember { mutableStateOf(station.batterySlotCount.toString()) }
     var selectedSlotName by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
@@ -55,6 +66,11 @@ fun OperatorAddSlotScreen(
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
     val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
+
+    // Formatters
+    val formattedDate = dateFormat.format(Date(selectedDateMillis))
+    val formattedStartTime = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, selectedStartHour); set(Calendar.MINUTE, selectedStartMinute) }.let { timeFormat.format(it.time) }
+    val formattedEndTime = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, selectedEndHour); set(Calendar.MINUTE, selectedEndMinute) }.let { timeFormat.format(it.time) }
 
     // Generate acronym and slots
     val acronym = station.stationName.split(" ").mapNotNull { it.firstOrNull()?.uppercase() }.joinToString("")
@@ -87,7 +103,7 @@ fun OperatorAddSlotScreen(
                 )
             }
             Text(
-                text = "Add Time Slot",
+                text = "Add New Slot",
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -108,6 +124,39 @@ fun OperatorAddSlotScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
+                // Status Section
+                Text("Status", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1E293B))
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF8FAFC), shape = RoundedCornerShape(8.dp))
+                        .padding(16.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFFDCFCE7), shape = RoundedCornerShape(16.dp))
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "AVAILABLE",
+                                color = Color(0xFF166534),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = "(New slots are automatically set to Available)",
+                            color = Color(0xFF64748B),
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(20.dp))
+
                 // Slot Name
                 Text("Slot Name", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1E293B))
                 Spacer(modifier = Modifier.height(8.dp))
@@ -159,7 +208,7 @@ fun OperatorAddSlotScreen(
                 Text("Date", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1E293B))
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = dateFormat.format(dateCal.time),
+                    value = formattedDate,
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = {
@@ -169,19 +218,7 @@ fun OperatorAddSlotScreen(
                             tint = Color(0xFF64748B)
                         )
                     },
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        DatePickerDialog(
-                            context,
-                            { _, y, m, d ->
-                                dateCal.set(y, m, d)
-                                startTimeCal.set(y, m, d)
-                                endTimeCal.set(y, m, d)
-                            },
-                            dateCal.get(Calendar.YEAR),
-                            dateCal.get(Calendar.MONTH),
-                            dateCal.get(Calendar.DAY_OF_MONTH)
-                        ).show()
-                    },
+                    modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color(0xFFE2E8F0),
@@ -197,28 +234,17 @@ fun OperatorAddSlotScreen(
                 Text("Start Time", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1E293B))
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = timeFormat.format(startTimeCal.time),
+                    value = formattedStartTime,
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = {
                         Icon(
-                            painter = androidx.compose.ui.res.painterResource(android.R.drawable.ic_menu_recent_history),
+                            painter = painterResource(android.R.drawable.ic_menu_recent_history),
                             contentDescription = "Select Start Time",
                             tint = Color(0xFF64748B)
                         )
                     },
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        TimePickerDialog(
-                            context,
-                            { _, h, m ->
-                                startTimeCal.set(Calendar.HOUR_OF_DAY, h)
-                                startTimeCal.set(Calendar.MINUTE, m)
-                            },
-                            startTimeCal.get(Calendar.HOUR_OF_DAY),
-                            startTimeCal.get(Calendar.MINUTE),
-                            false
-                        ).show()
-                    },
+                    modifier = Modifier.fillMaxWidth().clickable { showStartTimePicker = true },
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color(0xFFE2E8F0),
@@ -234,28 +260,17 @@ fun OperatorAddSlotScreen(
                 Text("End Time", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1E293B))
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = timeFormat.format(endTimeCal.time),
+                    value = formattedEndTime,
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = {
                         Icon(
-                            painter = androidx.compose.ui.res.painterResource(android.R.drawable.ic_menu_recent_history),
+                            painter = painterResource(android.R.drawable.ic_menu_recent_history),
                             contentDescription = "Select End Time",
                             tint = Color(0xFF64748B)
                         )
                     },
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        TimePickerDialog(
-                            context,
-                            { _, h, m ->
-                                endTimeCal.set(Calendar.HOUR_OF_DAY, h)
-                                endTimeCal.set(Calendar.MINUTE, m)
-                            },
-                            endTimeCal.get(Calendar.HOUR_OF_DAY),
-                            endTimeCal.get(Calendar.MINUTE),
-                            false
-                        ).show()
-                    },
+                    modifier = Modifier.fillMaxWidth().clickable { showEndTimePicker = true },
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color(0xFFE2E8F0),
@@ -267,8 +282,17 @@ fun OperatorAddSlotScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Battery Slots / Capacity
-                Text("Battery Slots", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1E293B))
+                Text(
+                    text = buildAnnotatedString {
+                        append("Capacity (kWh) ")
+                        withStyle(style = SpanStyle(color = Color.Red)) {
+                            append("*")
+                        }
+                    },
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color(0xFF1E293B)
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = batterySlots,
@@ -313,9 +337,14 @@ fun OperatorAddSlotScreen(
                             return@Button
                         }
 
-                        // Adjust the dates for the UTC string
-                        val sTime = startTimeCal.time
-                        val eTime = endTimeCal.time
+                        // Combine date and time
+                        val dateCal = Calendar.getInstance().apply { timeInMillis = selectedDateMillis }
+                        val sTime = Calendar.getInstance().apply {
+                            set(dateCal.get(Calendar.YEAR), dateCal.get(Calendar.MONTH), dateCal.get(Calendar.DAY_OF_MONTH), selectedStartHour, selectedStartMinute)
+                        }.time
+                        val eTime = Calendar.getInstance().apply {
+                            set(dateCal.get(Calendar.YEAR), dateCal.get(Calendar.MONTH), dateCal.get(Calendar.DAY_OF_MONTH), selectedEndHour, selectedEndMinute)
+                        }.time
                         
                         val req = CreateSlotRequest(
                             stationId = station.stationId,
@@ -344,5 +373,88 @@ fun OperatorAddSlotScreen(
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
+    }
+
+    // Material 3 Date Picker Dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        selectedDateMillis = it
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK", color = greenBg)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel", color = greenBg)
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Material 3 Start Time Picker Dialog
+    if (showStartTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = selectedStartHour,
+            initialMinute = selectedStartMinute
+        )
+        AlertDialog(
+            onDismissRequest = { showStartTimePicker = false },
+            title = { Text("Select Start Time") },
+            text = {
+                TimePicker(state = timePickerState)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedStartHour = timePickerState.hour
+                    selectedStartMinute = timePickerState.minute
+                    showStartTimePicker = false
+                }) {
+                    Text("OK", color = greenBg)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartTimePicker = false }) {
+                    Text("Cancel", color = greenBg)
+                }
+            }
+        )
+    }
+
+    // Material 3 End Time Picker Dialog
+    if (showEndTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = selectedEndHour,
+            initialMinute = selectedEndMinute
+        )
+        AlertDialog(
+            onDismissRequest = { showEndTimePicker = false },
+            title = { Text("Select End Time") },
+            text = {
+                TimePicker(state = timePickerState)
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedEndHour = timePickerState.hour
+                    selectedEndMinute = timePickerState.minute
+                    showEndTimePicker = false
+                }) {
+                    Text("OK", color = greenBg)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndTimePicker = false }) {
+                    Text("Cancel", color = greenBg)
+                }
+            }
+        )
     }
 }
