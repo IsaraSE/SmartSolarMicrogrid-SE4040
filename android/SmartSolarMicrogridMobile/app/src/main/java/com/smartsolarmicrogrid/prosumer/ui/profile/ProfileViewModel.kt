@@ -45,14 +45,38 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         private set
 
     fun loadProfile() {
-        val nic = sessionDb.getSession()?.nic
+        val session = sessionDb.getSession()
+        if (session == null) {
+            profileState = ProfileState.Error("Session expired. Please log in again.")
+            return
+        }
+        
+        val nic = session.nic
+        val role = session.role
+        
         profileState = ProfileState.Loading
         viewModelScope.launch {
             try {
-                if (nic == null) {
-                    profileState = ProfileState.Error("Session expired. Please log in again.")
+                val isGridOp = role.equals("GRID_OPERATOR", ignoreCase = true) || role == "1" || role.equals("GridOperator", ignoreCase = true)
+                
+                if (isGridOp) {
+                    val operatorProfile = Prosumer(
+                        nic = nic ?: "",
+                        fullName = session.fullName,
+                        email = "gridop@smartsolar.local", // Generic placeholder
+                        phone = "N/A",
+                        address = "Grid Operator Portal",
+                        accountStatus = session.accountStatus
+                    )
+                    profileState = ProfileState.Loaded(operatorProfile)
                     return@launch
                 }
+
+                if (nic.isNullOrEmpty()) {
+                    profileState = ProfileState.Error("Session expired or invalid NIC.")
+                    return@launch
+                }
+                
                 val response = RetrofitClient.apiService.getProsumer(nic)
                 val prosumer = response.body()?.data
                 if (response.isSuccessful && prosumer != null) {

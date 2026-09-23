@@ -80,6 +80,10 @@ sealed class Screen(val route: String) {
     // Grid operator mode
     object OperatorHome : Screen("operator_home")
     object OperatorReservations : Screen("operator_reservations")
+    object OperatorReservationDetails : Screen("operator_reservation_details")
+    object OperatorProsumerDetails : Screen("operator_prosumer_details/{nic}") {
+        fun createRoute(nic: String) = "operator_prosumer_details/$nic"
+    }
     object OperatorScan : Screen("operator_scan")
     object OperatorStations : Screen("operator_stations") // Replacing OperatorMap
     object OperatorStationDetails : Screen("operator_station_details")
@@ -120,7 +124,8 @@ fun NavGraph(
                         }
                     } else {
                         // The role decides which home screen the user lands on.
-                        val home = if (role == "GRID_OPERATOR") {
+                        val isGridOp = role.equals("GRID_OPERATOR", ignoreCase = true) || role == "1" || role.equals("GridOperator", ignoreCase = true)
+                        val home = if (isGridOp) {
                             Screen.OperatorHome.route
                         } else {
                             Screen.Dashboard.route
@@ -158,16 +163,34 @@ fun NavGraph(
         }
 
         composable(Screen.Profile.route) {
-            WithBottomBar(navController, Screen.Profile.route) {
-                ProfileScreen(
-                    onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
-                    onDeactivated = {
-                        navController.navigate(Screen.RoleSelection.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    },
-                    onBack = { navController.popBackStack() }
-                )
+            val sessionDb = com.smartsolarmicrogrid.prosumer.data.local.SessionDbHelper(navController.context)
+            val session = sessionDb.getSession()
+            val isGridOp = session?.role.equals("GRID_OPERATOR", ignoreCase = true) || session?.role == "1" || session?.role.equals("GridOperator", ignoreCase = true)
+
+            if (isGridOp) {
+                WithOperatorBottomBar(navController, Screen.Profile.route) {
+                    ProfileScreen(
+                        onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
+                        onDeactivated = {
+                            navController.navigate(Screen.RoleSelection.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+            } else {
+                WithBottomBar(navController, Screen.Profile.route) {
+                    ProfileScreen(
+                        onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
+                        onDeactivated = {
+                            navController.navigate(Screen.RoleSelection.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
 
@@ -330,12 +353,44 @@ fun NavGraph(
 
         composable(Screen.OperatorReservations.route) { backStackEntry ->
             val operatorViewModel: OperatorViewModel = operatorViewModel(navController, backStackEntry)
+            val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
             WithOperatorBottomBar(navController, Screen.OperatorReservations.route) {
                 OperatorReservationsScreen(
                     onScanQr = { navController.navigate(Screen.OperatorScan.route) },
-                    operatorViewModel = operatorViewModel
+                    onNavigateToDetails = { reservation ->
+                        bookingListViewModel.selectReservation(reservation)
+                        navController.navigate(Screen.OperatorReservationDetails.route)
+                    },
+                    operatorViewModel = operatorViewModel,
+                    bookingListViewModel = bookingListViewModel
                 )
             }
+        }
+
+        composable(Screen.OperatorReservationDetails.route) { backStackEntry ->
+            val operatorViewModel = operatorViewModel(navController, backStackEntry)
+            val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
+            val reservation = bookingListViewModel.selectedReservation
+
+            if (reservation != null) {
+                com.smartsolarmicrogrid.prosumer.ui.operator.OperatorReservationDetailsScreen(
+                    reservation = reservation,
+                    onBack = { navController.popBackStack() },
+                    onViewProsumer = { nic ->
+                        navController.navigate(Screen.OperatorProsumerDetails.createRoute(nic))
+                    },
+                    operatorViewModel = operatorViewModel,
+                    bookingListViewModel = bookingListViewModel
+                )
+            }
+        }
+
+        composable(Screen.OperatorProsumerDetails.route) { backStackEntry ->
+            val nic = backStackEntry.arguments?.getString("nic") ?: ""
+            com.smartsolarmicrogrid.prosumer.ui.operator.OperatorProsumerDetailsScreen(
+                nic = nic,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.OperatorScan.route) { backStackEntry ->
