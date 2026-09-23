@@ -46,6 +46,9 @@ interface ApiService {
     @GET("api/slots/station/{stationId}")
     suspend fun getAllSlotsByStationId(@Path("stationId") stationId: String): Response<ApiResponse<List<Slot>>>
 
+    @POST("api/slots")
+    suspend fun createSlot(@Body request: CreateSlotRequest): Response<ApiResponse<Slot>>
+
     @PUT("api/slots/{id}")
     suspend fun updateSlot(@Path("id") id: String, @Body request: UpdateSlotRequest): Response<ApiResponse<Slot>>
 

@@ -148,4 +148,23 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+
+    fun createSlot(
+        request: com.smartsolarmicrogrid.prosumer.data.model.CreateSlotRequest,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.createSlot(request)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    onSuccess()
+                } else {
+                    onError(response.body()?.message ?: "Failed to create slot")
+                }
+            } catch (e: Exception) {
+                onError("Network error: ${e.message}")
+            }
+        }
+    }
 }

@@ -376,6 +376,15 @@ fun NavGraph(
             val stationViewModel: StationViewModel = sharedActivityViewModel()
             com.smartsolarmicrogrid.prosumer.ui.operator.OperatorSlotListScreen(
                 onBack = { navController.popBackStack() },
+                stationViewModel = stationViewModel,
+                onAddSlotClick = { navController.navigate("operator_add_slot") }
+            )
+        }
+        
+        composable("operator_add_slot") {
+            val stationViewModel: StationViewModel = sharedActivityViewModel()
+            com.smartsolarmicrogrid.prosumer.ui.operator.OperatorAddSlotScreen(
+                onBack = { navController.popBackStack() },
                 stationViewModel = stationViewModel
             )
         }

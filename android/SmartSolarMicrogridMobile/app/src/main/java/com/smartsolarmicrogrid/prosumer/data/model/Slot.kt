@@ -54,3 +54,12 @@ data class UpdateSlotRequest(
     val capacity: Double,
     val notes: String? = null
 )
+
+data class CreateSlotRequest(
+    val stationId: String,
+    val slotName: String,
+    val startDateTime: String,
+    val endDateTime: String,
+    val capacity: Double,
+    val notes: String? = null
+)

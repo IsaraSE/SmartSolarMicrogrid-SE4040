@@ -35,7 +35,8 @@ import java.util.Locale
 @Composable
 fun OperatorSlotListScreen(
     onBack: () -> Unit,
-    stationViewModel: StationViewModel
+    stationViewModel: StationViewModel,
+    onAddSlotClick: () -> Unit = {}
 ) {
     val state = stationViewModel.slotListState
     val greenBg = Color(0xFF0C8A44)
@@ -228,7 +229,7 @@ fun OperatorSlotListScreen(
                 // Add Slot Button
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
-                    onClick = { /* Add slot logic if needed */ },
+                    onClick = onAddSlotClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
