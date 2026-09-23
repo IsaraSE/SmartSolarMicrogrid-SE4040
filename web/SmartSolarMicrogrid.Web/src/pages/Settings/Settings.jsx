@@ -27,18 +27,41 @@ const Settings = () => {
   const [initialProfileData, setInitialProfileData] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      const data = {
-        fullName: user.fullName || '',
-        email: user.email || 'tharindu@smartsolar.com',
-        phone: '+94 71 234 5678',
-        role: user.role || 'BackOffice',
-        address: '123 Solar Way, Colombo',
-        status: 'ACTIVE'
-      };
-      setProfileData(data);
-      setInitialProfileData(data);
-    }
+    const fetchProfile = async () => {
+      try {
+        const response = await authService.getProfile();
+        if (response.success && response.data) {
+          const userDto = response.data;
+          const data = {
+            fullName: userDto.fullName || '',
+            email: userDto.email || '',
+            phone: userDto.phone || '',
+            role: userDto.role === 1 || userDto.role === 'GRID_OPERATOR' ? 'GRID_OPERATOR' : 'BackOffice',
+            address: userDto.address || '',
+            status: userDto.accountStatus === 0 || userDto.accountStatus === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE'
+          };
+          setProfileData(data);
+          setInitialProfileData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        // Fallback to local storage user
+        if (user) {
+          const data = {
+            fullName: user.fullName || '',
+            email: user.email || '',
+            phone: '',
+            role: user.role || '',
+            address: '',
+            status: 'ACTIVE'
+          };
+          setProfileData(data);
+          setInitialProfileData(data);
+        }
+      }
+    };
+
+    fetchProfile();
   }, [user]);
 
   const [securityData, setSecurityData] = useState({
