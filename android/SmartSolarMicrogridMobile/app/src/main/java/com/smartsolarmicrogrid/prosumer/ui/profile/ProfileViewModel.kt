@@ -24,6 +24,13 @@ sealed class UpdateState {
     data class Error(val message: String) : UpdateState()
 }
 
+sealed class PasswordUpdateState {
+    object Idle : PasswordUpdateState()
+    object Loading : PasswordUpdateState()
+    object Success : PasswordUpdateState()
+    data class Error(val message: String) : PasswordUpdateState()
+}
+
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val sessionDb = SessionDbHelper(application)
@@ -32,6 +39,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         private set
 
     var updateState by mutableStateOf<UpdateState>(UpdateState.Idle)
+        private set
+
+    var passwordUpdateState by mutableStateOf<PasswordUpdateState>(PasswordUpdateState.Idle)
         private set
 
     fun loadProfile() {
@@ -84,6 +94,40 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 }
             } catch (e: Exception) {
                 updateState = UpdateState.Error("Network error: ${e.message}")
+            }
+        }
+    }
+
+    fun changePassword(current: String, newStr: String) {
+        passwordUpdateState = PasswordUpdateState.Loading
+        viewModelScope.launch {
+            try {
+                val req = com.smartsolarmicrogrid.prosumer.data.model.ChangePasswordRequest(current, newStr)
+                val response = RetrofitClient.apiService.changePassword(req)
+                if (response.isSuccessful) {
+                    passwordUpdateState = PasswordUpdateState.Success
+                } else {
+                    val msg = try {
+                        val errorStr = response.errorBody()?.string()
+                        if (errorStr != null) {
+                            val json = org.json.JSONObject(errorStr)
+                            if (json.has("message")) {
+                                json.getString("message")
+                            } else if (json.has("errors")) {
+                                val errors = json.getJSONObject("errors")
+                                val firstKey = errors.keys().next()
+                                errors.getJSONArray(firstKey).getString(0)
+                            } else {
+                                "Password update failed"
+                            }
+                        } else "Password update failed"
+                    } catch (e: Exception) {
+                        "Password update failed"
+                    }
+                    passwordUpdateState = PasswordUpdateState.Error(msg)
+                }
+            } catch (e: Exception) {
+                passwordUpdateState = PasswordUpdateState.Error("Network error: ${e.message}")
             }
         }
     }

@@ -140,10 +140,6 @@ fun ProfileScreen(
                         Text("Prosumer Portal", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                     }
                 }
-                
-                IconButton(onClick = onNavigateToEdit) {
-                    Icon(Icons.Filled.Edit, contentDescription = "Edit", tint = Color.White)
-                }
             }
 
             // Main White Content Container

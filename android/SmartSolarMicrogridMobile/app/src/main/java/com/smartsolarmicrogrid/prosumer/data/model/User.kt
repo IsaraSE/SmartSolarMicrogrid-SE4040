@@ -23,6 +23,11 @@ data class RegisterRequest(
     val password: String
 )
 
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String
+)
+
 data class Prosumer(
     val nic: String,
     val fullName: String,

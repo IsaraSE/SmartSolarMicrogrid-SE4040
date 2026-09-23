@@ -20,6 +20,9 @@ interface ApiService {
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<ApiResponse<LoginResponse>>
 
+    @PUT("api/auth/password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ApiResponse<Any>>
+
     // ---------- Prosumer account ----------
     @POST("api/prosumers/register")
     suspend fun registerProsumer(@Body request: RegisterRequest): Response<ApiResponse<Prosumer>>
