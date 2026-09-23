@@ -43,6 +43,7 @@ fun ProfileScreen(
 
     val state = profileViewModel.profileState
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showDeactivateDialog by remember { mutableStateOf(false) }
 
     if (showLogoutDialog) {
         AlertDialog(
@@ -61,6 +62,29 @@ fun ProfileScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showDeactivateDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeactivateDialog = false },
+            title = { Text("Deactivate Account") },
+            text = { Text("Are you sure you want to deactivate your account? Once deactivated, you will not be able to log in and your account can only be reactivated by a Backoffice officer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeactivateDialog = false
+                        profileViewModel.deactivateAccount(onDone = onDeactivated)
+                    }
+                ) {
+                    Text("Deactivate", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeactivateDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -272,6 +296,20 @@ fun ProfileScreen(
                                 Text("Edit Profile", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                             }
                             
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            OutlinedButton(
+                                onClick = { showDeactivateDialog = true },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth().height(54.dp)
+                            ) {
+                                Icon(Icons.Filled.Warning, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Request Account Deactivation", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            }
+
                             Spacer(modifier = Modifier.height(16.dp))
                             
                             OutlinedButton(

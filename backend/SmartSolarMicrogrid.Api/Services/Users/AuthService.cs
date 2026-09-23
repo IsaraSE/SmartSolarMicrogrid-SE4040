@@ -50,7 +50,7 @@ public class AuthService : IAuthService
 
         if (user.AccountStatus == AccountStatus.DEACTIVATED)
         {
-            return (false, "Your account has been deactivated. Please contact backoffice.", null);
+            return (false, "Your account is currently deactivated. Please contact Backoffice for reactivation.", null);
         }
 
         // Verify password hash

@@ -149,7 +149,7 @@ public class ProsumersController : ControllerBase
     /// Deactivates an active prosumer.
     /// </summary>
     [HttpPut("{nic}/deactivate")]
-    [Authorize(Roles = "BACKOFFICE")]
+    [Authorize(Roles = "PROSUMER,BACKOFFICE")]
     public async Task<IActionResult> DeactivateProsumer(string nic)
     {
         var deactivatedProsumer = await _prosumerService.DeactivateProsumerAsync(nic);

@@ -33,7 +33,7 @@ object RetrofitClient {
             chain.request()
         }
         val response = chain.proceed(request)
-        if (response.code == 401) {
+        if (response.code == 401 && !request.url.encodedPath.contains("auth/login")) {
             onSessionExpired?.invoke()
         }
         response
