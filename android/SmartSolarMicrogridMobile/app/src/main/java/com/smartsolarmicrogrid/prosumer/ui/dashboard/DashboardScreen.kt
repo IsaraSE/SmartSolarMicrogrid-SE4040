@@ -39,6 +39,7 @@ fun DashboardScreen(
     onNavigateToBookings: () -> Unit,
     onNavigateToMap: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onBookingSelected: (Reservation) -> Unit,
     dashboardViewModel: DashboardViewModel = viewModel()
 ) {
     val state = dashboardViewModel.dashboardState
@@ -206,7 +207,7 @@ fun DashboardScreen(
                             
                             // Light Green Button
                             Button(
-                                onClick = onNavigateToStations,
+                                onClick = onNavigateToMap,
                                 colors = ButtonDefaults.buttonColors(containerColor = SolarGreenLight),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.weight(1f).height(56.dp)
@@ -226,7 +227,9 @@ fun DashboardScreen(
                         // Upcoming Reservation Section
                         SectionHeader("My Upcoming Reservation", "View All", onNavigateToBookings)
                         if (data.upcomingReservation != null) {
-                            UpcomingReservationCardV2(data.upcomingReservation, onNavigateToBookings)
+                            UpcomingReservationCardV2(data.upcomingReservation) {
+                                onBookingSelected(data.upcomingReservation)
+                            }
                         } else {
                             Text("No upcoming reservations.", color = Color.Gray, modifier = Modifier.padding(horizontal = 24.dp), fontSize = 14.sp)
                         }
@@ -238,7 +241,9 @@ fun DashboardScreen(
                         
                         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
                             data.recentActivity.forEachIndexed { index, item ->
-                                ActivityRowV2(item)
+                                ActivityRowV2(item) {
+                                    onBookingSelected(item.reservation)
+                                }
                                 if (index < data.recentActivity.size - 1) {
                                     HorizontalDivider(color = Color(0xFFEEEEEE), modifier = Modifier.padding(vertical = 8.dp))
                                 }
@@ -306,7 +311,7 @@ fun UpcomingReservationCardV2(reservation: Reservation, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                val stationName = when (reservation.stationId) {
+                val stationName = reservation.stationName ?: when (reservation.stationId) {
                     "ST001" -> "Colombo Solar Hub"
                     "ST002" -> "Kandy Solar Hub"
                     "ST003" -> "Galle Solar Hub"
@@ -333,27 +338,59 @@ fun UpcomingReservationCardV2(reservation: Reservation, onClick: () -> Unit) {
             
             Spacer(modifier = Modifier.height(12.dp))
             
+            val formattedStart = try {
+                val parts = reservation.startTime?.split(":") ?: listOf("0", "0")
+                val h = parts[0].toInt()
+                val m = parts[1]
+                val ap = if (h >= 12) "PM" else "AM"
+                val dh = if (h == 0) 12 else if (h > 12) h - 12 else h
+                "$dh:$m $ap"
+            } catch (e: Exception) { reservation.startTime ?: "" }
+
+            val formattedEnd = try {
+                val parts = reservation.endTime?.split(":") ?: listOf("0", "0")
+                val h = parts[0].toInt()
+                val m = parts[1]
+                val ap = if (h >= 12) "PM" else "AM"
+                val dh = if (h == 0) 12 else if (h > 12) h - 12 else h
+                "$dh:$m $ap"
+            } catch (e: Exception) { reservation.endTime ?: "" }
+            
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.AccessTime, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(reservation.startTime + " - 12:00 PM", fontSize = 14.sp, color = Color.DarkGray) // Mocking end time for UI
+                Text("$formattedStart - $formattedEnd", fontSize = 14.sp, color = Color.DarkGray)
             }
         }
     }
 }
 
 @Composable
-fun ActivityRowV2(item: ActivityItem) {
+fun ActivityRowV2(item: ActivityItem, onClick: () -> Unit = {}) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val bgColor = when (item.status.uppercase()) {
+            "PENDING" -> SolarAmber
+            "CANCELLED" -> Color(0xFFE53935) // Red
+            "COMPLETED" -> Color(0xFF1976D2) // Blue
+            else -> SolarGreen
+        }
+        
+        val icon = when (item.status.uppercase()) {
+            "PENDING" -> Icons.Filled.AccessTime
+            "CANCELLED" -> Icons.Filled.Close
+            "COMPLETED" -> Icons.Filled.CheckCircle
+            else -> Icons.Filled.Check
+        }
+
         Box(
-            modifier = Modifier.size(44.dp).clip(CircleShape).background(if (item.status == "PENDING") SolarAmber else SolarGreen),
+            modifier = Modifier.size(44.dp).clip(CircleShape).background(bgColor),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                if (item.status == "PENDING") Icons.Filled.AccessTime else Icons.Filled.Check,
+                icon,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)

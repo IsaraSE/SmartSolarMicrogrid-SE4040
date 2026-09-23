@@ -53,7 +53,6 @@ fun StationListScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("All") }
     val filterOptions = listOf("All", "Near Me", "Available")
-    var isMapView by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -173,14 +172,14 @@ fun StationListScreen(
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (!isMapView) Color.White else Color.Transparent)
-                                .clickable { isMapView = false },
+                                .background(if (!stationViewModel.isMapView) Color.White else Color.Transparent)
+                                .clickable { stationViewModel.isMapView = false },
                             contentAlignment = Alignment.Center
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.FormatListBulleted, contentDescription = null, tint = if (!isMapView) SolarGreenDark else Color.Gray, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Filled.FormatListBulleted, contentDescription = null, tint = if (!stationViewModel.isMapView) SolarGreenDark else Color.Gray, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("List", color = if (!isMapView) SolarGreenDark else Color.Gray, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                Text("List", color = if (!stationViewModel.isMapView) SolarGreenDark else Color.Gray, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
 
@@ -190,14 +189,14 @@ fun StationListScreen(
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isMapView) SolarGreenDark else Color.Transparent)
-                                .clickable { isMapView = true },
+                                .background(if (stationViewModel.isMapView) SolarGreenDark else Color.Transparent)
+                                .clickable { stationViewModel.isMapView = true },
                             contentAlignment = Alignment.Center
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.Map, contentDescription = null, tint = if (isMapView) Color.White else Color.Gray, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Filled.Map, contentDescription = null, tint = if (stationViewModel.isMapView) Color.White else Color.Gray, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Map", color = if (isMapView) Color.White else Color.Gray, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                Text("Map", color = if (stationViewModel.isMapView) Color.White else Color.Gray, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -244,7 +243,7 @@ fun StationListScreen(
                                 it.status.uppercase() == "ACTIVE" || it.status.uppercase() == "AVAILABLE" || it.status == "0"
                             }
 
-                            if (isMapView) {
+                            if (stationViewModel.isMapView) {
                                 // Map View
                                 val sriLanka = LatLng(7.8731, 80.7718)
                                 val cameraPositionState = rememberCameraPositionState {

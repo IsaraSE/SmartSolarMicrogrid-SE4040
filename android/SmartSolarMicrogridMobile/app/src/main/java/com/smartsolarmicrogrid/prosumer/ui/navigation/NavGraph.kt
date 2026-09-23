@@ -16,6 +16,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
+
 import com.smartsolarmicrogrid.prosumer.ui.auth.LoginScreen
 import com.smartsolarmicrogrid.prosumer.ui.auth.RegisterScreen
 import com.smartsolarmicrogrid.prosumer.ui.auth.PendingActivationScreen
@@ -41,6 +44,12 @@ import com.smartsolarmicrogrid.prosumer.ui.station.SlotListScreen
 import com.smartsolarmicrogrid.prosumer.ui.station.StationDetailsScreen
 import com.smartsolarmicrogrid.prosumer.ui.station.StationListScreen
 import com.smartsolarmicrogrid.prosumer.ui.station.StationViewModel
+
+@Composable
+inline fun <reified T : androidx.lifecycle.ViewModel> sharedActivityViewModel(): T {
+    val activity = LocalContext.current as ComponentActivity
+    return viewModel(activity)
+}
 
 /** Where the user reached Modify / Cancel from: the new-booking flow or the booking list. */
 const val SOURCE_CREATE = "create"
@@ -154,7 +163,7 @@ fun NavGraph(
         }
 
         composable(Screen.Stations.route) {
-            val stationViewModel: StationViewModel = viewModel()
+            val stationViewModel: StationViewModel = sharedActivityViewModel()
             WithBottomBar(navController, Screen.Stations.route) {
                 StationListScreen(
                     onStationSelected = { station ->
@@ -248,12 +257,44 @@ fun NavGraph(
         }
 
         composable(Screen.Dashboard.route) {
+            val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
+            val stationViewModel: StationViewModel = sharedActivityViewModel()
             WithBottomBar(navController, Screen.Dashboard.route) {
                 DashboardScreen(
-                    onNavigateToStations = { navController.navigate(Screen.Stations.route) },
-                    onNavigateToBookings = { navController.navigate(Screen.BookingList.route) },
-                    onNavigateToMap = { navController.navigate(Screen.Stations.route) },
-                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                    onNavigateToStations = {
+                        stationViewModel.isMapView = false
+                        navController.navigate(Screen.Stations.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToBookings = {
+                        navController.navigate(Screen.BookingList.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToMap = {
+                        stationViewModel.isMapView = true
+                        navController.navigate(Screen.Stations.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToProfile = {
+                        navController.navigate(Screen.Profile.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onBookingSelected = { reservation ->
+                        bookingListViewModel.selectReservation(reservation)
+                        navController.navigate(Screen.BookingDetails.route)
+                    }
                 )
             }
         }
@@ -310,7 +351,7 @@ fun NavGraph(
         // ---------- Booking views: Current / Pending / History + search ----------
 
         composable(Screen.BookingList.route) { backStackEntry ->
-            val bookingListViewModel: BookingListViewModel = viewModel(backStackEntry)
+            val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
             WithBottomBar(navController, Screen.BookingList.route) {
                 BookingListScreen(
                     onBookingSelected = { reservation ->
@@ -324,11 +365,8 @@ fun NavGraph(
         }
 
         composable(Screen.BookingDetails.route) { backStackEntry ->
-            val listEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(Screen.BookingList.route)
-            }
-            val bookingListViewModel: BookingListViewModel = viewModel(listEntry)
-            val bookingViewModel: BookingViewModel = viewModel(listEntry)
+            val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
+            val bookingViewModel: BookingViewModel = sharedActivityViewModel()
             val reservation = bookingListViewModel.selectedReservation
 
             if (reservation != null) {
@@ -350,10 +388,7 @@ fun NavGraph(
         }
 
         composable(Screen.BookingQr.route) { backStackEntry ->
-            val listEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(Screen.BookingList.route)
-            }
-            val bookingListViewModel: BookingListViewModel = viewModel(listEntry)
+            val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
             val reservation = bookingListViewModel.selectedReservation
 
             if (reservation != null) {
@@ -370,11 +405,8 @@ fun NavGraph(
             val source = backStackEntry.arguments?.getString("source") ?: SOURCE_CREATE
 
             if (source == SOURCE_LIST) {
-                val listEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(Screen.BookingList.route)
-                }
-                val bookingListViewModel: BookingListViewModel = viewModel(listEntry)
-                val bookingViewModel: BookingViewModel = viewModel(listEntry)
+                val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
+                val bookingViewModel: BookingViewModel = sharedActivityViewModel()
                 val reservation = bookingListViewModel.selectedReservation
 
                 if (reservation != null) {
@@ -410,11 +442,8 @@ fun NavGraph(
             val source = backStackEntry.arguments?.getString("source") ?: SOURCE_CREATE
 
             if (source == SOURCE_LIST) {
-                val listEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(Screen.BookingList.route)
-                }
-                val bookingListViewModel: BookingListViewModel = viewModel(listEntry)
-                val bookingViewModel: BookingViewModel = viewModel(listEntry)
+                val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
+                val bookingViewModel: BookingViewModel = sharedActivityViewModel()
                 val reservation = bookingListViewModel.selectedReservation
 
                 if (reservation != null) {

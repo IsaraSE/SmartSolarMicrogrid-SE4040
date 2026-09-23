@@ -32,6 +32,8 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
     var slotListState by mutableStateOf<SlotListState>(SlotListState.Idle)
         private set
 
+    var isMapView by mutableStateOf(false)
+
     var selectedStation by mutableStateOf<Station?>(null)
         private set
 

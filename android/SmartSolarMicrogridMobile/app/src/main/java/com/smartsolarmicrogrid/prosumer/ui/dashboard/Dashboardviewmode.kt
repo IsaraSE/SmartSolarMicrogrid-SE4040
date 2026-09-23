@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 data class ActivityItem(
+    val reservation: Reservation,
     val title: String,
     val subtitle: String,
     val status: String,
@@ -73,41 +74,32 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 // Determine next upcoming
                 val nextUpcoming = upcomingList.firstOrNull()
 
-                // Merge activity feed
-                val activityItems = mutableListOf<ActivityItem>()
+                // Merge all reservations uniquely
+                val allReservations = (pending + current + history).distinctBy { it.reservationId }
                 
-                // Add pending activities
-                pending.forEach { res ->
-                    activityItems.add(ActivityItem(
-                        title = "Reservation pending",
-                        subtitle = "${formatStationName(res.stationId)} • ${formatActivityDate(res.bookingDate)}",
-                        status = "PENDING",
-                        date = res.bookingDate
-                    ))
-                }
+                // Sort by most recently updated/created for a true "Recent Activity" feed
+                val sortedRecent = allReservations
+                    .sortedByDescending { it.updatedAt ?: it.createdAt ?: it.bookingDate }
+                    .take(5)
                 
-                // Add approved activities
-                current.filter { it.status == "APPROVED" }.forEach { res ->
-                    activityItems.add(ActivityItem(
-                        title = "Reservation approved",
-                        subtitle = "${formatStationName(res.stationId)} • ${formatActivityDate(res.bookingDate)}",
-                        status = "APPROVED",
-                        date = res.bookingDate
-                    ))
+                val activityItems = sortedRecent.map { res ->
+                    val actionStr = when (res.status) {
+                        "PENDING" -> "Reservation requested"
+                        "APPROVED" -> "Reservation approved"
+                        "CANCELLED" -> "Reservation cancelled"
+                        "COMPLETED" -> "Reservation completed"
+                        else -> "Reservation updated"
+                    }
+                    val dateStr = res.updatedAt ?: res.createdAt ?: res.bookingDate
+                    val name = res.stationName ?: formatStationName(res.stationId)
+                    ActivityItem(
+                        reservation = res,
+                        title = actionStr,
+                        subtitle = "$name • ${formatActivityDate(res.bookingDate)} • ${formatTime(res.startTime)} - ${formatTime(res.endTime)}",
+                        status = res.status,
+                        date = dateStr
+                    )
                 }
-
-                // Add completed activities
-                completedList.forEach { res ->
-                    activityItems.add(ActivityItem(
-                        title = "Reservation completed",
-                        subtitle = "${formatStationName(res.stationId)} • ${formatActivityDate(res.bookingDate)}",
-                        status = "COMPLETED",
-                        date = res.bookingDate
-                    ))
-                }
-                
-                // Sort by most recent date (descending)
-                val sortedActivity = activityItems.sortedByDescending { it.date }.take(5)
                 
                 // Construct Data
                 val data = DashboardData(
@@ -117,7 +109,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     completedCount = completedList.size,
                     totalEnergyTraded = completedList.size * 2.5,
                     upcomingReservation = nextUpcoming,
-                    recentActivity = sortedActivity
+                    recentActivity = activityItems
                 )
                 
                 dashboardState = DashboardState.Loaded(data)
@@ -131,7 +123,8 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     private fun isFutureOrToday(bookingDate: String): Boolean {
         return try {
-            !LocalDate.parse(bookingDate).isBefore(LocalDate.now())
+            val datePart = bookingDate.substringBefore("T")
+            !LocalDate.parse(datePart).isBefore(LocalDate.now())
         } catch (e: Exception) {
             true
         }
@@ -146,15 +139,31 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
     
-    private fun formatActivityDate(dateString: String): String {
+    private fun formatActivityDate(dateString: String?): String {
+        if (dateString.isNullOrEmpty()) return ""
         return try {
-            val date = LocalDate.parse(dateString)
+            val datePart = dateString.substringBefore("T")
+            val date = LocalDate.parse(datePart)
             val day = date.dayOfMonth
             val month = date.month.name.substring(0, 3).lowercase().replaceFirstChar { it.uppercase() }
             val year = date.year
             "$day $month $year"
         } catch (e: Exception) {
             dateString
+        }
+    }
+    
+    private fun formatTime(timeStr: String?): String {
+        if (timeStr.isNullOrEmpty()) return ""
+        return try {
+            val parts = timeStr.split(":")
+            val hour = parts[0].toInt()
+            val min = parts[1]
+            val amPm = if (hour >= 12) "PM" else "AM"
+            val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+            "$displayHour:$min $amPm"
+        } catch (e: Exception) {
+            timeStr
         }
     }
 }
