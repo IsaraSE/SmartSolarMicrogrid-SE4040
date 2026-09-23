@@ -37,7 +37,7 @@ private data class BottomNavItem(
 private val bottomNavItems = listOf(
     BottomNavItem(Screen.Dashboard.route, "Dashboard", Icons.Filled.SpaceDashboard),
     BottomNavItem(Screen.Stations.route, "Stations", Icons.Filled.SolarPower),
-    BottomNavItem(Screen.BookingList.route, "Reservations", Icons.Filled.EventNote),
+    BottomNavItem(Screen.BookingList.route, "Bookings", Icons.Filled.EventNote),
     BottomNavItem(Screen.Profile.route, "Profile", Icons.Filled.Person)
 )
 

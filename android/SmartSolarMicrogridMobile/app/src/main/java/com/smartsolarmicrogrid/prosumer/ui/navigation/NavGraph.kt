@@ -401,6 +401,12 @@ fun NavGraph(
                         operatorViewModel.resetScan()
                         navController.popBackStack()
                     },
+                    onNavigateToDashboard = {
+                        operatorViewModel.resetScan()
+                        navController.navigate(Screen.OperatorHome.route) {
+                            popUpTo(Screen.OperatorHome.route) { inclusive = true }
+                        }
+                    },
                     operatorViewModel = operatorViewModel
                 )
             }
