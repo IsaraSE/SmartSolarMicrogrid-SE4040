@@ -46,3 +46,11 @@ data class Slot(
         }
     }
 }
+
+data class UpdateSlotRequest(
+    val startDateTime: String,
+    val endDateTime: String,
+    val status: Int,
+    val capacity: Double,
+    val notes: String? = null
+)

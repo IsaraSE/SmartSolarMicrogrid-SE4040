@@ -82,4 +82,70 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+
+    fun selectStationAndLoadAllSlots(station: Station) {
+        selectedStation = station
+        slotListState = SlotListState.Loading
+        viewModelScope.launch {
+            try {
+                val slotsResponse = RetrofitClient.apiService.getAllSlotsByStationId(station.stationId)
+                val reservationsResponse = try {
+                    RetrofitClient.apiService.getReservationsByStationId(station.stationId)
+                } catch (e: Exception) {
+                    null
+                }
+                
+                val slots = slotsResponse.body()?.data
+                val reservations = reservationsResponse?.body()?.data ?: emptyList()
+                
+                if (slotsResponse.isSuccessful && slots != null) {
+                    val mergedSlots = slots.map { slot ->
+                        val activeRes = reservations.find { r -> 
+                            r.slotId == slot.slotId && 
+                            (r.status.uppercase() == "PENDING" || r.status == "0" || 
+                             r.status.uppercase() == "APPROVED" || r.status == "1")
+                        }
+                        
+                        var effectiveStatus = slot.status.uppercase()
+                        if (activeRes != null) {
+                            val resStatus = activeRes.status.uppercase()
+                            if (resStatus == "PENDING" || resStatus == "0") effectiveStatus = "3" // PENDING
+                            if (resStatus == "APPROVED" || resStatus == "1") effectiveStatus = "1" // RESERVED
+                        }
+                        
+                        slot.copy(status = effectiveStatus)
+                    }
+                    slotListState = SlotListState.Loaded(mergedSlots)
+                } else {
+                    slotListState = SlotListState.Error("Could not load slots")
+                }
+            } catch (e: Exception) {
+                slotListState = SlotListState.Error("Network error: ${e.message}")
+            }
+        }
+    }
+
+    fun toggleSlotStatus(slot: com.smartsolarmicrogrid.prosumer.data.model.Slot) {
+        val currentStatus = slot.status.uppercase()
+        val newStatus = if (currentStatus == "AVAILABLE" || currentStatus == "0") 2 else 0 // 0=AVAILABLE, 2=UNAVAILABLE
+        
+        val request = com.smartsolarmicrogrid.prosumer.data.model.UpdateSlotRequest(
+            startDateTime = slot.startDateTime,
+            endDateTime = slot.endDateTime,
+            status = newStatus,
+            capacity = slot.capacity
+        )
+
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.updateSlot(slot.slotId, request)
+                if (response.isSuccessful) {
+                    // Reload the slots for the currently selected station
+                    selectedStation?.let { selectStationAndLoadAllSlots(it) }
+                }
+            } catch (e: Exception) {
+                // handle error or show toast
+            }
+        }
+    }
 }

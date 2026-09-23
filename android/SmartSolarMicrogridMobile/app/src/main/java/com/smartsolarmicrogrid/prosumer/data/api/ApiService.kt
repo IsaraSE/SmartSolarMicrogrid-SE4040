@@ -43,9 +43,18 @@ interface ApiService {
     @GET("api/stations/{id}/available-slots")
     suspend fun getAvailableSlots(@Path("id") stationId: String): Response<ApiResponse<List<Slot>>>
 
+    @GET("api/slots/station/{stationId}")
+    suspend fun getAllSlotsByStationId(@Path("stationId") stationId: String): Response<ApiResponse<List<Slot>>>
+
+    @PUT("api/slots/{id}")
+    suspend fun updateSlot(@Path("id") id: String, @Body request: UpdateSlotRequest): Response<ApiResponse<Slot>>
+
     // ---------- Reservations ----------
     @POST("api/reservations")
     suspend fun createReservation(@Body request: CreateReservationRequest): Response<ApiResponse<Reservation>>
+
+    @GET("api/reservations/search")
+    suspend fun getReservationsByStationId(@Query("stationId") stationId: String): Response<ApiResponse<List<Reservation>>>
 
     @PUT("api/reservations/{id}")
     suspend fun updateReservation(@Path("id") id: String, @Body request: CreateReservationRequest): Response<ApiResponse<Reservation>>
