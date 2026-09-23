@@ -16,7 +16,7 @@ namespace SmartSolarMicrogrid.Api.Controllers.Users;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "BACKOFFICE")]
+[Authorize]
 public class ProsumersController : ControllerBase
 {
     private readonly IProsumerService _prosumerService;
@@ -72,6 +72,7 @@ public class ProsumersController : ControllerBase
     /// Gets all prosumers.
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = "BACKOFFICE")]
     public async Task<IActionResult> GetAllProsumers()
     {
         var prosumers = await _prosumerService.GetAllProsumersAsync();
@@ -82,6 +83,7 @@ public class ProsumersController : ControllerBase
     /// Gets pending prosumers.
     /// </summary>
     [HttpGet("pending")]
+    [Authorize(Roles = "BACKOFFICE")]
     public async Task<IActionResult> GetPendingProsumers()
     {
         var prosumers = await _prosumerService.GetPendingProsumersAsync();
@@ -92,6 +94,7 @@ public class ProsumersController : ControllerBase
     /// Gets deactivated prosumers.
     /// </summary>
     [HttpGet("deactivated")]
+    [Authorize(Roles = "BACKOFFICE")]
     public async Task<IActionResult> GetDeactivatedProsumers()
     {
         var prosumers = await _prosumerService.GetDeactivatedProsumersAsync();
@@ -102,6 +105,7 @@ public class ProsumersController : ControllerBase
     /// Gets a specific prosumer by NIC.
     /// </summary>
     [HttpGet("{nic}")]
+    [Authorize(Roles = "PROSUMER,BACKOFFICE")]
     public async Task<IActionResult> GetProsumerByNic(string nic)
     {
         var prosumer = await _prosumerService.GetProsumerByNicAsync(nic);
@@ -116,6 +120,7 @@ public class ProsumersController : ControllerBase
     /// Activates a pending prosumer.
     /// </summary>
     [HttpPut("{nic}/activate")]
+    [Authorize(Roles = "BACKOFFICE")]
     public async Task<IActionResult> ActivateProsumer(string nic)
     {
         var activatedProsumer = await _prosumerService.ActivateProsumerAsync(nic);
@@ -130,6 +135,7 @@ public class ProsumersController : ControllerBase
     /// Reactivates a deactivated prosumer.
     /// </summary>
     [HttpPut("{nic}/reactivate")]
+    [Authorize(Roles = "BACKOFFICE")]
     public async Task<IActionResult> ReactivateProsumer(string nic)
     {
         var reactivatedProsumer = await _prosumerService.ReactivateProsumerAsync(nic);
@@ -143,13 +149,14 @@ public class ProsumersController : ControllerBase
     /// Deactivates an active prosumer.
     /// </summary>
     [HttpPut("{nic}/deactivate")]
+    [Authorize(Roles = "PROSUMER,BACKOFFICE")]
     public async Task<IActionResult> DeactivateProsumer(string nic)
     {
-        var deactivatedProsumer = await _prosumerService.DeactivateProsumerAsync(nic);
-        if (deactivatedProsumer == null)
+        var (success, message, deactivatedProsumer) = await _prosumerService.DeactivateProsumerAsync(nic);
+        if (!success)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse("Prosumer not found or not in active status."));
+            return BadRequest(ApiResponse<object>.ErrorResponse(message));
         }
-        return Ok(ApiResponse<UserDto>.SuccessResponse("Prosumer deactivated successfully.", deactivatedProsumer));
+        return Ok(ApiResponse<UserDto>.SuccessResponse(message, deactivatedProsumer));
     }
 }

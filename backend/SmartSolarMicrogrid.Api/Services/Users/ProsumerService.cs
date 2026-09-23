@@ -11,16 +11,19 @@ using SmartSolarMicrogrid.Api.Models.DTOs;
 using SmartSolarMicrogrid.Api.Models.Entities;
 using SmartSolarMicrogrid.Api.Models.Enums;
 using SmartSolarMicrogrid.Api.Repositories;
+using SmartSolarMicrogrid.Api.Repositories.Users;
 
 namespace SmartSolarMicrogrid.Api.Services.Users;
 
 public class ProsumerService : IProsumerService
 {
     private readonly IUserDetailsRepository _userRepository;
+    private readonly IEnergyReservationRepository _reservationRepository;
 
-    public ProsumerService(IUserDetailsRepository userRepository)
+    public ProsumerService(IUserDetailsRepository userRepository, IEnergyReservationRepository reservationRepository)
     {
         _userRepository = userRepository;
+        _reservationRepository = reservationRepository;
     }
 
     /// <summary>
@@ -154,17 +157,25 @@ public class ProsumerService : IProsumerService
         return MapToDto(user);
     }
 
-    public async Task<UserDto?> DeactivateProsumerAsync(string nic)
+    public async Task<(bool Success, string Message, UserDto? Prosumer)> DeactivateProsumerAsync(string nic)
     {
         var user = await _userRepository.GetByNicAsync(nic);
         if (user == null || user.Role != UserRole.PROSUMER || user.AccountStatus != AccountStatus.ACTIVE)
         {
-            return null;
+            return (false, "Prosumer not found or not in active status.", null);
+        }
+
+        var allReservations = await _reservationRepository.GetAllAsync();
+        var ongoingReservations = allReservations.Where(r => r.ProsumerNic == nic && (r.Status == ReservationStatus.PENDING || r.Status == ReservationStatus.APPROVED)).ToList();
+        
+        if (ongoingReservations.Any())
+        {
+            return (false, "You cannot deactivate your account because you have ongoing bookings. Please complete or cancel them first.", null);
         }
 
         user.AccountStatus = AccountStatus.DEACTIVATED;
         await _userRepository.UpdateAsync(user.UserId!, user);
-        return MapToDto(user);
+        return (true, "Prosumer deactivated successfully.", MapToDto(user));
     }
 
     private static UserDto MapToDto(UserDetail user)

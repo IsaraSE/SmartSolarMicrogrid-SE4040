@@ -25,6 +25,10 @@ public class CreateSlotDto
     [Required]
     public DateTime EndDateTime { get; set; }
 
+    [Required]
+    [Range(0.1, 1000)]
+    public double Capacity { get; set; }
+
     [MaxLength(500)]
     public string? Notes { get; set; }
 }

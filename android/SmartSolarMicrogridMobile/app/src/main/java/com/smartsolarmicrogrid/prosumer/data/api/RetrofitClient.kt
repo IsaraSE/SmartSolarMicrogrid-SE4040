@@ -9,12 +9,14 @@ object RetrofitClient {
 
     // Emulator note: 10.0.2.2 is how the Android emulator reaches your PC's "localhost".
     // The C# API runs on port 5235 (see backend Properties/launchSettings.json).
-    private const val BASE_URL = "http://10.0.2.2:5235/"
+    private const val BASE_URL = "http://192.168.1.5:5235/"
 
     // JWT bearer token for authenticated requests. Set on login and restored from
     // SQLite when the app starts (see MainActivity / AuthViewModel).
     @Volatile
     var authToken: String? = null
+
+    var onSessionExpired: (() -> Unit)? = null
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -30,7 +32,11 @@ object RetrofitClient {
         } else {
             chain.request()
         }
-        chain.proceed(request)
+        val response = chain.proceed(request)
+        if (response.code == 401 && !request.url.encodedPath.contains("auth/login")) {
+            onSessionExpired?.invoke()
+        }
+        response
     }
 
     private val okHttpClient = OkHttpClient.Builder()

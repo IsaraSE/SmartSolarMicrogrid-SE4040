@@ -19,6 +19,7 @@ const AddSlot = () => {
     date: '',
     startTime: '',
     endTime: '',
+    capacity: 5.0, // default capacity
     status: 0, // AVAILABLE
     notes: ''
   });
@@ -72,14 +73,14 @@ const AddSlot = () => {
       return;
     }
     
-    setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [name]: name === 'capacity' ? parseFloat(value) || '' : value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.stationId || !formData.slotName || !formData.date || !formData.startTime || !formData.endTime) {
+    if (!formData.stationId || !formData.slotName || !formData.date || !formData.startTime || !formData.endTime || !formData.capacity) {
       setError('Please fill out all required fields.');
       return;
     }
@@ -101,6 +102,7 @@ const AddSlot = () => {
         slotName: formData.slotName,
         startDateTime: startDateTime,
         endDateTime: endDateTime,
+        capacity: formData.capacity,
         notes: formData.notes
       };
 
@@ -251,6 +253,21 @@ const AddSlot = () => {
                 </div>
                 <span className="input-hint">Select the slot end time.</span>
               </div>
+            </div>
+
+            <div className="input-group full">
+              <label>Capacity (kWh) <span className="req">*</span></label>
+              <input 
+                type="number" 
+                name="capacity"
+                value={formData.capacity}
+                onChange={handleChange}
+                step="0.1"
+                min="0.1"
+                max="1000"
+                required 
+              />
+              <span className="input-hint">Specify the energy capacity available for this slot.</span>
             </div>
 
             <div className="input-group full">

@@ -20,6 +20,8 @@ public class EnergyBookingSlot
     public DateTime StartDateTime { get; set; }
     public DateTime EndDateTime { get; set; }
     
+    public double Capacity { get; set; }
+    
     [BsonRepresentation(BsonType.String)]
     public SlotStatus Status { get; set; }
     

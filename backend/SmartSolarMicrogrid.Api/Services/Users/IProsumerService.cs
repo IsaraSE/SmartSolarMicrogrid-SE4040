@@ -21,5 +21,5 @@ public interface IProsumerService
     Task<UserDto?> ActivateProsumerAsync(string nic);
     Task<IEnumerable<UserDto>> GetDeactivatedProsumersAsync();
     Task<UserDto?> ReactivateProsumerAsync(string nic);
-    Task<UserDto?> DeactivateProsumerAsync(string nic);
+    Task<(bool Success, string Message, UserDto? Prosumer)> DeactivateProsumerAsync(string nic);
 }

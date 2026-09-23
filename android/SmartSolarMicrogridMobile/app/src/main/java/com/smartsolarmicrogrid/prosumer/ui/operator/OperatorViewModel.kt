@@ -98,8 +98,8 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.apiService.getOperatorPendingReservations()
-                if (response.isSuccessful && response.body() != null) {
-                    pendingState = PendingListState.Loaded(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    pendingState = PendingListState.Loaded(response.body()!!.data!!)
                 } else {
                     // TODO: remove mock fallback before submission
                     pendingState = PendingListState.Loaded(getMockPending())
@@ -117,8 +117,8 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.apiService.getStations()
-                if (response.isSuccessful && response.body() != null) {
-                    stationState = StationMapState.Loaded(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    stationState = StationMapState.Loaded(response.body()!!.data!!)
                 } else {
                     // TODO: remove mock fallback before submission
                     stationState = StationMapState.Loaded(getMockStations())
@@ -169,8 +169,8 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.apiService.verifyQr(QrVerifyRequest(reference))
-                if (response.isSuccessful && response.body() != null) {
-                    verifyState = VerifyState.Result(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    verifyState = VerifyState.Result(response.body()!!.data!!)
                 } else if (response.code() == 404) {
                     verifyState = VerifyState.Result(
                         QrVerificationResult(valid = false, message = "No reservation matches this QR code.")
@@ -192,8 +192,8 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.apiService.completeReservation(reservationId)
-                if (response.isSuccessful && response.body() != null) {
-                    completeState = CompleteState.Success(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    completeState = CompleteState.Success(response.body()!!.data!!)
                     completedCount += 1
                     loadPendingReservations()
                 } else {

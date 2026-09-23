@@ -41,14 +41,14 @@ public class AuthController : ControllerBase
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request format."));
         }
 
-        var response = await _authService.LoginAsync(request);
+        var (success, message, data) = await _authService.LoginAsync(request);
 
-        if (response == null)
+        if (!success)
         {
-            return Unauthorized(ApiResponse<object>.ErrorResponse("Invalid email or password, or account is deactivated."));
+            return Unauthorized(ApiResponse<object>.ErrorResponse(message));
         }
 
-        return Ok(ApiResponse<LoginResponseDto>.SuccessResponse("Login successful", response));
+        return Ok(ApiResponse<LoginResponseDto>.SuccessResponse(message, data));
     }
 
     /// <summary>

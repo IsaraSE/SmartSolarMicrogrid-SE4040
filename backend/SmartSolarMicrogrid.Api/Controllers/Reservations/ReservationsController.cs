@@ -31,6 +31,7 @@ public class ReservationsController : ControllerBase
     /// Gets reservations based on role and filters.
     /// </summary>
     [HttpGet]
+    [HttpGet("search")]
     public async Task<IActionResult> GetReservations([FromQuery] string? nic, [FromQuery] string? stationId, [FromQuery] string? status, [FromQuery] DateTime? date)
     {
         var role = User.FindFirstValue(ClaimTypes.Role);

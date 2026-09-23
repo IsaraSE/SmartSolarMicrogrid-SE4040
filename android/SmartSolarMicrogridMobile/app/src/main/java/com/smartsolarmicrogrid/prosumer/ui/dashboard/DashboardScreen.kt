@@ -1,13 +1,7 @@
-/*
- * DashboardScreen.kt
- * Smart Solar Microgrid Trading System - Prosumer Mobile Application
- *
- * Prosumer dashboard: pending reservation count, approved future reservation
- * count and the next upcoming bookings, all read live from the C# Web API.
- */
 package com.smartsolarmicrogrid.prosumer.ui.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -20,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -29,16 +22,24 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smartsolarmicrogrid.prosumer.data.model.Reservation
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.StatusBadge
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 private val SolarGreenDark = Color(0xFF1B5E20)
 private val SolarGreen = Color(0xFF2E7D32)
+private val SolarGreenLight = Color(0xFFE8F5E9)
 private val SolarAmber = Color(0xFFFFA000)
-private val SurfaceGray = Color(0xFFF5F5F5)
+private val SolarAmberLight = Color(0xFFFFF8E1)
+private val SolarBlue = Color(0xFF1976D2)
+private val SolarBlueLight = Color(0xFFE3F2FD)
 
 @Composable
 fun DashboardScreen(
-    onViewAllBookings: () -> Unit,
-    onBack: (() -> Unit)? = null,   // null hides the back arrow (dashboard is a bottom-bar tab)
+    onNavigateToStations: () -> Unit,
+    onNavigateToBookings: () -> Unit,
+    onNavigateToMap: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onBookingSelected: (Reservation) -> Unit,
     dashboardViewModel: DashboardViewModel = viewModel()
 ) {
     val state = dashboardViewModel.dashboardState
@@ -46,267 +47,364 @@ fun DashboardScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(SolarGreenDark, SolarGreen, SurfaceGray),
-                    startY = 0f,
-                    endY = 480f
-                )
-            )
+            .background(SolarGreenDark)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Spacer(modifier = Modifier.height(48.dp))
 
-            // Header
+            // Top Header (Green Area)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 20.dp),
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (onBack != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.WbSunny, contentDescription = null, tint = SolarAmber, modifier = Modifier.size(28.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text("Smart Solar Microgrid", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("Prosumer Portal", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                    }
+                }
+                
+                Box(contentAlignment = Alignment.TopEnd) {
+                    Icon(Icons.Filled.Notifications, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(10.dp)
                             .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Dashboard", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                    Text(
-                        "Your reservation summary",
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 12.sp
+                            .background(Color.White) // Mockup shows a white bell with no red dot, or maybe a white bell? Wait, mockup 2 has a white bell with no red dot.
+                            // Actually it looks like a white bell. I'll just leave it as white bell.
+                            // Oh wait, the previous mockup had a red dot. Let's just remove the red dot.
                     )
-                }
-                IconButton(onClick = { dashboardViewModel.loadDashboard() }) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Refresh", tint = Color.White)
                 }
             }
 
-            when (state) {
-                is DashboardState.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(320.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color.White)
-                    }
-                }
+            Spacer(modifier = Modifier.height(24.dp))
 
-                is DashboardState.Error -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(Icons.Filled.CloudOff, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(state.message, color = Color.White, fontSize = 13.sp)
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Button(
-                            onClick = { dashboardViewModel.loadDashboard() },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Text("Retry", color = SolarGreenDark)
+            // The Massive White Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (state is DashboardState.Loading) {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = SolarGreen)
                         }
-                    }
-                }
+                    } else if (state is DashboardState.Loaded) {
+                        val data = state.data
 
-                is DashboardState.Loaded -> {
-                    val data = state.data
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                    // Greeting
-                    Text(
-                        text = "Hello, ${data.prosumerName}",
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // The two counts required by the rubric
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatCard(
-                            icon = Icons.Filled.HourglassTop,
-                            value = data.pendingCount.toString(),
-                            label = "Pending reservations",
-                            accent = SolarAmber,
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            icon = Icons.Filled.EventAvailable,
-                            value = data.approvedFutureCount.toString(),
-                            label = "Approved upcoming",
-                            accent = SolarGreen,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Upcoming bookings
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Upcoming bookings",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1B1B1B)
-                        )
-                        TextButton(onClick = onViewAllBookings) {
-                            Text("View all", color = SolarGreen, fontSize = 13.sp)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    if (data.upcoming.isEmpty()) {
-                        Card(
-                            shape = RoundedCornerShape(18.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        // Greeting & Profile
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
+                                .padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(Icons.Filled.EventBusy, contentDescription = null, tint = Color.Gray)
+                            Column {
+                                Text("Hello,", color = Color.DarkGray, fontSize = 16.sp)
+                                Text(data.prosumerName, color = SolarGreenDark, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("Good to see you!", color = Color.Gray, fontSize = 14.sp)
+                            }
+                            
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onNavigateToProfile() }) {
+                                Box(
+                                    modifier = Modifier.size(56.dp).clip(CircleShape).background(SolarGreenLight),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Filled.Person, contentDescription = null, tint = SolarGreenDark, modifier = Modifier.size(40.dp))
+                                }
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Text("No upcoming bookings", color = Color.Gray, fontSize = 13.sp)
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = SolarGreenLight)
+                                ) {
+                                    Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Text("View Profile", fontSize = 11.sp, color = SolarGreenDark, fontWeight = FontWeight.SemiBold)
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(Icons.Filled.ChevronRight, contentDescription = null, modifier = Modifier.size(14.dp), tint = SolarGreenDark)
+                                    }
+                                }
                             }
                         }
-                    } else {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        // Stats Grid (3 cards)
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            data.upcoming.forEach { reservation ->
-                                UpcomingBookingCard(reservation)
+                            StatCardV2(
+                                icon = Icons.Filled.AccessTime,
+                                value = data.pendingCount.toString(),
+                                label = "Pending\nReservations",
+                                bgColor = SolarAmberLight,
+                                iconColor = Color.White,
+                                iconBgColor = SolarAmber,
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCardV2(
+                                icon = Icons.Filled.Event,
+                                value = data.upcomingCount.toString(),
+                                label = "Upcoming\nReservations",
+                                bgColor = SolarGreenLight,
+                                iconColor = Color.White,
+                                iconBgColor = SolarGreen,
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCardV2(
+                                icon = Icons.Filled.Check,
+                                value = data.completedCount.toString(),
+                                label = "Completed\nReservations",
+                                bgColor = SolarBlueLight,
+                                iconColor = Color.White,
+                                iconBgColor = SolarBlue,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        // Quick Actions
+                        Text("Quick Actions", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(horizontal = 24.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Dark Green Button
+                            Button(
+                                onClick = onNavigateToStations,
+                                colors = ButtonDefaults.buttonColors(containerColor = SolarGreenDark),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f).height(56.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                                    Icon(Icons.Filled.EventNote, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Book a Slot", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            
+                            // Light Green Button
+                            Button(
+                                onClick = onNavigateToMap,
+                                colors = ButtonDefaults.buttonColors(containerColor = SolarGreenLight),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f).height(56.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                                    Icon(Icons.Filled.LocationOn, contentDescription = null, tint = SolarGreenDark, modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Find Stations", color = SolarGreenDark, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = SolarGreenDark, modifier = Modifier.size(20.dp))
+                                }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        // Upcoming Reservation Section
+                        SectionHeader("My Upcoming Reservation", "View All", onNavigateToBookings)
+                        if (data.upcomingReservation != null) {
+                            UpcomingReservationCardV2(data.upcomingReservation) {
+                                onBookingSelected(data.upcomingReservation)
+                            }
+                        } else {
+                            Text("No upcoming reservations.", color = Color.Gray, modifier = Modifier.padding(horizontal = 24.dp), fontSize = 14.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        // Recent Activity
+                        SectionHeader("Recent Activity", "View All", onNavigateToBookings)
+                        
+                        Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                            data.recentActivity.forEachIndexed { index, item ->
+                                ActivityRowV2(item) {
+                                    onBookingSelected(item.reservation)
+                                }
+                                if (index < data.recentActivity.size - 1) {
+                                    HorizontalDivider(color = Color(0xFFEEEEEE), modifier = Modifier.padding(vertical = 8.dp))
+                                }
+                            }
+                            if (data.recentActivity.isEmpty()) {
+                                Text("No recent activity.", color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp), fontSize = 14.sp)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(48.dp))
                     }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Button(
-                        onClick = onViewAllBookings,
-                        colors = ButtonDefaults.buttonColors(containerColor = SolarGreen),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .height(50.dp)
-                    ) {
-                        Icon(Icons.Filled.EventNote, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Go to My Bookings")
-                    }
-
-                    Spacer(modifier = Modifier.height(28.dp))
                 }
             }
         }
     }
 }
 
-/** One of the two headline count cards. */
 @Composable
-private fun StatCard(
-    icon: ImageVector,
-    value: String,
-    label: String,
-    accent: Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        modifier = modifier
+fun SectionHeader(title: String, actionText: String, onAction: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, contentDescription = null, tint = accent)
+        Text(title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onAction() }) {
+            Text(actionText, color = SolarGreenDark, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = SolarGreenDark, modifier = Modifier.size(16.dp))
+        }
+    }
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+fun StatCardV2(icon: ImageVector, value: String, label: String, bgColor: Color, iconColor: Color, iconBgColor: Color, modifier: Modifier) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = modifier.height(130.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(iconBgColor), contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(20.dp))
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(value, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1B1B1B))
-            Text(label, fontSize = 11.sp, color = Color.Gray)
+            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(label, fontSize = 11.sp, color = Color.DarkGray, lineHeight = 14.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }
 
-/** A compact row for one of the next bookings. */
 @Composable
-private fun UpcomingBookingCard(reservation: Reservation) {
+fun UpcomingReservationCardV2(reservation: Reservation, onClick: () -> Unit) {
     Card(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).clickable { onClick() }
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(SolarGreen.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Filled.BatteryChargingFull, contentDescription = null, tint = SolarGreen)
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                val stationName = reservation.stationName ?: when (reservation.stationId) {
+                    "ST001" -> "Colombo Solar Hub"
+                    "ST002" -> "Kandy Solar Hub"
+                    "ST003" -> "Galle Solar Hub"
+                    else -> "Station ${reservation.stationId}"
+                }
+                Text(stationName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                StatusBadge(status = reservation.status)
             }
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Station ${reservation.stationId}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text(
-                    "${reservation.bookingDate}  •  ${reservation.startTime}",
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            val formattedDate = try {
+                LocalDate.parse(reservation.bookingDate).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+            } catch(e:Exception) { reservation.bookingDate }
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(formattedDate, fontSize = 14.sp, color = Color.DarkGray)
+                }
+                Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
             }
-            StatusBadge(status = reservation.status)
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            val formattedStart = try {
+                val parts = reservation.startTime?.split(":") ?: listOf("0", "0")
+                val h = parts[0].toInt()
+                val m = parts[1]
+                val ap = if (h >= 12) "PM" else "AM"
+                val dh = if (h == 0) 12 else if (h > 12) h - 12 else h
+                "$dh:$m $ap"
+            } catch (e: Exception) { reservation.startTime ?: "" }
+
+            val formattedEnd = try {
+                val parts = reservation.endTime?.split(":") ?: listOf("0", "0")
+                val h = parts[0].toInt()
+                val m = parts[1]
+                val ap = if (h >= 12) "PM" else "AM"
+                val dh = if (h == 0) 12 else if (h > 12) h - 12 else h
+                "$dh:$m $ap"
+            } catch (e: Exception) { reservation.endTime ?: "" }
+            
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.AccessTime, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("$formattedStart - $formattedEnd", fontSize = 14.sp, color = Color.DarkGray)
+            }
         }
+    }
+}
+
+@Composable
+fun ActivityRowV2(item: ActivityItem, onClick: () -> Unit = {}) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { onClick() },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val bgColor = when (item.status.uppercase()) {
+            "PENDING" -> SolarAmber
+            "CANCELLED" -> Color(0xFFE53935) // Red
+            "COMPLETED" -> Color(0xFF1976D2) // Blue
+            else -> SolarGreen
+        }
+        
+        val icon = when (item.status.uppercase()) {
+            "PENDING" -> Icons.Filled.AccessTime
+            "CANCELLED" -> Icons.Filled.Close
+            "COMPLETED" -> Icons.Filled.CheckCircle
+            else -> Icons.Filled.Check
+        }
+
+        Box(
+            modifier = Modifier.size(44.dp).clip(CircleShape).background(bgColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(item.title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(item.subtitle, fontSize = 13.sp, color = Color.Gray)
+        }
+        
+        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.LightGray)
     }
 }

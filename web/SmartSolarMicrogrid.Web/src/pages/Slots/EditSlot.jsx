@@ -20,6 +20,7 @@ const EditSlot = () => {
     date: '',
     startTime: '',
     endTime: '',
+    capacity: 5.0,
     status: 0,
     notes: ''
   });
@@ -57,6 +58,7 @@ const EditSlot = () => {
         date: dateStr,
         startTime: startTimeStr,
         endTime: endTimeStr,
+        capacity: slotData.capacity || 5.0,
         status: slotData.status,
         notes: slotData.notes || ''
       });
@@ -71,14 +73,14 @@ const EditSlot = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'notes' && value.length > 500) return;
-    setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [name]: name === 'capacity' ? parseFloat(value) || '' : value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.stationId || !formData.date || !formData.startTime || !formData.endTime) {
+    if (!formData.stationId || !formData.date || !formData.startTime || !formData.endTime || !formData.capacity) {
       setError('Please fill out all required fields.');
       return;
     }
@@ -97,6 +99,7 @@ const EditSlot = () => {
       const updateDto = {
         startDateTime: startDateTime,
         endDateTime: endDateTime,
+        capacity: formData.capacity,
         status: isNaN(parseInt(formData.status)) ? formData.status : parseInt(formData.status),
         notes: formData.notes
       };
@@ -214,6 +217,21 @@ const EditSlot = () => {
                   <span className="right-icon"><FiClock /></span>
                 </div>
               </div>
+            </div>
+
+            <div className="input-group full">
+              <label>Capacity (kWh) <span className="req">*</span></label>
+              <input 
+                type="number" 
+                name="capacity"
+                value={formData.capacity}
+                onChange={handleChange}
+                step="0.1"
+                min="0.1"
+                max="1000"
+                required 
+              />
+              <span className="input-hint">Update the energy capacity available for this slot.</span>
             </div>
 
             <div className="input-group full">

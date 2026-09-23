@@ -32,6 +32,7 @@ public class StationsController : ControllerBase
     /// Gets all solar stations.
     /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAllStations()
     {
         var stations = await _stationService.GetAllStationsAsync();
@@ -56,6 +57,7 @@ public class StationsController : ControllerBase
     /// Gets available slots for a station (used by the mobile app when creating a booking).
     /// </summary>
     [HttpGet("{id}/available-slots")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAvailableSlots(string id)
     {
         var slots = await _slotService.GetAvailableSlotsByStationIdAsync(id);

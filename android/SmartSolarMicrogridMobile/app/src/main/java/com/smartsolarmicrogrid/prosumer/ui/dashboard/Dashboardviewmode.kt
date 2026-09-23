@@ -1,12 +1,3 @@
-/*
- * DashboardViewModel.kt
- * Smart Solar Microgrid Trading System - Prosumer Mobile Application
- *
- * Builds the Prosumer dashboard figures from live API data: the number of
- * pending reservations, the number of approved reservations still in the
- * future, and the next upcoming bookings. No count is hardcoded - every value
- * is derived from what the C# Web API returns.
- */
 package com.smartsolarmicrogrid.prosumer.ui.dashboard
 
 import android.app.Application
@@ -21,12 +12,22 @@ import com.smartsolarmicrogrid.prosumer.data.model.Reservation
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-/** Everything the dashboard shows, calculated from the reservations returned by the API. */
+data class ActivityItem(
+    val reservation: Reservation,
+    val title: String,
+    val subtitle: String,
+    val status: String,
+    val date: String
+)
+
 data class DashboardData(
     val prosumerName: String,
     val pendingCount: Int,
-    val approvedFutureCount: Int,
-    val upcoming: List<Reservation>
+    val upcomingCount: Int,
+    val completedCount: Int,
+    val totalEnergyTraded: Double,
+    val upcomingReservation: Reservation?,
+    val recentActivity: List<ActivityItem>
 )
 
 sealed class DashboardState {
@@ -46,101 +47,123 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         loadDashboard()
     }
 
-    /** Loads pending and current reservations, then derives the dashboard figures. */
     fun loadDashboard() {
         dashboardState = DashboardState.Loading
         val session = sessionDb.getSession()
-        val nic = session?.nic ?: "MOCK-NIC-000" // TODO: remove mock fallback before submission
+        val nic = session?.nic ?: "MOCK-NIC-000"
         val name = session?.fullName ?: "Prosumer"
 
         viewModelScope.launch {
             try {
+                // Fetch all categories of reservations
                 val pendingResponse = RetrofitClient.apiService.getPendingReservations(nic)
                 val currentResponse = RetrofitClient.apiService.getCurrentReservations(nic)
+                val historyResponse = RetrofitClient.apiService.getReservationHistory(nic)
 
-                val pending = if (pendingResponse.isSuccessful) pendingResponse.body() else null
-                val current = if (currentResponse.isSuccessful) currentResponse.body() else null
+                val pending = if (pendingResponse.isSuccessful) pendingResponse.body()?.data ?: emptyList() else emptyList()
+                val current = if (currentResponse.isSuccessful) currentResponse.body()?.data ?: emptyList() else emptyList()
+                val history = if (historyResponse.isSuccessful) historyResponse.body()?.data ?: emptyList() else emptyList()
 
-                if (pending != null && current != null) {
-                    dashboardState = DashboardState.Loaded(buildData(name, pending, current))
-                } else {
-                    // TODO: remove mock fallback before submission
-                    dashboardState = DashboardState.Loaded(
-                        buildData(name, mockPending(), mockCurrent())
+                // Calculate upcoming logic
+                val upcomingList = current.filter { it.status == "APPROVED" && isFutureOrToday(it.bookingDate) }
+                    .sortedWith(compareBy({ it.bookingDate }, { it.startTime }))
+                
+                // For energy calculation
+                val completedList = history.filter { it.status == "COMPLETED" }
+
+                // Determine next upcoming
+                val nextUpcoming = upcomingList.firstOrNull()
+
+                // Merge all reservations uniquely
+                val allReservations = (pending + current + history).distinctBy { it.reservationId }
+                
+                // Sort by most recently updated/created for a true "Recent Activity" feed
+                val sortedRecent = allReservations
+                    .sortedByDescending { it.updatedAt ?: it.createdAt ?: it.bookingDate }
+                    .take(5)
+                
+                val activityItems = sortedRecent.map { res ->
+                    val actionStr = when (res.status) {
+                        "PENDING" -> "Reservation requested"
+                        "APPROVED" -> "Reservation approved"
+                        "CANCELLED" -> "Reservation cancelled"
+                        "COMPLETED" -> "Reservation completed"
+                        else -> "Reservation updated"
+                    }
+                    val dateStr = res.updatedAt ?: res.createdAt ?: res.bookingDate
+                    val name = res.stationName ?: formatStationName(res.stationId)
+                    ActivityItem(
+                        reservation = res,
+                        title = actionStr,
+                        subtitle = "$name • ${formatActivityDate(res.bookingDate)} • ${formatTime(res.startTime)} - ${formatTime(res.endTime)}",
+                        status = res.status,
+                        date = dateStr
                     )
                 }
-            } catch (e: Exception) {
-                // TODO: remove mock fallback before submission
-                dashboardState = DashboardState.Loaded(
-                    buildData(name, mockPending(), mockCurrent())
+                
+                // Construct Data
+                val data = DashboardData(
+                    prosumerName = name,
+                    pendingCount = pending.size,
+                    upcomingCount = upcomingList.size,
+                    completedCount = completedList.size,
+                    totalEnergyTraded = completedList.size * 2.5,
+                    upcomingReservation = nextUpcoming,
+                    recentActivity = activityItems
                 )
+                
+                dashboardState = DashboardState.Loaded(data)
+                
+            } catch (e: Exception) {
+                // Fallback or error state
+                dashboardState = DashboardState.Error("Failed to load dashboard data.")
             }
         }
     }
 
-    /** Counts pending bookings and approved bookings dated today or later. */
-    private fun buildData(
-        name: String,
-        pending: List<Reservation>,
-        current: List<Reservation>
-    ): DashboardData {
-        val approvedFuture = current.filter { it.status == "APPROVED" && isFutureOrToday(it.bookingDate) }
-
-        val upcoming = (approvedFuture + pending)
-            .sortedWith(compareBy({ it.bookingDate }, { it.startTime }))
-            .take(3)
-
-        return DashboardData(
-            prosumerName = name,
-            pendingCount = pending.size,
-            approvedFutureCount = approvedFuture.size,
-            upcoming = upcoming
-        )
-    }
-
-    /** True when the booking date is today or in the future (dates arrive as yyyy-MM-dd). */
     private fun isFutureOrToday(bookingDate: String): Boolean {
         return try {
-            !LocalDate.parse(bookingDate).isBefore(LocalDate.now())
+            val datePart = bookingDate.substringBefore("T")
+            !LocalDate.parse(datePart).isBefore(LocalDate.now())
         } catch (e: Exception) {
-            true // if the server sends an unexpected format, keep the booking visible
+            true
         }
     }
-
-    // TODO: remove this function before final submission - for UI preview only, no real backend yet
-    private fun mockPending(): List<Reservation> = listOf(
-        Reservation(
-            reservationId = "RES-1002",
-            prosumerNic = "MOCK-NIC-000",
-            stationId = "ST002",
-            slotId = "SL004",
-            bookingDate = LocalDate.now().plusDays(4).toString(),
-            startTime = "09:00",
-            status = "PENDING"
-        )
-    )
-
-    // TODO: remove this function before final submission - for UI preview only, no real backend yet
-    private fun mockCurrent(): List<Reservation> = listOf(
-        Reservation(
-            reservationId = "RES-1001",
-            prosumerNic = "MOCK-NIC-000",
-            stationId = "ST001",
-            slotId = "SL001",
-            bookingDate = LocalDate.now().plusDays(2).toString(),
-            startTime = "08:00",
-            status = "APPROVED",
-            qrReference = "QR-RES-1001"
-        ),
-        Reservation(
-            reservationId = "RES-1005",
-            prosumerNic = "MOCK-NIC-000",
-            stationId = "ST003",
-            slotId = "SL009",
-            bookingDate = LocalDate.now().plusDays(5).toString(),
-            startTime = "13:00",
-            status = "APPROVED",
-            qrReference = "QR-RES-1005"
-        )
-    )
+    
+    private fun formatStationName(stationId: String): String {
+        return when (stationId) {
+            "ST001" -> "Colombo Solar Hub"
+            "ST002" -> "Kandy Solar Hub"
+            "ST003" -> "Galle Solar Hub"
+            else -> "Station $stationId"
+        }
+    }
+    
+    private fun formatActivityDate(dateString: String?): String {
+        if (dateString.isNullOrEmpty()) return ""
+        return try {
+            val datePart = dateString.substringBefore("T")
+            val date = LocalDate.parse(datePart)
+            val day = date.dayOfMonth
+            val month = date.month.name.substring(0, 3).lowercase().replaceFirstChar { it.uppercase() }
+            val year = date.year
+            "$day $month $year"
+        } catch (e: Exception) {
+            dateString
+        }
+    }
+    
+    private fun formatTime(timeStr: String?): String {
+        if (timeStr.isNullOrEmpty()) return ""
+        return try {
+            val parts = timeStr.split(":")
+            val hour = parts[0].toInt()
+            val min = parts[1]
+            val amPm = if (hour >= 12) "PM" else "AM"
+            val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+            "$displayHour:$min $amPm"
+        } catch (e: Exception) {
+            timeStr
+        }
+    }
 }

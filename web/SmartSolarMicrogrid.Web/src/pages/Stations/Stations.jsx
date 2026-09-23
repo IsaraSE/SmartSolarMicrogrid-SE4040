@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PiSunLight } from 'react-icons/pi';
-import { 
-  FiSearch, 
-  FiMapPin, 
-  FiPower, 
+import {
+  FiSearch,
+  FiMapPin,
+  FiPower,
   FiPauseCircle,
-  FiBattery, 
+  FiBattery,
   FiBatteryCharging,
   FiClock,
-  FiEdit2, 
+  FiEdit2,
   FiEye,
   FiSlash,
   FiPlay,
@@ -28,10 +28,10 @@ import {
   FiX,
   FiCopy
 } from 'react-icons/fi';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
+import {
+  PieChart,
+  Pie,
+  Cell,
   ResponsiveContainer
 } from 'recharts';
 import { useJsApiLoader, GoogleMap, MarkerF, InfoWindowF } from '@react-google-maps/api';
@@ -153,18 +153,18 @@ const Stations = () => {
   const mapCenter = { lat: 7.8731, lng: 80.7718 };
 
   const filteredStations = stations.filter(s => {
-    const searchMatch = 
+    const searchMatch =
       s.stationName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.stationId?.toString().includes(searchTerm);
-      
+
     let statusMatch = true;
     if (statusFilter === 'ACTIVE') {
       statusMatch = s.status === 'ACTIVE' || s.status === 0;
     } else if (statusFilter === 'DEACTIVATED') {
       statusMatch = s.status === 'DEACTIVATED' || s.status === 1;
     }
-    
+
     return searchMatch && statusMatch;
   }).sort((a, b) => {
     if (sortBy === 'Name A-Z') {
@@ -211,7 +211,7 @@ const Stations = () => {
                 {stations.map(station => {
                   const isActive = station.status === 'ACTIVE' || station.status === 0;
                   return (
-                    <MarkerF 
+                    <MarkerF
                       key={station.stationId}
                       position={{ lat: station.latitude, lng: station.longitude }}
                       icon={{
@@ -252,7 +252,7 @@ const Stations = () => {
                 Loading Map...
               </div>
             )}
-              
+
             {/* Floating Map Legend */}
             <div className="map-legend">
               <div className="legend-item"><span className="legend-dot green"></span> Active Station</div>
@@ -293,35 +293,35 @@ const Stations = () => {
                   <span className="small-text">Total Stations</span>
                 </div>
               </div>
-              
+
               <div className="chart-legend">
                 <div className="legend-row">
                   <div className="legend-label"><span className="legend-dot green"></span> Active</div>
                   <div className="legend-stats">
-                    <span className="legend-value">{activeStations}</span> 
-                    <span className="legend-pct">{totalStations ? Math.round((activeStations/totalStations)*100) : 0}%</span>
+                    <span className="legend-value">{activeStations}</span>
+                    <span className="legend-pct">{totalStations ? Math.round((activeStations / totalStations) * 100) : 0}%</span>
                   </div>
                 </div>
                 <div className="legend-row">
                   <div className="legend-label"><span className="legend-dot red"></span> Deactivated</div>
                   <div className="legend-stats">
-                    <span className="legend-value">{deactivatedStations}</span> 
-                    <span className="legend-pct">{totalStations ? Math.round((deactivatedStations/totalStations)*100) : 0}%</span>
+                    <span className="legend-value">{deactivatedStations}</span>
+                    <span className="legend-pct">{totalStations ? Math.round((deactivatedStations / totalStations) * 100) : 0}%</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="chart-footer-card">
-               <div className="footer-icon-leaf">🌿</div>
-               <div className="footer-info">
-                 <h4>{totalCapacity} kW</h4>
-                 <p>Total installed capacity</p>
-               </div>
-               <div className="footer-trend positive">
-                 ↑ 18% <br/><span>vs. last month</span>
-               </div>
-               <Sparkline color="#10b981" />
+              <div className="footer-icon-leaf">🌿</div>
+              <div className="footer-info">
+                <h4>{totalCapacity} kW</h4>
+                <p>Total installed capacity</p>
+              </div>
+              <div className="footer-trend positive">
+                ↑ 18% <br /><span>vs. last month</span>
+              </div>
+              <Sparkline color="#10b981" />
             </div>
           </div>
         </div>
@@ -330,7 +330,7 @@ const Stations = () => {
       {/* Data Table Section */}
       <div className="table-card">
         <div className="table-header-row">
-          <div className="card-header" style={{marginBottom: 0}}>
+          <div className="card-header" style={{ marginBottom: 0 }}>
             <h3><FiHome /> All Stations</h3>
           </div>
           {user?.role === 'BACKOFFICE' && (
@@ -339,21 +339,21 @@ const Stations = () => {
             </button>
           )}
         </div>
-        
+
         <div className="table-filters">
           <div className="search-box">
             <FiSearch className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search stations by ID, name or address..." 
+            <input
+              type="text"
+              placeholder="Search stations by ID, name or address..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <div className="filter-group">
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <select className="filter-select" value={statusFilter} onChange={(e) => {setStatusFilter(e.target.value); setCurrentPage(1);}} style={{ appearance: 'none', backgroundColor: 'transparent', paddingRight: '36px', position: 'relative', zIndex: 1 }}>
+              <select className="filter-select" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }} style={{ appearance: 'none', backgroundColor: 'transparent', paddingRight: '36px', position: 'relative', zIndex: 1 }}>
                 <option value="All Statuses">All Statuses</option>
                 <option value="ACTIVE">Active</option>
                 <option value="DEACTIVATED">Deactivated</option>
@@ -362,7 +362,7 @@ const Stations = () => {
             </div>
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <select className="filter-select sort-select" value={sortBy} onChange={(e) => {setSortBy(e.target.value); setCurrentPage(1);}} style={{ appearance: 'none', backgroundColor: 'transparent', paddingRight: '36px', position: 'relative', zIndex: 1 }}>
+              <select className="filter-select sort-select" value={sortBy} onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }} style={{ appearance: 'none', backgroundColor: 'transparent', paddingRight: '36px', position: 'relative', zIndex: 1 }}>
                 <option value="Sort by">Sort by</option>
                 <option value="Name A-Z">Name A-Z</option>
               </select>
@@ -378,54 +378,54 @@ const Stations = () => {
                 <th>Station Name</th>
                 <th>Address</th>
                 <th>Capacity</th>
-                <th style={{textAlign: 'center'}}>Battery Slots</th>
+                <th style={{ textAlign: 'center' }}>Battery Slots</th>
                 <th>Operating Hours</th>
-                <th style={{textAlign: 'center'}}>Status</th>
-                <th style={{textAlign: 'center'}}>Actions</th>
+                <th style={{ textAlign: 'center' }}>Status</th>
+                <th style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="10" style={{textAlign: 'center', padding: '20px'}}>Loading stations...</td></tr>
+                <tr><td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>Loading stations...</td></tr>
               ) : currentStations.length === 0 ? (
-                <tr><td colSpan="10" style={{textAlign: 'center', padding: '20px'}}>No stations found.</td></tr>
+                <tr><td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No stations found.</td></tr>
               ) : (
                 currentStations.map(station => (
                   <tr key={station.stationId}>
                     <td className="font-semibold">{station.stationName}</td>
                     <td className="address-col" title={station.address}>{station.address}</td>
                     <td>{station.capacity} kW</td>
-                    <td style={{textAlign: 'center'}}>{station.batterySlotCount}</td>
+                    <td style={{ textAlign: 'center' }}>{station.batterySlotCount}</td>
                     <td>{station.operatingStartTime} - {station.operatingEndTime}</td>
-                    <td style={{textAlign: 'center'}}>
-                      <span 
-                        className={`status-badge-btn static-badge status-${(station.status === 'ACTIVE' || station.status === 0) ? 'active' : 'deactivated'}`} 
-                        style={{ 
-                          display: 'inline-flex', 
-                          padding: '6px 12px', 
-                          borderRadius: '20px', 
-                          fontSize: '0.85rem', 
-                          fontWeight: '500', 
-                          border: 'none', 
-                          cursor: 'default', 
-                          backgroundColor: (station.status === 'ACTIVE' || station.status === 0) ? '#dcfce7' : '#fee2e2', 
-                          color: (station.status === 'ACTIVE' || station.status === 0) ? '#166534' : '#991b1b' 
+                    <td style={{ textAlign: 'center' }}>
+                      <span
+                        className={`status-badge-btn static-badge status-${(station.status === 'ACTIVE' || station.status === 0) ? 'active' : 'deactivated'}`}
+                        style={{
+                          display: 'inline-flex',
+                          padding: '6px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.85rem',
+                          fontWeight: '500',
+                          border: 'none',
+                          cursor: 'default',
+                          backgroundColor: (station.status === 'ACTIVE' || station.status === 0) ? '#dcfce7' : '#fee2e2',
+                          color: (station.status === 'ACTIVE' || station.status === 0) ? '#166534' : '#991b1b'
                         }}
                       >
                         {(station.status === 'ACTIVE' || station.status === 0) ? 'Active' : 'Deactivated'}
                       </span>
                     </td>
                     <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
+                      {user?.role === 'BACKOFFICE' && (
+                        (station.status === 'ACTIVE' || station.status === 0) ? (
+                          <button className="deactivate-btn" style={{ width: '95px' }} onClick={() => handleDeactivate(station)}>Deactivate</button>
+                        ) : (
+                          <button className="activate-btn" style={{ width: '95px' }} onClick={() => handleActivate(station)}>Activate</button>
+                        )
+                      )}
                       <button className="review-btn" onClick={() => setSelectedStation(station)}>Review</button>
                       {user?.role === 'BACKOFFICE' && (
-                        <>
-                          <button className="edit-btn" onClick={() => navigate(`/stations/edit/${station.stationId}`)}>Edit</button>
-                          {(station.status === 'ACTIVE' || station.status === 0) ? (
-                            <button className="deactivate-btn" onClick={() => handleDeactivate(station)}>Deactivate</button>
-                          ) : (
-                            <button className="activate-btn" onClick={() => handleActivate(station)}>Activate</button>
-                          )}
-                        </>
+                        <button className="edit-btn" onClick={() => navigate(`/stations/edit/${station.stationId}`)}>Edit</button>
                       )}
                     </td>
                   </tr>
@@ -434,7 +434,7 @@ const Stations = () => {
             </tbody>
           </table>
         </div>
-        
+
         <div className="table-footer">
           <div className="footer-info">
             Showing {filteredStations.length === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredStations.length)} of {filteredStations.length} stations
@@ -442,9 +442,9 @@ const Stations = () => {
           <div className="footer-controls">
             <div className="pagination">
               <button className="page-btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>‹</button>
-              {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
-                <button 
-                  key={page} 
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
                   className={`page-btn ${currentPage === page ? 'active' : ''}`}
                   onClick={() => setCurrentPage(page)}
                 >{page}</button>
@@ -453,7 +453,7 @@ const Stations = () => {
             </div>
             <div className="rows-per-page">
               <span>Show</span>
-              <select value={itemsPerPage} onChange={(e) => {setItemsPerPage(Number(e.target.value)); setCurrentPage(1);}}>
+              <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -480,7 +480,7 @@ const Stations = () => {
                 <FiX />
               </button>
             </div>
-            
+
             <div className="premium-modal-body">
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiHome /></div>
@@ -489,7 +489,7 @@ const Stations = () => {
                   <span className="premium-info-value">{selectedStation.stationName}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiHash /></div>
                 <div className="premium-info-content">
@@ -502,7 +502,7 @@ const Stations = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card full-width">
                 <div className="premium-info-icon"><FiMapPin /></div>
                 <div className="premium-info-content">
@@ -510,7 +510,7 @@ const Stations = () => {
                   <span className="premium-info-value">{selectedStation.address}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiPower /></div>
                 <div className="premium-info-content">
@@ -518,7 +518,7 @@ const Stations = () => {
                   <span className="premium-info-value">{selectedStation.capacity} kW</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiBattery /></div>
                 <div className="premium-info-content">
@@ -526,7 +526,7 @@ const Stations = () => {
                   <span className="premium-info-value">{selectedStation.batterySlotCount}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card full-width">
                 <div className="premium-info-icon"><FiClock /></div>
                 <div className="premium-info-content">
@@ -534,7 +534,7 @@ const Stations = () => {
                   <span className="premium-info-value">{selectedStation.operatingStartTime} - {selectedStation.operatingEndTime}</span>
                 </div>
               </div>
-              
+
               <div className="premium-info-card">
                 <div className="premium-info-icon"><FiActivity /></div>
                 <div className="premium-info-content">
@@ -547,7 +547,7 @@ const Stations = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="premium-info-card full-width">
                 <div className="premium-info-icon"><FiFileText /></div>
                 <div className="premium-info-content">
@@ -556,7 +556,7 @@ const Stations = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="premium-modal-footer has-info">
               <div className="premium-footer-info">
                 <PiSunLight style={{ fontSize: '18px' }} />
@@ -604,8 +604,8 @@ const Stations = () => {
             </div>
             <div className="user-modal-footer">
               <button className="btn-modal-cancel" onClick={() => setStatusConfirm(null)}>Cancel</button>
-              <button 
-                className="btn-modal-confirm" 
+              <button
+                className="btn-modal-confirm"
                 style={{ backgroundColor: statusConfirm.newStatus === 1 ? '#ef4444' : '#10b981' }}
                 onClick={confirmStatusChange}
               >
@@ -654,8 +654,8 @@ const Stations = () => {
             </div>
             <div className="user-modal-footer">
               <button className="btn-modal-cancel" style={{ visibility: 'hidden' }}>Cancel</button>
-              <button 
-                className="btn-modal-confirm" 
+              <button
+                className="btn-modal-confirm"
                 style={{ backgroundColor: '#0f172a' }}
                 onClick={() => setInfoMsg(null)}
               >
@@ -685,7 +685,7 @@ const Stations = () => {
                   {stations.map(station => {
                     const isActive = station.status === 'ACTIVE' || station.status === 0;
                     return (
-                      <MarkerF 
+                      <MarkerF
                         key={station.stationId}
                         position={{ lat: station.latitude, lng: station.longitude }}
                         icon={{

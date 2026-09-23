@@ -10,6 +10,7 @@ import com.smartsolarmicrogrid.prosumer.data.api.RetrofitClient
 import com.smartsolarmicrogrid.prosumer.data.local.SessionDbHelper
 import com.smartsolarmicrogrid.prosumer.data.model.CreateReservationRequest
 import com.smartsolarmicrogrid.prosumer.data.model.Reservation
+import com.smartsolarmicrogrid.prosumer.data.model.Slot
 import kotlinx.coroutines.launch
 
 sealed class CreateBookingState {
@@ -46,7 +47,41 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
     var cancelBookingState by mutableStateOf<CancelBookingState>(CancelBookingState.Idle)
         private set
 
-    fun createBooking(stationId: String, slotId: String, bookingDate: String, startTime: String) {
+    var availableSlotsState by mutableStateOf<List<Slot>?>(null)
+        private set
+
+    var currentReservationState by mutableStateOf<Reservation?>(null)
+        private set
+
+    fun loadReservation(reservationId: String) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getReservation(reservationId)
+                if (response.isSuccessful) {
+                    currentReservationState = response.body()?.data
+                }
+            } catch (e: Exception) {
+                // Ignore or handle
+            }
+        }
+    }
+
+    fun loadAvailableSlots(stationId: String) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getAvailableSlots(stationId)
+                if (response.isSuccessful) {
+                    availableSlotsState = response.body()?.data ?: emptyList()
+                } else {
+                    availableSlotsState = emptyList()
+                }
+            } catch (e: Exception) {
+                availableSlotsState = emptyList()
+            }
+        }
+    }
+
+    fun createBooking(stationId: String, slotId: String, bookingDate: String, startTime: String, notes: String?) {
         val nic = sessionDb.getSession()?.nic ?: "MOCK-NIC-000" // TODO: remove mock fallback before submission
 
         createBookingState = CreateBookingState.Loading
@@ -58,11 +93,12 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         stationId = stationId,
                         slotId = slotId,
                         bookingDate = bookingDate,
-                        startTime = startTime
+                        startTime = startTime,
+                        notes = notes
                     )
                 )
-                if (response.isSuccessful && response.body() != null) {
-                    createBookingState = CreateBookingState.Success(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    createBookingState = CreateBookingState.Success(response.body()!!.data!!)
                 } else if (response.code() == 400) {
                     createBookingState = CreateBookingState.Error(
                         "Booking date must be within 7 days. Please choose a different slot."
@@ -76,7 +112,7 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun updateBooking(reservationId: String, stationId: String, slotId: String, bookingDate: String, startTime: String) {
+    fun updateBooking(reservationId: String, stationId: String, slotId: String, bookingDate: String, startTime: String, notes: String?) {
         val nic = sessionDb.getSession()?.nic ?: "MOCK-NIC-000" // TODO: remove mock fallback before submission
 
         updateBookingState = UpdateBookingState.Loading
@@ -89,11 +125,12 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         stationId = stationId,
                         slotId = slotId,
                         bookingDate = bookingDate,
-                        startTime = startTime
+                        startTime = startTime,
+                        notes = notes
                     )
                 )
-                if (response.isSuccessful && response.body() != null) {
-                    updateBookingState = UpdateBookingState.Success(response.body()!!)
+                if (response.isSuccessful && response.body()?.data != null) {
+                    updateBookingState = UpdateBookingState.Success(response.body()!!.data!!)
                 } else if (response.code() == 400) {
                     updateBookingState = UpdateBookingState.Error(
                         "Updates require at least 12 hours' notice before the booking starts."
@@ -133,13 +170,18 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun resetState() {
-        createBookingState = CreateBookingState.Idle
-        updateBookingState = UpdateBookingState.Idle
+    fun resetCancelState() {
         cancelBookingState = CancelBookingState.Idle
     }
 
-    // TODO: remove this function before final submission — for UI preview only, no real backend yet
+    fun resetState() {
+        createBookingState = CreateBookingState.Idle
+    }
+
+    fun resetUpdateBookingState() {
+        updateBookingState = UpdateBookingState.Idle
+    }
+
     private fun getMockReservation(stationId: String, slotId: String, bookingDate: String, startTime: String): Reservation {
         return Reservation(
             reservationId = "RES-MOCK-001",
@@ -152,7 +194,8 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
             qrReference = null,
             createdAt = null,
             updatedAt = null,
-            completedAt = null
+            completedAt = null,
+            notes = "Mock note"
         )
     }
 }

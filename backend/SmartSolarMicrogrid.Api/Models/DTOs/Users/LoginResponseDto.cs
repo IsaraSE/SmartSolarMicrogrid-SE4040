@@ -14,6 +14,7 @@ namespace SmartSolarMicrogrid.Api.Models.DTOs.Users;
 public class LoginResponseDto
 {
     public string UserId { get; set; } = null!;
+    public string Nic { get; set; } = null!;
     public string FullName { get; set; } = null!;
     public UserRole Role { get; set; }
     public AccountStatus AccountStatus { get; set; }

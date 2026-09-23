@@ -7,16 +7,18 @@
  * Date: 2026-09-14
  */
 
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SmartSolarMicrogrid.Api.Models;
 using SmartSolarMicrogrid.Api.Models.DTOs;
 using SmartSolarMicrogrid.Api.Models.Enums;
-using SmartSolarMicrogrid.Api.Repositories;
-using BCrypt.Net;
+using SmartSolarMicrogrid.Api.Repositories.Users;
 
 namespace SmartSolarMicrogrid.Api.Services.Users;
 
@@ -31,19 +33,30 @@ public class AuthService : IAuthService
         _jwtSettings = jwtSettings.Value;
     }
 
-    public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
+    public async Task<(bool Success, string Message, LoginResponseDto? Data)> LoginAsync(LoginRequestDto request)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
-
-        if (user == null || user.AccountStatus == AccountStatus.DEACTIVATED)
+        
+        // Check by NIC if email not found
+        if (user == null)
         {
-            return null; // Invalid credentials or deactivated
+            user = await _userRepository.GetByNicAsync(request.Email);
+        }
+
+        if (user == null)
+        {
+            return (false, "Invalid email/NIC or password.", null);
+        }
+
+        if (user.AccountStatus == AccountStatus.DEACTIVATED)
+        {
+            return (false, "Your account is currently deactivated. Please contact Backoffice for reactivation.", null);
         }
 
         // Verify password hash
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
-            return null; // Invalid password
+            return (false, "Invalid email/NIC or password.", null);
         }
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -72,13 +85,16 @@ public class AuthService : IAuthService
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
-        return new LoginResponseDto
+        var response = new LoginResponseDto
         {
             UserId = user.UserId!,
+            Nic = user.Nic ?? "",
             FullName = user.FullName,
             Role = user.Role,
             AccountStatus = user.AccountStatus,
             Token = tokenHandler.WriteToken(token)
         };
+
+        return (true, "Login successful", response);
     }
 }
