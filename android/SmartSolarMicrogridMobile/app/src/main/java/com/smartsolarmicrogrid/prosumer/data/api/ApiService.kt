@@ -23,6 +23,12 @@ interface ApiService {
     @PUT("api/auth/password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ApiResponse<Any>>
 
+    @GET("api/auth/profile")
+    suspend fun getUserProfile(): Response<ApiResponse<UserDto>>
+
+    @PUT("api/auth/profile")
+    suspend fun updateUserProfile(@Body request: UpdateProfileRequest): Response<ApiResponse<UserDto>>
+
     // ---------- Prosumer account ----------
     @POST("api/prosumers/register")
     suspend fun registerProsumer(@Body request: RegisterRequest): Response<ApiResponse<Prosumer>>

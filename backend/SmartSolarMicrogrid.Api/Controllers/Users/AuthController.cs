@@ -52,6 +52,28 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the authenticated user's profile details.
+    /// </summary>
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(ApiResponse<object>.ErrorResponse("Unauthorized."));
+        }
+
+        var user = await _userService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse("User not found."));
+        }
+
+        return Ok(ApiResponse<UserDto>.SuccessResponse("Profile retrieved successfully.", user));
+    }
+
+    /// <summary>
     /// Updates the authenticated user's profile details.
     /// </summary>
     [HttpPut("profile")]

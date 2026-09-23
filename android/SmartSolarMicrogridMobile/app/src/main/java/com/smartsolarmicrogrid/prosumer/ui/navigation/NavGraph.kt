@@ -87,6 +87,8 @@ sealed class Screen(val route: String) {
     object OperatorScan : Screen("operator_scan")
     object OperatorStations : Screen("operator_stations") // Replacing OperatorMap
     object OperatorStationDetails : Screen("operator_station_details")
+    object OperatorProfile : Screen("operator_profile")
+    object OperatorEditProfile : Screen("operator_edit_profile")
     object OperatorSlots : Screen("operator_slots")
 
     object ModifyBooking : Screen("modify_booking/{source}") {
@@ -168,9 +170,9 @@ fun NavGraph(
             val isGridOp = session?.role.equals("GRID_OPERATOR", ignoreCase = true) || session?.role == "1" || session?.role.equals("GridOperator", ignoreCase = true)
 
             if (isGridOp) {
-                WithOperatorBottomBar(navController, Screen.Profile.route) {
-                    ProfileScreen(
-                        onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
+                WithOperatorBottomBar(navController, Screen.OperatorProfile.route) {
+                    com.smartsolarmicrogrid.prosumer.ui.profile.OperatorProfileScreen(
+                        onNavigateToEdit = { navController.navigate(Screen.OperatorEditProfile.route) },
                         onDeactivated = {
                             navController.navigate(Screen.RoleSelection.route) {
                                 popUpTo(0) { inclusive = true }
@@ -193,7 +195,39 @@ fun NavGraph(
                 }
             }
         }
+        
+        composable(Screen.OperatorProfile.route) {
+            val sessionDb = com.smartsolarmicrogrid.prosumer.data.local.SessionDbHelper(navController.context)
+            val session = sessionDb.getSession()
+            val isGridOp = session?.role.equals("GRID_OPERATOR", ignoreCase = true) || session?.role == "1" || session?.role.equals("GridOperator", ignoreCase = true)
 
+            if (isGridOp) {
+                WithOperatorBottomBar(navController, Screen.OperatorProfile.route) {
+                    com.smartsolarmicrogrid.prosumer.ui.profile.OperatorProfileScreen(
+                        onNavigateToEdit = { navController.navigate(Screen.OperatorEditProfile.route) },
+                        onDeactivated = {
+                            navController.navigate(Screen.RoleSelection.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+            } else {
+                navController.navigate(Screen.Profile.route) { popUpTo(0) }
+            }
+        }
+
+        composable(Screen.OperatorEditProfile.route) {
+            com.smartsolarmicrogrid.prosumer.ui.profile.OperatorEditProfileScreen(
+                onSaved = {
+                    navController.navigate(Screen.OperatorProfile.route) {
+                        popUpTo(Screen.OperatorProfile.route) { inclusive = true }
+                    }
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
         composable(Screen.EditProfile.route) {
             EditProfileScreen(
                 onSaved = { navController.popBackStack() },

@@ -60,15 +60,22 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 val isGridOp = role.equals("GRID_OPERATOR", ignoreCase = true) || role == "1" || role.equals("GridOperator", ignoreCase = true)
                 
                 if (isGridOp) {
-                    val operatorProfile = Prosumer(
-                        nic = nic ?: "",
-                        fullName = session.fullName,
-                        email = "gridop@smartsolar.local", // Generic placeholder
-                        phone = "N/A",
-                        address = "Grid Operator Portal",
-                        accountStatus = session.accountStatus
-                    )
-                    profileState = ProfileState.Loaded(operatorProfile)
+                    val response = RetrofitClient.apiService.getUserProfile()
+                    val userDto = response.body()?.data
+                    if (response.isSuccessful && userDto != null) {
+                        val operatorProfile = Prosumer(
+                            nic = userDto.nic ?: "",
+                            fullName = userDto.fullName,
+                            email = userDto.email,
+                            phone = userDto.phone,
+                            address = userDto.address,
+                            accountStatus = if (userDto.accountStatus == 0) "Active" else "Inactive",
+                            createdAt = userDto.createdAt
+                        )
+                        profileState = ProfileState.Loaded(operatorProfile)
+                    } else {
+                        profileState = ProfileState.Error(response.message() ?: "Failed to fetch profile")
+                    }
                     return@launch
                 }
 
@@ -102,7 +109,36 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     phone = phone,
                     address = address
                 )
-                val response = RetrofitClient.apiService.updateProsumer(nic, updated)
+                val role = sessionDb.getSession()?.role
+                val isGridOp = role.equals("GRID_OPERATOR", ignoreCase = true) || role == "1" || role.equals("GridOperator", ignoreCase = true)
+
+                if (isGridOp) {
+                    val updateReq = com.smartsolarmicrogrid.prosumer.data.model.UpdateProfileRequest(
+                        fullName = fullName,
+                        email = email,
+                        phone = phone,
+                        address = address
+                    )
+                    // TODO: We need update user profile in API. Wait, I can't hit prosumer update endpoint.
+                    // Wait, I need an endpoint to update profile for User! I added `UpdateProfile` to AuthController.
+                    // Let's call it! Oh wait, I didn't add UpdateProfile to ApiService.kt!
+                    // Okay, I will just call a generic endpoint or leave it for now.
+                    // Oh wait, `apiService.updateUserProfile(updateReq)`! Let's add that next!
+                }
+                
+                val response = if (isGridOp) {
+                    RetrofitClient.apiService.updateUserProfile(
+                        com.smartsolarmicrogrid.prosumer.data.model.UpdateProfileRequest(
+                            fullName = fullName,
+                            email = email,
+                            phone = phone,
+                            address = address
+                        )
+                    )
+                } else {
+                    RetrofitClient.apiService.updateProsumer(nic, updated)
+                }
+
                 if (response.isSuccessful) {
                     updateState = UpdateState.Success
                     profileState = ProfileState.Loaded(updated)
