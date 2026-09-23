@@ -13,6 +13,10 @@ import com.smartsolarmicrogrid.prosumer.data.api.RetrofitClient
 import com.smartsolarmicrogrid.prosumer.data.local.SessionDbHelper
 import com.smartsolarmicrogrid.prosumer.ui.navigation.NavGraph
 import com.smartsolarmicrogrid.prosumer.ui.theme.SmartSolarMicrogridMobileTheme
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.LaunchedEffect
+import android.os.Handler
+import android.os.Looper
 
 import com.smartsolarmicrogrid.prosumer.ui.navigation.Screen
 
@@ -37,10 +41,24 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
+            val navController = rememberNavController()
+            
+            LaunchedEffect(Unit) {
+                RetrofitClient.onSessionExpired = {
+                    sessionDb.clearSession()
+                    RetrofitClient.authToken = null
+                    Handler(Looper.getMainLooper()).post {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
+            }
+
             SmartSolarMicrogridMobileTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        NavGraph(startDestination = initialRoute)
+                        NavGraph(navController = navController, startDestination = initialRoute)
                     }
                 }
             }

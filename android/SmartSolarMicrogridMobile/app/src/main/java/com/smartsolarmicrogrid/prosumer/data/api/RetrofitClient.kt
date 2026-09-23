@@ -16,6 +16,8 @@ object RetrofitClient {
     @Volatile
     var authToken: String? = null
 
+    var onSessionExpired: (() -> Unit)? = null
+
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
@@ -30,7 +32,11 @@ object RetrofitClient {
         } else {
             chain.request()
         }
-        chain.proceed(request)
+        val response = chain.proceed(request)
+        if (response.code == 401) {
+            onSessionExpired?.invoke()
+        }
+        response
     }
 
     private val okHttpClient = OkHttpClient.Builder()
