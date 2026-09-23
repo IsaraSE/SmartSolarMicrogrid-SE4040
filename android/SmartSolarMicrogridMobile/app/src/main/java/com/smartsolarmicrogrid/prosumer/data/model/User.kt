@@ -7,6 +7,7 @@ data class LoginRequest(
 
 data class LoginResponse(
     val userId: String,
+    val nic: String,
     val fullName: String,
     val role: String,
     val accountStatus: String,
@@ -20,6 +21,11 @@ data class RegisterRequest(
     val phone: String,
     val address: String,
     val password: String
+)
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String
 )
 
 data class Prosumer(

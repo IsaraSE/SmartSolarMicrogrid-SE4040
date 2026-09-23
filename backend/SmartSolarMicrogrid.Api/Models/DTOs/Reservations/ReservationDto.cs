@@ -17,13 +17,26 @@ public class ReservationDto
     public string ReservationNumber { get; set; } = null!;
     public string ProsumerNic { get; set; } = null!;
     public string StationId { get; set; } = null!;
+    public string? StationName { get; set; }
     public string SlotId { get; set; } = null!;
-    public string? SlotName { get; set; }
+    public string? SlotName { get; set; } // Enriched from Slot
+
     public DateTime ScheduledStartDateTime { get; set; }
     public DateTime ScheduledEndDateTime { get; set; }
+
+    // Backwards compatibility for Android App
+    public string BookingDate => ScheduledStartDateTime.ToLocalTime().ToString("yyyy-MM-dd");
+    public string StartTime => ScheduledStartDateTime.ToLocalTime().ToString("HH:mm");
+    public string EndTime => ScheduledEndDateTime.ToLocalTime().ToString("HH:mm");
+
+
     public ReservationStatus Status { get; set; }
     public string QrReference { get; set; } = null!;
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+
+    public string? Notes { get; set; }
+    public double EnergyAmount { get; set; }
 }

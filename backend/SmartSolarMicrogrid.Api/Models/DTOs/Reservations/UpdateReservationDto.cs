@@ -15,4 +15,6 @@ public class UpdateReservationDto
 {
     [Required]
     public string SlotId { get; set; } = null!;
+    
+    public string? Notes { get; set; }
 }

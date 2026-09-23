@@ -151,6 +151,7 @@ const Slots = () => {
       case 0: return 'Available';
       case 1: return 'Reserved';
       case 2: return 'Unavailable';
+      case 3: return 'Pending';
       default: return 'Unknown';
     }
   };
@@ -162,11 +163,11 @@ const Slots = () => {
   };
 
   const getReservedByText = (slot) => {
-    const st = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
-    if (st !== 1 && st !== 'RESERVED') {
+    const st = slot.effectiveStatus || slot.status;
+    if (st !== 1 && st !== 'RESERVED' && st !== 3 && st !== 'PENDING') {
       return '-';
     }
-    const reservation = reservations.find(r => r.slotId === slot.slotId && (r.status === 2 || String(r.status).toUpperCase() === 'APPROVED'));
+    const reservation = reservations.find(r => r.slotId === slot.slotId && (r.status === 2 || String(r.status).toUpperCase() === 'APPROVED' || r.status === 0 || String(r.status).toUpperCase() === 'PENDING'));
     if (reservation && reservation.prosumerNic) {
       return reservation.prosumerNic;
     }
@@ -235,11 +236,26 @@ const Slots = () => {
   };
 
   // Filter slots based on tab
-  const filteredSlots = slots.filter(slot => {
-    const status = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
-    if (activeTab === 'AVAILABLE') return status === 0 || status === 'AVAILABLE';
-    if (activeTab === 'UNAVAILABLE') return status === 2 || status === 'UNAVAILABLE';
-    if (activeTab === 'RESERVED') return status === 1 || status === 'RESERVED';
+  const filteredSlots = slots.map(slot => {
+    // Determine effective status to fix older slots that are stuck as AVAILABLE in DB
+    const reservation = reservations.find(r => r.slotId === slot.slotId && (String(r.status).toUpperCase() === 'PENDING' || r.status === 0 || String(r.status).toUpperCase() === 'APPROVED' || r.status === 1));
+    let effective = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
+    if (reservation) {
+       if (String(reservation.status).toUpperCase() === 'PENDING' || reservation.status === 0) effective = 'PENDING';
+       if (String(reservation.status).toUpperCase() === 'APPROVED' || reservation.status === 1) effective = 'RESERVED';
+    } else {
+       if (effective === 0) effective = 'AVAILABLE';
+       if (effective === 1) effective = 'RESERVED';
+       if (effective === 2) effective = 'UNAVAILABLE';
+       if (effective === 3) effective = 'PENDING';
+    }
+    return { ...slot, effectiveStatus: effective };
+  }).filter(slot => {
+    const status = slot.effectiveStatus;
+    if (activeTab === 'AVAILABLE') return status === 'AVAILABLE';
+    if (activeTab === 'UNAVAILABLE') return status === 'UNAVAILABLE';
+    if (activeTab === 'RESERVED') return status === 'RESERVED';
+    if (activeTab === 'PENDING') return status === 'PENDING';
     return true; // ALL
   });
 
@@ -287,6 +303,9 @@ const Slots = () => {
             </button>
             <button className={`tab-btn ${activeTab === 'UNAVAILABLE' ? 'active' : ''}`} onClick={() => setActiveTab('UNAVAILABLE')}>
               Unavailable
+            </button>
+            <button className={`tab-btn ${activeTab === 'PENDING' ? 'active' : ''}`} onClick={() => setActiveTab('PENDING')}>
+              Pending
             </button>
             <button className={`tab-btn ${activeTab === 'RESERVED' ? 'active' : ''}`} onClick={() => setActiveTab('RESERVED')}>
               Reserved
@@ -356,7 +375,7 @@ const Slots = () => {
                 </tr>
               ) : (
                 currentItems.map(slot => {
-                  const st = typeof slot.status === 'string' ? slot.status.toUpperCase() : slot.status;
+                  const st = slot.effectiveStatus;
                   return (
                     <tr key={slot.slotId}>
                       <td className="font-semibold">{slot.slotName || 'Unknown'}</td>
@@ -374,11 +393,11 @@ const Slots = () => {
                             fontWeight: '500',
                             border: 'none',
                             cursor: 'default',
-                            backgroundColor: (st === 0 || st === 'AVAILABLE') ? '#dcfce7' : (st === 1 || st === 'RESERVED') ? '#fef3c7' : '#fee2e2',
-                            color: (st === 0 || st === 'AVAILABLE') ? '#166534' : (st === 1 || st === 'RESERVED') ? '#b45309' : '#991b1b'
+                            backgroundColor: (st === 'AVAILABLE') ? '#dcfce7' : (st === 'RESERVED') ? '#fef3c7' : (st === 'PENDING') ? '#fef08a' : '#fee2e2',
+                            color: (st === 'AVAILABLE') ? '#166534' : (st === 'RESERVED') ? '#b45309' : (st === 'PENDING') ? '#854d0e' : '#991b1b'
                           }}
                         >
-                          {getStatusText(slot.status)}
+                          {getStatusText(st)}
                         </span>
                       </td>
                       <td className="text-secondary" style={{ textAlign: 'center' }}>
@@ -393,13 +412,13 @@ const Slots = () => {
                           {user?.role === 'GRID_OPERATOR' && (
                             <>
                               <div style={{ display: 'flex', gap: '8px' }}>
-                                {(st === 0 || st === 'AVAILABLE') && (
+                                {(st === 'AVAILABLE') && (
                                   <button className="deactivate-btn" onClick={() => requestStatusChange(slot, 2)}>
                                     Deactivate
                                   </button>
                                 )}
 
-                                {(st === 2 || st === 'UNAVAILABLE') && (
+                                {(st === 'UNAVAILABLE') && (
                                   <button className="activate-btn" onClick={() => requestStatusChange(slot, 0)}>
                                     Activate
                                   </button>
@@ -529,13 +548,21 @@ const Slots = () => {
               </div>
 
               <div className="premium-info-card">
+                <div className="premium-info-icon"><FiZap /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Capacity</span>
+                  <span className="premium-info-value">{selectedSlot.capacity || 5.0} kWh</span>
+                </div>
+              </div>
+
+              <div className="premium-info-card">
                 <div className="premium-info-icon"><FiActivity /></div>
                 <div className="premium-info-content">
                   <span className="premium-info-label">Status</span>
                   <div className="premium-info-value">
-                    <span className={`status-badge-btn static-badge status-${selectedSlot.status === 'AVAILABLE' || selectedSlot.status === 0 ? 'available' : selectedSlot.status === 'RESERVED' || selectedSlot.status === 1 ? 'reserved' : 'unavailable'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: (selectedSlot.status === 'AVAILABLE' || selectedSlot.status === 0) ? '#dcfce7' : (selectedSlot.status === 'RESERVED' || selectedSlot.status === 1) ? '#fef3c7' : '#fee2e2', color: (selectedSlot.status === 'AVAILABLE' || selectedSlot.status === 0) ? '#166534' : (selectedSlot.status === 'RESERVED' || selectedSlot.status === 1) ? '#b45309' : '#991b1b' }}>
+                    <span className={`status-badge-btn static-badge status-${selectedSlot.effectiveStatus === 'AVAILABLE' ? 'available' : selectedSlot.effectiveStatus === 'RESERVED' ? 'reserved' : selectedSlot.effectiveStatus === 'PENDING' ? 'pending' : 'unavailable'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: (selectedSlot.effectiveStatus === 'AVAILABLE') ? '#dcfce7' : (selectedSlot.effectiveStatus === 'RESERVED') ? '#fef3c7' : (selectedSlot.effectiveStatus === 'PENDING') ? '#fef08a' : '#fee2e2', color: (selectedSlot.effectiveStatus === 'AVAILABLE') ? '#166534' : (selectedSlot.effectiveStatus === 'RESERVED') ? '#b45309' : (selectedSlot.effectiveStatus === 'PENDING') ? '#854d0e' : '#991b1b' }}>
                       <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
-                      {getStatusText(selectedSlot.status)}
+                      {getStatusText(selectedSlot.effectiveStatus)}
                     </span>
                   </div>
                 </div>

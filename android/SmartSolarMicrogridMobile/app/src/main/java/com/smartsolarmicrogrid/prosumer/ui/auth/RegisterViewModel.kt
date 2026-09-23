@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 sealed class RegisterState {
     object Idle : RegisterState()
     object Loading : RegisterState()
-    object Success : RegisterState()
+    data class Success(val nic: String) : RegisterState()
     data class Error(val message: String) : RegisterState()
 }
 
@@ -44,9 +44,16 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
                     )
                 )
                 if (response.isSuccessful) {
-                    registerState = RegisterState.Success
+                    registerState = RegisterState.Success(nic)
                 } else {
-                    registerState = RegisterState.Error("Registration failed. Please check your details.")
+                    val msg = try {
+                        val errorStr = response.errorBody()?.string()
+                        if (errorStr != null) org.json.JSONObject(errorStr).getString("message")
+                        else "Registration failed."
+                    } catch (e: Exception) {
+                        "Registration failed. Please check your details."
+                    }
+                    registerState = RegisterState.Error(msg)
                 }
             } catch (e: Exception) {
                 registerState = RegisterState.Error("Network error: ${e.message}")

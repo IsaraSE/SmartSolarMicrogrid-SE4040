@@ -54,26 +54,31 @@ public class SlotService : ISlotService
             .Select(r => r.SlotId)
             .ToHashSet();
 
-        // A slot is available if its status is AVAILABLE and it is not currently booked/pending
-        var availableSlots = slots.Where(s => 
-            s.Status == SlotStatus.AVAILABLE && 
-            !bookedSlotIds.Contains(s.SlotId) &&
-            s.StartDateTime > DateTime.UtcNow); // Also ensure we don't show past slots
+        // A slot is available if its status is AVAILABLE and it is not already booked
+        var availableSlots = slots.Where(s => s.Status == SlotStatus.AVAILABLE && !bookedSlotIds.Contains(s.SlotId));
 
         return availableSlots.Select(MapToDto);
     }
 
     public async Task<SlotDto> CreateSlotAsync(CreateSlotDto request)
     {
-        // Prevent duplicate time overlap for the same SlotName at the same Station
+        var station = await _stationRepository.GetByIdAsync(request.StationId);
+        if (station == null)
+            throw new InvalidOperationException("Station not found.");
+
         var existingSlots = await _slotRepository.GetByStationIdAsync(request.StationId);
-        var overlap = existingSlots.Any(s => 
-            s.SlotName == request.SlotName &&
-            (request.StartDateTime < s.EndDateTime && request.EndDateTime > s.StartDateTime));
         
-        if (overlap)
+        // Prevent duplicate SlotName for the same Station
+        var duplicateName = existingSlots.Any(s => s.SlotName == request.SlotName);
+        if (duplicateName)
         {
-            throw new InvalidOperationException($"Time overlap: Slot {request.SlotName} is already scheduled during this time.");
+            throw new InvalidOperationException($"Slot with name {request.SlotName} already exists for this station.");
+        }
+
+        // Prevent exceeding station capacity
+        if (existingSlots.Count() >= station.BatterySlotCount)
+        {
+            throw new InvalidOperationException($"Cannot create more slots. Station capacity ({station.BatterySlotCount}) reached.");
         }
 
         var slot = new EnergyBookingSlot
@@ -83,6 +88,7 @@ public class SlotService : ISlotService
             StationId = request.StationId,
             StartDateTime = request.StartDateTime,
             EndDateTime = request.EndDateTime,
+            Capacity = request.Capacity,
             Notes = request.Notes,
             Status = SlotStatus.AVAILABLE
         };
@@ -96,20 +102,9 @@ public class SlotService : ISlotService
         var slot = await _slotRepository.GetByIdAsync(id);
         if (slot == null) return null;
 
-        // Prevent duplicate time overlap for the same SlotName at the same Station on update
-        var existingSlots = await _slotRepository.GetByStationIdAsync(slot.StationId);
-        var overlap = existingSlots.Any(s => 
-            s.SlotId != slot.SlotId && 
-            s.SlotName == slot.SlotName &&
-            (request.StartDateTime < s.EndDateTime && request.EndDateTime > s.StartDateTime));
-            
-        if (overlap)
-        {
-            throw new InvalidOperationException($"Time overlap: Slot {slot.SlotName} is already scheduled during this time.");
-        }
-
         slot.StartDateTime = request.StartDateTime;
         slot.EndDateTime = request.EndDateTime;
+        slot.Capacity = request.Capacity;
         slot.Status = request.Status;
         slot.Notes = request.Notes;
 
@@ -140,6 +135,7 @@ public class SlotService : ISlotService
             StationId = slot.StationId,
             StartDateTime = slot.StartDateTime,
             EndDateTime = slot.EndDateTime,
+            Capacity = slot.Capacity,
             Status = slot.Status,
             ReservedBy = slot.ReservedBy,
             Notes = slot.Notes

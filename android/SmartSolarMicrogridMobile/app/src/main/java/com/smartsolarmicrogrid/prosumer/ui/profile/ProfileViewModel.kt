@@ -24,6 +24,13 @@ sealed class UpdateState {
     data class Error(val message: String) : UpdateState()
 }
 
+sealed class PasswordUpdateState {
+    object Idle : PasswordUpdateState()
+    object Loading : PasswordUpdateState()
+    object Success : PasswordUpdateState()
+    data class Error(val message: String) : PasswordUpdateState()
+}
+
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val sessionDb = SessionDbHelper(application)
@@ -34,13 +41,16 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var updateState by mutableStateOf<UpdateState>(UpdateState.Idle)
         private set
 
+    var passwordUpdateState by mutableStateOf<PasswordUpdateState>(PasswordUpdateState.Idle)
+        private set
+
     fun loadProfile() {
         val nic = sessionDb.getSession()?.nic
         profileState = ProfileState.Loading
         viewModelScope.launch {
             try {
                 if (nic == null) {
-                    profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
+                    profileState = ProfileState.Error("Session expired. Please log in again.")
                     return@launch
                 }
                 val response = RetrofitClient.apiService.getProsumer(nic)
@@ -48,25 +58,12 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 if (response.isSuccessful && prosumer != null) {
                     profileState = ProfileState.Loaded(prosumer)
                 } else {
-                    profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
+                    profileState = ProfileState.Error(response.message() ?: "Failed to fetch profile")
                 }
             } catch (e: Exception) {
-                profileState = ProfileState.Loaded(getMockProfile()) // TODO: remove before submission
+                profileState = ProfileState.Error(e.message ?: "Network error")
             }
         }
-    }
-
-    // TODO: remove this function before final submission — for UI preview only, no real backend yet
-    private fun getMockProfile(): Prosumer {
-        return Prosumer(
-            nic = "200012345678",
-            fullName = "Juthmini Perera",
-            email = "juthmini@example.com",
-            phone = "0771234567",
-            address = "45 Galle Road, Colombo 03",
-            accountStatus = "ACTIVE",
-            createdAt = "2026-01-15"
-        )
     }
 
     fun updateProfile(fullName: String, email: String, phone: String, address: String) {
@@ -86,7 +83,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     updateState = UpdateState.Success
                     profileState = ProfileState.Loaded(updated)
                 } else {
-                    updateState = UpdateState.Error("Update failed")
+                    val msg = try {
+                        val errorStr = response.errorBody()?.string()
+                        if (errorStr != null) org.json.JSONObject(errorStr).getString("message")
+                        else "Update failed"
+                    } catch (e: Exception) {
+                        "Update failed"
+                    }
+                    updateState = UpdateState.Error(msg)
                 }
             } catch (e: Exception) {
                 updateState = UpdateState.Error("Network error: ${e.message}")
@@ -94,7 +98,41 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun deactivateAccount(onDone: () -> Unit) {
+    fun changePassword(current: String, newStr: String) {
+        passwordUpdateState = PasswordUpdateState.Loading
+        viewModelScope.launch {
+            try {
+                val req = com.smartsolarmicrogrid.prosumer.data.model.ChangePasswordRequest(current, newStr)
+                val response = RetrofitClient.apiService.changePassword(req)
+                if (response.isSuccessful) {
+                    passwordUpdateState = PasswordUpdateState.Success
+                } else {
+                    val msg = try {
+                        val errorStr = response.errorBody()?.string()
+                        if (errorStr != null) {
+                            val json = org.json.JSONObject(errorStr)
+                            if (json.has("message")) {
+                                json.getString("message")
+                            } else if (json.has("errors")) {
+                                val errors = json.getJSONObject("errors")
+                                val firstKey = errors.keys().next()
+                                errors.getJSONArray(firstKey).getString(0)
+                            } else {
+                                "Password update failed"
+                            }
+                        } else "Password update failed"
+                    } catch (e: Exception) {
+                        "Password update failed"
+                    }
+                    passwordUpdateState = PasswordUpdateState.Error(msg)
+                }
+            } catch (e: Exception) {
+                passwordUpdateState = PasswordUpdateState.Error("Network error: ${e.message}")
+            }
+        }
+    }
+
+    fun deactivateAccount(onDone: () -> Unit, onError: (String) -> Unit) {
         val nic = sessionDb.getSession()?.nic ?: return
         viewModelScope.launch {
             try {
@@ -103,10 +141,25 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     sessionDb.clearSession()
                     RetrofitClient.authToken = null
                     onDone()
+                } else {
+                    val msg = try {
+                        val errorStr = response.errorBody()?.string()
+                        if (errorStr != null) org.json.JSONObject(errorStr).getString("message")
+                        else "Deactivation failed"
+                    } catch (e: Exception) {
+                        "Deactivation failed"
+                    }
+                    onError(msg)
                 }
             } catch (e: Exception) {
-                // could add an error state for this too if needed
+                onError(e.message ?: "Network error")
             }
         }
+    }
+
+    fun logout(onDone: () -> Unit) {
+        sessionDb.clearSession()
+        RetrofitClient.authToken = null
+        onDone()
     }
 }

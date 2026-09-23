@@ -280,6 +280,47 @@ using (var scope = app.Services.CreateScope())
 
         Console.WriteLine("✅ Seeded 3 stations, available slots, and 3 sample reservations for NIC 123456789V.");
     }
+
+    // --- MIGRATION: BACKFILL CAPACITIES FOR EXISTING SLOTS ---
+    var allSlots = await slotRepository.GetAllAsync();
+    var random = new Random();
+    var possibleCapacities = new[] { 5.0, 10.0, 15.0, 20.0 };
+    int updatedCount = 0;
+    
+    foreach (var slot in allSlots)
+    {
+        if (slot.Capacity == 0)
+        {
+            slot.Capacity = possibleCapacities[random.Next(possibleCapacities.Length)];
+            await slotRepository.UpdateAsync(slot.SlotId, slot);
+            updatedCount++;
+        }
+    }
+    
+    if (updatedCount > 0)
+    {
+        Console.WriteLine($"✅ Successfully backfilled {updatedCount} existing slots with random capacities.");
+    }
+    
+    // --- MIGRATION: BACKFILL NOTES FOR EXISTING RESERVATIONS ---
+    var allReservations = await reservationRepository.GetAllAsync();
+    var possibleNotes = new[] { "Need full charge", "Selling excess energy", "Urgent battery issue", "Standard charge", "Selling 5kWh" };
+    int updatedResCount = 0;
+    
+    foreach (var res in allReservations)
+    {
+        if (string.IsNullOrEmpty(res.Notes))
+        {
+            res.Notes = possibleNotes[random.Next(possibleNotes.Length)];
+            await reservationRepository.UpdateAsync(res.ReservationId, res);
+            updatedResCount++;
+        }
+    }
+    
+    if (updatedResCount > 0)
+    {
+        Console.WriteLine($"✅ Successfully backfilled {updatedResCount} existing reservations with random notes.");
+    }
 }
 // -------------------------------
 
