@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smartsolarmicrogrid.prosumer.data.model.Reservation
+import com.smartsolarmicrogrid.prosumer.data.model.Station
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingListState
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingListViewModel
 import com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingTab
@@ -58,13 +59,13 @@ fun OperatorReservationsScreen(
 
     val selectedTabIndex = bookingListViewModel.selectedTab.ordinal
     val listState = if (bookingListViewModel.isSearching) bookingListViewModel.searchState else bookingListViewModel.listState
-    val tabs = BookingTab.values().filter { it != BookingTab.COMPLETED } // Match UI
+    val tabs = BookingTab.values().toList()
     
     var selectedStationFilter by remember { mutableStateOf("All Stations") }
     var isStationDropdownExpanded by remember { mutableStateOf(false) }
 
-    val reservations = (listState as? BookingListState.Loaded)?.reservations ?: emptyList()
-    val availableStations = listOf("All Stations") + reservations.mapNotNull { it.stationName }.distinct().sorted()
+    val loadedStations: List<Station> = (operatorViewModel.stationState as? StationMapState.Loaded)?.stations ?: emptyList()
+    val availableStations = listOf("All Stations") + loadedStations.map { it.stationName }.distinct().sorted()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
