@@ -143,12 +143,30 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
             try {
                 val response = RetrofitClient.apiService.approveReservation(reservation.reservationId)
                 actionMessage = if (response.isSuccessful) {
-                    "Reservation ${reservation.reservationId} approved."
+                    "Reservation ${reservation.reservationNumber ?: reservation.reservationId} approved."
                 } else {
-                    "Could not approve reservation ${reservation.reservationId}."
+                    "Could not approve reservation ${reservation.reservationNumber ?: reservation.reservationId}."
                 }
             } catch (e: Exception) {
                 actionMessage = "Network error while approving the reservation."
+            }
+            loadPendingReservations()
+        }
+    }
+
+    /** Cancels a reservation. Grid operators might cancel if needed (subject to UI rules). */
+    fun cancelReservation(reservationId: String) {
+        actionMessage = null
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.cancelReservation(reservationId)
+                actionMessage = if (response.isSuccessful) {
+                    "Reservation cancelled successfully."
+                } else {
+                    "Could not cancel reservation."
+                }
+            } catch (e: Exception) {
+                actionMessage = "Network error while cancelling the reservation."
             }
             loadPendingReservations()
         }
