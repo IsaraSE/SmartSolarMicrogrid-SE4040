@@ -43,7 +43,7 @@ private val bottomNavItems = listOf(
 
 private val operatorNavItems = listOf(
     BottomNavItem(Screen.OperatorHome.route, "Home", Icons.Filled.Home),
-    BottomNavItem(Screen.OperatorMap.route, "Stations", Icons.Filled.SolarPower),
+    BottomNavItem(Screen.OperatorStations.route, "Stations", Icons.Filled.SolarPower),
     BottomNavItem(Screen.OperatorScan.route, "Scan QR", Icons.Filled.QrCodeScanner),
     BottomNavItem(Screen.OperatorReservations.route, "Bookings", Icons.Filled.EventNote),
     BottomNavItem(Screen.Profile.route, "Profile", Icons.Filled.Person)
