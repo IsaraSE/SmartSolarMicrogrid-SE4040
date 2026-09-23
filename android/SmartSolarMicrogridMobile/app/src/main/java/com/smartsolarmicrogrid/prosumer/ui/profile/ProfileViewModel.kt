@@ -69,7 +69,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                             email = userDto.email,
                             phone = userDto.phone,
                             address = userDto.address,
-                            accountStatus = if (userDto.accountStatus == 0) "Active" else "Inactive",
+                            accountStatus = userDto.accountStatus.lowercase().replaceFirstChar { it.uppercase() },
                             createdAt = userDto.createdAt
                         )
                         profileState = ProfileState.Loaded(operatorProfile)

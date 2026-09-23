@@ -51,8 +51,8 @@ data class UserDto(
     val fullName: String,
     val email: String,
     val phone: String,
-    val role: Int,
-    val accountStatus: Int,
+    val role: String,
+    val accountStatus: String,
     val address: String,
     val additionalInfo: String?,
     val createdAt: String

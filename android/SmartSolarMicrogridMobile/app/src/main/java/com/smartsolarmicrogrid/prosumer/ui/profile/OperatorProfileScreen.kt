@@ -203,7 +203,7 @@ fun OperatorProfileScreen(
                                 
                                 Column {
                                     Text(prosumer.fullName, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = SolarGreenDark)
-                                    Text("GO Member", fontSize = 14.sp, color = Color.Gray)
+                                    Text("Grid Operator Member", fontSize = 14.sp, color = Color.Gray)
                                     Spacer(modifier = Modifier.height(6.dp))
                                     
                                     // Status Chip
