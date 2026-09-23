@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                 else -> Screen.Dashboard.route
             }
         } else {
-            Screen.Login.route
+            Screen.RoleSelection.route
         }
 
         enableEdgeToEdge()

@@ -20,6 +20,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 
 import com.smartsolarmicrogrid.prosumer.ui.auth.LoginScreen
+import com.smartsolarmicrogrid.prosumer.ui.auth.RoleSelectionScreen
 import com.smartsolarmicrogrid.prosumer.ui.auth.RegisterScreen
 import com.smartsolarmicrogrid.prosumer.ui.auth.PendingActivationScreen
 import com.smartsolarmicrogrid.prosumer.ui.booking.BookingSummaryScreen
@@ -56,7 +57,10 @@ const val SOURCE_CREATE = "create"
 const val SOURCE_LIST = "list"
 
 sealed class Screen(val route: String) {
-    object Login : Screen("login")
+    object RoleSelection : Screen("role_selection")
+    object Login : Screen("login/{role}") {
+        fun createRoute(role: String) = "login/$role"
+    }
     object Register : Screen("register")
     object PendingActivation : Screen("pending_activation/{nic}") {
         fun createRoute(nic: String) = "pending_activation/$nic"
@@ -91,12 +95,22 @@ sealed class Screen(val route: String) {
 @Composable
 fun NavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Login.route
+    startDestination: String = Screen.RoleSelection.route
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
 
-        composable(Screen.Login.route) {
+        composable(Screen.RoleSelection.route) {
+            RoleSelectionScreen(
+                onSelectRole = { role ->
+                    navController.navigate(Screen.Login.createRoute(role))
+                }
+            )
+        }
+
+        composable(Screen.Login.route) { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role") ?: "PROSUMER"
             LoginScreen(
+                role = role,
                 onLoginSuccess = { nic, role, status ->
                     if (status == "PENDING") {
                         navController.navigate(Screen.PendingActivation.createRoute(nic)) {
@@ -134,7 +148,7 @@ fun NavGraph(
             PendingActivationScreen(
                 nic = nic,
                 onBackToLogin = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.RoleSelection.route) {
                         popUpTo(0) { inclusive = true } // Clear entire backstack
                     }
                 }
@@ -146,7 +160,7 @@ fun NavGraph(
                 ProfileScreen(
                     onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
                     onDeactivated = {
-                        navController.navigate(Screen.Login.route) {
+                        navController.navigate(Screen.RoleSelection.route) {
                             popUpTo(0) { inclusive = true }
                         }
                     },
@@ -303,7 +317,7 @@ fun NavGraph(
                     onViewReservations = { navController.navigate(Screen.OperatorReservations.route) },
                     onViewMap = { navController.navigate(Screen.OperatorMap.route) },
                     onLogout = {
-                        navController.navigate(Screen.Login.route) {
+                        navController.navigate(Screen.RoleSelection.route) {
                             popUpTo(0) { inclusive = true }
                         }
                     },

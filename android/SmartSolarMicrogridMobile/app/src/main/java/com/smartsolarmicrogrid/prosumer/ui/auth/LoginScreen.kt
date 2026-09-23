@@ -1,5 +1,8 @@
 package com.smartsolarmicrogrid.prosumer.ui.auth
 
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,8 +31,10 @@ private val SolarGreen = Color(0xFF2E7D32)
 private val SolarAmber = Color(0xFFFFA000)
 private val BackgroundTop = Color(0xFF1B5E20)
 
+
 @Composable
 fun LoginScreen(
+    role: String = "PROSUMER",
     onLoginSuccess: (nic: String, role: String, status: String) -> Unit,
     onNavigateToRegister: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
@@ -91,7 +96,7 @@ fun LoginScreen(
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Prosumer Portal",
+                text = if (role == "GRID_OPERATOR") "Grid Operator Portal" else "Prosumer Portal",
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
             )
@@ -123,11 +128,12 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
-                        label = { Text("Email or NIC") },
+                        label = { Text(if (role == "GRID_OPERATOR") "Email Address" else "Email or NIC") },
                         leadingIcon = {
                             Icon(Icons.Filled.Person, contentDescription = null, tint = SolarGreen)
                         },
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = if (role == "GRID_OPERATOR") KeyboardType.Email else KeyboardType.Text),
                         shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = SolarGreen,
@@ -212,14 +218,16 @@ fun LoginScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    if (role == "PROSUMER") {
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    TextButton(
-                        onClick = onNavigateToRegister,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Don't have an account? ", color = Color.Gray, fontSize = 13.sp)
-                        Text("Register", color = SolarGreen, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        TextButton(
+                            onClick = onNavigateToRegister,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Don't have an account? ", color = Color.Gray, fontSize = 13.sp)
+                            Text("Register", color = SolarGreen, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        }
                     }
                 }
             }
