@@ -176,11 +176,8 @@ fun NavGraph(
             }
         }
 
-        composable(Screen.StationDetails.route) { backStackEntry ->
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(Screen.Stations.route)
-            }
-            val stationViewModel: StationViewModel = viewModel(parentEntry)
+        composable(Screen.StationDetails.route) {
+            val stationViewModel: StationViewModel = sharedActivityViewModel()
             StationDetailsScreen(
                 onNavigateToSlots = { navController.navigate(Screen.Slots.route) },
                 onBack = { navController.popBackStack() },
@@ -188,11 +185,8 @@ fun NavGraph(
             )
         }
 
-        composable(Screen.Slots.route) { backStackEntry ->
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(Screen.Stations.route)
-            }
-            val stationViewModel: StationViewModel = viewModel(parentEntry)
+        composable(Screen.Slots.route) {
+            val stationViewModel: StationViewModel = sharedActivityViewModel()
             SlotListScreen(
                 onSlotSelected = { slot ->
                     stationViewModel.selectSlot(slot)
@@ -207,7 +201,7 @@ fun NavGraph(
             val parentEntry = remember(backStackEntry) {
                 navController.getBackStackEntry(Screen.Stations.route)
             }
-            val stationViewModel: StationViewModel = viewModel(parentEntry)
+            val stationViewModel: StationViewModel = sharedActivityViewModel()
             val bookingViewModel: BookingViewModel = viewModel(parentEntry)
 
             val station = stationViewModel.selectedStation
@@ -230,7 +224,7 @@ fun NavGraph(
             val parentEntry = remember(backStackEntry) {
                 navController.getBackStackEntry(Screen.Stations.route)
             }
-            val stationViewModel: StationViewModel = viewModel(parentEntry)
+            val stationViewModel: StationViewModel = sharedActivityViewModel()
             val bookingViewModel: BookingViewModel = viewModel(parentEntry)
             val state = bookingViewModel.createBookingState
 
