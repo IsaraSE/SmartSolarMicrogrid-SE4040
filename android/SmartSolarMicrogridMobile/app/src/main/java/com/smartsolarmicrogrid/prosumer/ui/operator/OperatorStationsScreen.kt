@@ -9,11 +9,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.*
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -107,6 +116,54 @@ fun OperatorStationsScreen(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Map / List Toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .height(48.dp)
+                        .background(Color(0xFFF5F5F5), RoundedCornerShape(12.dp))
+                        .padding(4.dp)
+                ) {
+                    // List Toggle
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (!stationViewModel.isMapView) Color.White else Color.Transparent)
+                            .clickable { stationViewModel.isMapView = false },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.FormatListBulleted, contentDescription = null, tint = if (!stationViewModel.isMapView) greenBg else Color.Gray, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("List", color = if (!stationViewModel.isMapView) greenBg else Color.Gray, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    // Map Toggle
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (stationViewModel.isMapView) greenBg else Color.Transparent)
+                            .clickable { stationViewModel.isMapView = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Map, contentDescription = null, tint = if (stationViewModel.isMapView) Color.White else Color.Gray, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Map", color = if (stationViewModel.isMapView) Color.White else Color.Gray, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 // Station List
                 when (state) {
                     is StationListState.Loading -> {
@@ -125,18 +182,52 @@ fun OperatorStationsScreen(
                                 Text("No stations found.", color = Color.Gray, modifier = Modifier.padding(top = 40.dp))
                             }
                         } else {
-                            LazyColumn(
-                                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                items(filteredStations) { station ->
-                                    OperatorStationCard(
-                                        station = station,
-                                        onClick = { 
-                                            stationViewModel.selectStationAndLoadAllSlots(station)
-                                            onStationSelected()
+                            if (stationViewModel.isMapView) {
+                                // Map View
+                                val sriLanka = LatLng(7.8731, 80.7718)
+                                val cameraPositionState = rememberCameraPositionState {
+                                    position = CameraPosition.fromLatLngZoom(sriLanka, 7f)
+                                }
+                                val context = androidx.compose.ui.platform.LocalContext.current
+                                Box(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp).padding(bottom = 24.dp).clip(RoundedCornerShape(16.dp))) {
+                                    GoogleMap(
+                                        modifier = Modifier.fillMaxSize(),
+                                        cameraPositionState = cameraPositionState
+                                    ) {
+                                        filteredStations.forEach { station ->
+                                            val isOnline = station.status.uppercase() == "ACTIVE" || station.status.uppercase() == "AVAILABLE" || station.status == "0"
+
+                                            Marker(
+                                                state = MarkerState(position = LatLng(station.latitude, station.longitude)),
+                                                title = station.stationName,
+                                                snippet = if (isOnline) "${station.capacity} kW" else "Currently Inactive",
+                                                icon = com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker(
+                                                    if (isOnline) com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_GREEN 
+                                                    else com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_RED
+                                                ),
+                                                onClick = {
+                                                    stationViewModel.selectStationAndLoadAllSlots(station)
+                                                    onStationSelected()
+                                                    true
+                                                }
+                                            )
                                         }
-                                    )
+                                    }
+                                }
+                            } else {
+                                LazyColumn(
+                                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 100.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    items(filteredStations) { station ->
+                                        OperatorStationCard(
+                                            station = station,
+                                            onClick = { 
+                                                stationViewModel.selectStationAndLoadAllSlots(station)
+                                                onStationSelected()
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
