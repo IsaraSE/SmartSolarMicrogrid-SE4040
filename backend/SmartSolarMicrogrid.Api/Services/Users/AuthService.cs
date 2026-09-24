@@ -37,6 +37,12 @@ public class AuthService : IAuthService
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
         
+        // Block Prosumers from logging in with an email
+        if (user != null && user.Role == UserRole.PROSUMER)
+        {
+            return (false, "Prosumers must log in using their NIC.", null);
+        }
+
         // Check by NIC if email not found
         if (user == null)
         {
