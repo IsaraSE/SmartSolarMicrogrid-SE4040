@@ -2,9 +2,9 @@
  * File Name: ReservationsController.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Controller for shared web/mobile reservation management.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of ReservationsController.cs
+ * Date: 2026-09-22
  */
 
 using System.Security.Claims;
@@ -34,6 +34,7 @@ public class ReservationsController : ControllerBase
     [HttpGet("search")]
     public async Task<IActionResult> GetReservations([FromQuery] string? nic, [FromQuery] string? stationId, [FromQuery] string? status, [FromQuery] DateTime? date)
     {
+        // Retrieves reservations data from the system.
         var role = User.FindFirstValue(ClaimTypes.Role);
         var userNic = User.FindFirstValue("nic");
 
@@ -54,6 +55,7 @@ public class ReservationsController : ControllerBase
     [Authorize(Roles = "PROSUMER,BACKOFFICE,GRID_OPERATOR")]
     public async Task<IActionResult> GetCurrentReservations(string prosumerNic)
     {
+        // Retrieves current reservations data from the system.
         if (!IsOwnNicOrPrivileged(prosumerNic))
         {
             return Forbid();
@@ -70,6 +72,7 @@ public class ReservationsController : ControllerBase
     [Authorize(Roles = "PROSUMER,BACKOFFICE,GRID_OPERATOR")]
     public async Task<IActionResult> GetPendingReservations(string prosumerNic)
     {
+        // Retrieves pending reservations data from the system.
         if (!IsOwnNicOrPrivileged(prosumerNic))
         {
             return Forbid();
@@ -86,6 +89,7 @@ public class ReservationsController : ControllerBase
     [Authorize(Roles = "PROSUMER,BACKOFFICE,GRID_OPERATOR")]
     public async Task<IActionResult> GetReservationHistory(string prosumerNic)
     {
+        // Retrieves reservation history data from the system.
         if (!IsOwnNicOrPrivileged(prosumerNic))
         {
             return Forbid();
@@ -100,6 +104,7 @@ public class ReservationsController : ControllerBase
     /// </summary>
     private bool IsOwnNicOrPrivileged(string prosumerNic)
     {
+        // Executes logic to is own nic or privileged.
         var role = User.FindFirstValue(ClaimTypes.Role);
         if (role == "BACKOFFICE" || role == "GRID_OPERATOR")
         {
@@ -115,6 +120,7 @@ public class ReservationsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetReservationById(string id)
     {
+        // Retrieves reservation by id data from the system.
         var reservation = await _reservationService.GetReservationByIdAsync(id);
         if (reservation == null)
         {
@@ -140,6 +146,7 @@ public class ReservationsController : ControllerBase
     [Authorize(Roles = "PROSUMER,BACKOFFICE,GRID_OPERATOR")]
     public async Task<IActionResult> CreateReservation([FromBody] CreateReservationDto request)
     {
+        // Handles the creation of reservation.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
@@ -180,6 +187,7 @@ public class ReservationsController : ControllerBase
     [Authorize(Roles = "PROSUMER,GRID_OPERATOR,BACKOFFICE")]
     public async Task<IActionResult> UpdateReservation(string id, [FromBody] UpdateReservationDto request)
     {
+        // Updates existing reservation records.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
@@ -209,6 +217,7 @@ public class ReservationsController : ControllerBase
     [Authorize(Roles = "PROSUMER,GRID_OPERATOR")]
     public async Task<IActionResult> CancelReservation(string id)
     {
+        // Executes logic to cancel reservation.
         var userNic = User.FindFirstValue("nic") ?? "";
         var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
         if (role == "PROSUMER" && string.IsNullOrEmpty(userNic))
@@ -233,6 +242,7 @@ public class ReservationsController : ControllerBase
     [Authorize(Roles = "GRID_OPERATOR")]
     public async Task<IActionResult> UpdateReservationStatus(string id, [FromBody] UpdateReservationStatusDto request)
     {
+        // Updates existing reservation status records.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
@@ -246,5 +256,20 @@ public class ReservationsController : ControllerBase
         }
 
         return Ok(ApiResponse<ReservationDto>.SuccessResponse(message, reservation));
+    }
+
+    [HttpPut("{id}/complete")]
+    [Authorize(Roles = "GRID_OPERATOR,BACKOFFICE")]
+    public async Task<IActionResult> CompleteReservation(string id)
+    {
+        // Completes the reservation process.
+        var (success, message, reservation) = await _reservationService.UpdateReservationStatusAsync(id, Models.Enums.Reservations.ReservationStatus.COMPLETED);
+        
+        if (!success)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(message));
+        }
+
+        return Ok(ApiResponse<ReservationDto>.SuccessResponse("Session completed successfully.", reservation));
     }
 }

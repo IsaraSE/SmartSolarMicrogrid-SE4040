@@ -2,9 +2,9 @@
  * File Name: DashboardStatsDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for dashboard statistics.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of DashboardStatsDto.cs
+ * Date: 2026-09-22
  */
 
 namespace SmartSolarMicrogrid.Api.Models.DTOs.Dashboard;

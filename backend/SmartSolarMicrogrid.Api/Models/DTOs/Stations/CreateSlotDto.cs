@@ -2,9 +2,9 @@
  * File Name: CreateSlotDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for creating a slot.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of CreateSlotDto.cs
+ * Date: 2026-09-17
  */
 
 using System.ComponentModel.DataAnnotations;

@@ -2,9 +2,9 @@
  * File Name: AuthService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for authentication logic including JWT generation.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of AuthService.cs
+ * Date: 2026-09-22
  */
 
 using System;
@@ -37,6 +37,12 @@ public class AuthService : IAuthService
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
         
+        // Block Prosumers from logging in with an email
+        if (user != null && user.Role == UserRole.PROSUMER)
+        {
+            return (false, "Prosumers must log in using their NIC.", null);
+        }
+
         // Check by NIC if email not found
         if (user == null)
         {

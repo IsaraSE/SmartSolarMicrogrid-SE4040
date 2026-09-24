@@ -2,9 +2,9 @@
  * File Name: UserDetailsRepository.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Repository implementation for UserDetails collection with index setup.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of UserDetailsRepository.cs
+ * Date: 2026-09-16
  */
 
 using MongoDB.Driver;
@@ -23,6 +23,7 @@ public class UserDetailsRepository : BaseRepository<UserDetail>, IUserDetailsRep
 
     private void CreateIndexes()
     {
+        // Handles the creation of indexes.
         try
         {
             // Unique index for Email
@@ -57,16 +58,19 @@ public class UserDetailsRepository : BaseRepository<UserDetail>, IUserDetailsRep
 
     public async Task<UserDetail?> GetByEmailAsync(string email)
     {
+        // Retrieves by email data from the system.
         return await _collection.Find(u => u.Email == email).FirstOrDefaultAsync();
     }
 
     public async Task<UserDetail?> GetByNicAsync(string nic)
     {
+        // Retrieves by nic data from the system.
         return await _collection.Find(u => u.Nic == nic).FirstOrDefaultAsync();
     }
 
     public async Task<UserDetail?> GetByPhoneAsync(string phone)
     {
+        // Retrieves by phone data from the system.
         return await _collection.Find(u => u.Phone == phone).FirstOrDefaultAsync();
     }
 }

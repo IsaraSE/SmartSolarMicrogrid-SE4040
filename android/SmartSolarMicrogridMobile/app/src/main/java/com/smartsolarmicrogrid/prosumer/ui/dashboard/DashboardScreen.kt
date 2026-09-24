@@ -1,5 +1,6 @@
 package com.smartsolarmicrogrid.prosumer.ui.dashboard
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -47,12 +50,16 @@ fun DashboardScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SolarGreenDark)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0xFF145A32), SolarGreenDark, SolarGreen)
+                )
+            )
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Top Header (Green Area)
+            // Top Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -61,24 +68,34 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.WbSunny, contentDescription = null, tint = SolarAmber, modifier = Modifier.size(28.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = androidx.compose.ui.res.painterResource(id = com.smartsolarmicrogrid.prosumer.R.drawable.heliogrid_logo),
+                            contentDescription = "HelioGrid Logo",
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("Smart Solar Microgrid", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Prosumer Portal", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                        Text("HelioGrid", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text("Prosumer Portal", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     }
                 }
                 
-                Box(contentAlignment = Alignment.TopEnd) {
-                    Icon(Icons.Filled.Notifications, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(Color.White) // Mockup shows a white bell with no red dot, or maybe a white bell? Wait, mockup 2 has a white bell with no red dot.
-                            // Actually it looks like a white bell. I'll just leave it as white bell.
-                            // Oh wait, the previous mockup had a red dot. Let's just remove the red dot.
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.Notifications, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
                 }
             }
 
@@ -143,7 +160,7 @@ fun DashboardScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(28.dp))
 
                         // Stats Grid (3 cards)
                         Row(
@@ -153,28 +170,28 @@ fun DashboardScreen(
                             StatCardV2(
                                 icon = Icons.Filled.AccessTime,
                                 value = data.pendingCount.toString(),
-                                label = "Pending\nReservations",
-                                bgColor = SolarAmberLight,
+                                label = "Pending",
+                                bgColor = Color(0xFFFFF8E1),
                                 iconColor = Color.White,
-                                iconBgColor = SolarAmber,
+                                iconBgColor = Color(0xFFFFB300),
                                 modifier = Modifier.weight(1f)
                             )
                             StatCardV2(
                                 icon = Icons.Filled.Event,
                                 value = data.upcomingCount.toString(),
-                                label = "Upcoming\nReservations",
-                                bgColor = SolarGreenLight,
+                                label = "Upcoming",
+                                bgColor = Color(0xFFE8F5E9),
                                 iconColor = Color.White,
-                                iconBgColor = SolarGreen,
+                                iconBgColor = Color(0xFF43A047),
                                 modifier = Modifier.weight(1f)
                             )
                             StatCardV2(
-                                icon = Icons.Filled.Check,
+                                icon = Icons.Filled.CheckCircle,
                                 value = data.completedCount.toString(),
-                                label = "Completed\nReservations",
-                                bgColor = SolarBlueLight,
+                                label = "Completed",
+                                bgColor = Color(0xFFE3F2FD),
                                 iconColor = Color.White,
-                                iconBgColor = SolarBlue,
+                                iconBgColor = Color(0xFF1E88E5),
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -182,42 +199,47 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.height(32.dp))
 
                         // Quick Actions
-                        Text("Quick Actions", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(horizontal = 24.dp))
+                        Text("Quick Actions", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E), modifier = Modifier.padding(horizontal = 24.dp))
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // Dark Green Button
+                            // Book a Slot - gradient button
                             Button(
                                 onClick = onNavigateToStations,
-                                colors = ButtonDefaults.buttonColors(containerColor = SolarGreenDark),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f).height(56.dp)
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                shape = RoundedCornerShape(16.dp),
+                                contentPadding = PaddingValues(),
+                                modifier = Modifier.weight(1f).height(56.dp).shadow(4.dp, RoundedCornerShape(16.dp))
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                    Icon(Icons.Filled.EventNote, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Book a Slot", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                Box(
+                                    modifier = Modifier.fillMaxSize().background(
+                                        Brush.horizontalGradient(listOf(SolarGreenDark, SolarGreen)),
+                                        RoundedCornerShape(16.dp)
+                                    ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 16.dp)) {
+                                        Icon(Icons.Filled.EventNote, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Book a Slot", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                             
-                            // Light Green Button
-                            Button(
+                            // Find Stations - outlined style
+                            OutlinedButton(
                                 onClick = onNavigateToMap,
-                                colors = ButtonDefaults.buttonColors(containerColor = SolarGreenLight),
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.5.dp, SolarGreen),
                                 modifier = Modifier.weight(1f).height(56.dp)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                    Icon(Icons.Filled.LocationOn, contentDescription = null, tint = SolarGreenDark, modifier = Modifier.size(20.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Filled.LocationOn, contentDescription = null, tint = SolarGreen, modifier = Modifier.size(20.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Find Stations", color = SolarGreenDark, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = SolarGreenDark, modifier = Modifier.size(20.dp))
+                                    Text("Find Stations", color = SolarGreen, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -280,23 +302,29 @@ fun SectionHeader(title: String, actionText: String, onAction: () -> Unit) {
 @Composable
 fun StatCardV2(icon: ImageVector, value: String, label: String, bgColor: Color, iconColor: Color, iconBgColor: Color, modifier: Modifier) {
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = modifier.height(130.dp)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = modifier
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
+            modifier = Modifier.fillMaxSize().padding(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(iconBgColor), contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(20.dp))
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = iconBgColor, modifier = Modifier.size(22.dp))
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(label, fontSize = 11.sp, color = Color.DarkGray, lineHeight = 14.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(value, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF1A1A2E))
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(label, fontSize = 11.sp, color = Color(0xFF94A3B8), fontWeight = FontWeight.Medium, lineHeight = 14.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
 }
@@ -304,9 +332,9 @@ fun StatCardV2(icon: ImageVector, value: String, label: String, bgColor: Color, 
 @Composable
 fun UpcomingReservationCardV2(reservation: Reservation, onClick: () -> Unit) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -317,49 +345,68 @@ fun UpcomingReservationCardV2(reservation: Reservation, onClick: () -> Unit) {
                     "ST003" -> "Galle Solar Hub"
                     else -> "Station ${reservation.stationId}"
                 }
-                Text(stationName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                Text(stationName, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E))
                 StatusBadge(status = reservation.status)
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            // Info chips row
             val formattedDate = try {
                 LocalDate.parse(reservation.bookingDate).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
             } catch(e:Exception) { reservation.bookingDate }
             
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(formattedDate, fontSize = 14.sp, color = Color.DarkGray)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Date chip
+                Card(
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = SolarGreen, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(formattedDate, fontSize = 13.sp, color = Color(0xFF475569), fontWeight = FontWeight.Medium)
+                    }
                 }
-                Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            val formattedStart = try {
-                val parts = reservation.startTime?.split(":") ?: listOf("0", "0")
-                val h = parts[0].toInt()
-                val m = parts[1]
-                val ap = if (h >= 12) "PM" else "AM"
-                val dh = if (h == 0) 12 else if (h > 12) h - 12 else h
-                "$dh:$m $ap"
-            } catch (e: Exception) { reservation.startTime ?: "" }
+                
+                // Time chip
+                val formattedStart = try {
+                    val parts = reservation.startTime?.split(":") ?: listOf("0", "0")
+                    val h = parts[0].toInt()
+                    val m = parts[1]
+                    val ap = if (h >= 12) "PM" else "AM"
+                    val dh = if (h == 0) 12 else if (h > 12) h - 12 else h
+                    "$dh:$m $ap"
+                } catch (e: Exception) { reservation.startTime ?: "" }
 
-            val formattedEnd = try {
-                val parts = reservation.endTime?.split(":") ?: listOf("0", "0")
-                val h = parts[0].toInt()
-                val m = parts[1]
-                val ap = if (h >= 12) "PM" else "AM"
-                val dh = if (h == 0) 12 else if (h > 12) h - 12 else h
-                "$dh:$m $ap"
-            } catch (e: Exception) { reservation.endTime ?: "" }
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.AccessTime, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("$formattedStart - $formattedEnd", fontSize = 14.sp, color = Color.DarkGray)
+                val formattedEnd = try {
+                    val parts = reservation.endTime?.split(":") ?: listOf("0", "0")
+                    val h = parts[0].toInt()
+                    val m = parts[1]
+                    val ap = if (h >= 12) "PM" else "AM"
+                    val dh = if (h == 0) 12 else if (h > 12) h - 12 else h
+                    "$dh:$m $ap"
+                } catch (e: Exception) { reservation.endTime ?: "" }
+                
+                Card(
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Filled.AccessTime, contentDescription = null, tint = SolarGreen, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("$formattedStart - $formattedEnd", fontSize = 13.sp, color = Color(0xFF475569), fontWeight = FontWeight.Medium)
+                    }
+                }
             }
         }
     }
@@ -368,14 +415,18 @@ fun UpcomingReservationCardV2(reservation: Reservation, onClick: () -> Unit) {
 @Composable
 fun ActivityRowV2(item: ActivityItem, onClick: () -> Unit = {}) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val bgColor = when (item.status.uppercase()) {
-            "PENDING" -> SolarAmber
-            "CANCELLED" -> Color(0xFFE53935) // Red
-            "COMPLETED" -> Color(0xFF1976D2) // Blue
-            else -> SolarGreen
+        val (iconColor, iconBgColor) = when (item.status.uppercase()) {
+            "PENDING" -> Pair(Color(0xFFFF9800), Color(0xFFFFF3E0))
+            "CANCELLED" -> Pair(Color(0xFFE53935), Color(0xFFFFEBEE))
+            "COMPLETED" -> Pair(Color(0xFF1976D2), Color(0xFFE3F2FD))
+            else -> Pair(SolarGreen, Color(0xFFE8F5E9))
         }
         
         val icon = when (item.status.uppercase()) {
@@ -386,25 +437,23 @@ fun ActivityRowV2(item: ActivityItem, onClick: () -> Unit = {}) {
         }
 
         Box(
-            modifier = Modifier.size(44.dp).clip(CircleShape).background(bgColor),
+            modifier = Modifier
+                .size(46.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(iconBgColor),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
+            Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(22.dp))
         }
         
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(14.dp))
         
         Column(modifier = Modifier.weight(1f)) {
-            Text(item.title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(item.subtitle, fontSize = 13.sp, color = Color.Gray)
+            Text(item.title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(item.subtitle, fontSize = 13.sp, color = Color(0xFF94A3B8))
         }
         
-        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color.LightGray)
+        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Color(0xFFCBD5E1), modifier = Modifier.size(20.dp))
     }
 }

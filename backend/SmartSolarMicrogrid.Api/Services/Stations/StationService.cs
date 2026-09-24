@@ -2,9 +2,9 @@
  * File Name: StationService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for solar station management logic.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of StationService.cs
+ * Date: 2026-09-23
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;
@@ -27,18 +27,21 @@ public class StationService : IStationService
 
     public async Task<IEnumerable<StationDto>> GetAllStationsAsync()
     {
+        // Retrieves all stations data from the system.
         var stations = await _stationRepository.GetAllAsync();
         return stations.Select(MapToDto);
     }
 
     public async Task<StationDto?> GetStationByIdAsync(string id)
     {
+        // Retrieves station by id data from the system.
         var station = await _stationRepository.GetByIdAsync(id);
         return station != null ? MapToDto(station) : null;
     }
 
     public async Task<StationDto> CreateStationAsync(CreateStationDto request)
     {
+        // Handles the creation of station.
         var station = new SolarStationInfo
         {
             StationId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
@@ -112,6 +115,7 @@ public class StationService : IStationService
 
     public async Task<bool> DeleteStationAsync(string id)
     {
+        // Safely removes station from the database.
         var station = await _stationRepository.GetByIdAsync(id);
         if (station == null) return false;
 
@@ -128,6 +132,7 @@ public class StationService : IStationService
 
     private static StationDto MapToDto(SolarStationInfo station)
     {
+        // Maps to dto to the corresponding DTO.
         return new StationDto
         {
             StationId = station.StationId!,

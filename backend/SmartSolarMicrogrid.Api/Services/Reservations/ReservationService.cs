@@ -2,9 +2,9 @@
  * File Name: ReservationService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for reservation logic including business rules.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of ReservationService.cs
+ * Date: 2026-09-21
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;
@@ -30,6 +30,7 @@ public class ReservationService : IReservationService
 
     public async Task<IEnumerable<ReservationDto>> GetReservationsAsync(string? nic, string? stationId, string? status, DateTime? date)
     {
+        // Retrieves reservations data from the system.
         var all = await _reservationRepository.GetAllAsync();
         
         var filtered = all.AsEnumerable();
@@ -68,6 +69,7 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetCurrentReservationsByNicAsync(string nic)
     {
+        // Retrieves current reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         var now = DateTime.UtcNow;
         return reservations
@@ -81,6 +83,7 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetPendingReservationsByNicAsync(string nic)
     {
+        // Retrieves pending reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         return reservations
             .Where(r => r.Status == ReservationStatus.PENDING)
@@ -93,6 +96,7 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetHistoryReservationsByNicAsync(string nic)
     {
+        // Retrieves history reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         var now = DateTime.UtcNow;
         return reservations
@@ -105,6 +109,7 @@ public class ReservationService : IReservationService
 
     public async Task<ReservationDto?> GetReservationByIdAsync(string id)
     {
+        // Retrieves reservation by id data from the system.
         var reservation = await _reservationRepository.GetByIdAsync(id);
         if (reservation == null) return null;
         
@@ -132,11 +137,11 @@ public class ReservationService : IReservationService
             return (false, "Selected slot is not available.", null);
         }
 
-        // Rule: Booking must be scheduled within 7 days from today.
+        // Rule: Booking must be in the future and within 7 days from today.
         var maxDate = DateTime.UtcNow.Date.AddDays(7);
-        if (slot.StartDateTime.Date < DateTime.UtcNow.Date || slot.StartDateTime.Date > maxDate)
+        if (slot.StartDateTime < DateTime.UtcNow || slot.StartDateTime.Date > maxDate)
         {
-            return (false, "Reservation date must be within the next 7 days.", null);
+            return (false, "Reservation must be in the future and within the next 7 days.", null);
         }
 
         // Check if the slot is already booked by another active reservation (PENDING or APPROVED)
@@ -336,9 +341,9 @@ public class ReservationService : IReservationService
 
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationStatusAsync(string id, ReservationStatus newStatus)
     {
-        if (newStatus == ReservationStatus.COMPLETED || newStatus == ReservationStatus.CANCELLED)
+        if (newStatus == ReservationStatus.CANCELLED)
         {
-            return (false, "Status must be updated via the dedicated cancellation endpoint or QR verification flow.", null);
+            return (false, "Status must be updated via the dedicated cancellation endpoint.", null);
         }
 
         var reservation = await _reservationRepository.GetByIdAsync(id);
@@ -388,6 +393,7 @@ public class ReservationService : IReservationService
 
     private static ReservationDto MapToDto(EnergyReservation reservation)
     {
+        // Maps to dto to the corresponding DTO.
         return new ReservationDto
         {
             ReservationId = reservation.ReservationId!,
@@ -404,5 +410,22 @@ public class ReservationService : IReservationService
             CompletedAt = reservation.CompletedAt,
             Notes = reservation.Notes
         };
+    }
+
+    public async Task<ReservationDto?> GetReservationByQrAsync(string qrReference)
+    {
+        // Retrieves reservation by qr data from the system.
+        var reservation = await _reservationRepository.GetByQrReferenceAsync(qrReference);
+        if (reservation == null) return null;
+        
+        var dto = MapToDto(reservation);
+        var slot = await _slotRepository.GetByIdAsync(dto.SlotId);
+        dto.SlotName = slot?.SlotName ?? "Unknown Slot";
+        dto.EnergyAmount = slot?.Capacity ?? 0;
+        
+        var station = await _stationRepository.GetByIdAsync(dto.StationId);
+        dto.StationName = station?.StationName ?? "Unknown Station";
+        
+        return dto;
     }
 }

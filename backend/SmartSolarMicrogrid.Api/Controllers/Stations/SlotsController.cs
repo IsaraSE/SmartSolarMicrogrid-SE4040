@@ -2,9 +2,9 @@
  * File Name: SlotsController.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Controller for solar station slots operations.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of SlotsController.cs
+ * Date: 2026-09-22
  */
 
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +33,7 @@ public class SlotsController : ControllerBase
     [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR")]
     public async Task<IActionResult> GetAllSlots()
     {
+        // Retrieves all slots data from the system.
         var slots = await _slotService.GetAllSlotsAsync();
         return Ok(ApiResponse<IEnumerable<SlotDto>>.SuccessResponse("All slots retrieved successfully.", slots));
     }
@@ -44,6 +45,7 @@ public class SlotsController : ControllerBase
     [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR")]
     public async Task<IActionResult> GetSlotsByStationId(string stationId)
     {
+        // Retrieves slots by station id data from the system.
         var slots = await _slotService.GetSlotsByStationIdAsync(stationId);
         return Ok(ApiResponse<IEnumerable<SlotDto>>.SuccessResponse("Slots retrieved successfully.", slots));
     }
@@ -55,6 +57,7 @@ public class SlotsController : ControllerBase
     [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR,PROSUMER")]
     public async Task<IActionResult> GetAvailableSlotsByStationId(string stationId)
     {
+        // Retrieves available slots by station id data from the system.
         var slots = await _slotService.GetAvailableSlotsByStationIdAsync(stationId);
         return Ok(ApiResponse<IEnumerable<SlotDto>>.SuccessResponse("Available slots retrieved successfully.", slots));
     }
@@ -66,6 +69,7 @@ public class SlotsController : ControllerBase
     [Authorize(Roles = "GRID_OPERATOR")]
     public async Task<IActionResult> CreateSlot([FromBody] CreateSlotDto request)
     {
+        // Handles the creation of slot.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
@@ -82,6 +86,7 @@ public class SlotsController : ControllerBase
     [Authorize(Roles = "GRID_OPERATOR")]
     public async Task<IActionResult> UpdateSlot(string id, [FromBody] UpdateSlotDto request)
     {
+        // Updates existing slot records.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
@@ -103,6 +108,7 @@ public class SlotsController : ControllerBase
     [Authorize(Roles = "GRID_OPERATOR")]
     public async Task<IActionResult> DeleteSlot(string id)
     {
+        // Safely removes slot from the database.
         try
         {
             var success = await _slotService.DeleteSlotAsync(id);

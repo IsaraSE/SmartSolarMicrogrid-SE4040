@@ -2,9 +2,9 @@
  * File Name: IEnergyBookingSlotRepository.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Repository interface for EnergyBookingSlots collection.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of IEnergyBookingSlotRepository.cs
+ * Date: 2026-09-20
  */
 
 using SmartSolarMicrogrid.Api.Models.Entities;

@@ -1,5 +1,6 @@
 package com.smartsolarmicrogrid.prosumer.ui.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -47,64 +48,50 @@ fun ProfileScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     if (showLogoutDialog) {
-        AlertDialog(
+        com.smartsolarmicrogrid.prosumer.ui.components.HelioDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Log Out") },
-            text = { Text("Are you sure you want to log out of your account?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutDialog = false
-                        profileViewModel.logout(onDone = onDeactivated)
-                    }
-                ) {
-                    Text("Log Out", color = MaterialTheme.colorScheme.error)
-                }
+            title = "Log Out",
+            message = "Are you sure you want to log out of your account?",
+            type = com.smartsolarmicrogrid.prosumer.ui.components.HelioDialogType.WARNING,
+            icon = androidx.compose.material.icons.Icons.Filled.Logout,
+            confirmText = "Log Out",
+            dismissText = "Cancel",
+            onConfirm = {
+                showLogoutDialog = false
+                profileViewModel.logout(onDone = onDeactivated)
             },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { showLogoutDialog = false }
         )
     }
 
     if (showDeactivateDialog) {
-        AlertDialog(
+        com.smartsolarmicrogrid.prosumer.ui.components.HelioDialog(
             onDismissRequest = { showDeactivateDialog = false },
-            title = { Text("Deactivate Account") },
-            text = { Text("Are you sure you want to deactivate your account? Once deactivated, you will not be able to log in and your account can only be reactivated by a Backoffice officer.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeactivateDialog = false
-                        profileViewModel.deactivateAccount(
-                            onDone = onDeactivated,
-                            onError = { err -> errorMessage = err }
-                        )
-                    }
-                ) {
-                    Text("Deactivate", color = MaterialTheme.colorScheme.error)
-                }
+            title = "Deactivate Account",
+            message = "Are you sure you want to deactivate your account? Once deactivated, you will not be able to log in and your account can only be reactivated by a Backoffice officer.",
+            type = com.smartsolarmicrogrid.prosumer.ui.components.HelioDialogType.DANGER,
+            confirmText = "Deactivate",
+            dismissText = "Cancel",
+            onConfirm = {
+                showDeactivateDialog = false
+                profileViewModel.deactivateAccount(
+                    onDone = onDeactivated,
+                    onError = { err -> errorMessage = err }
+                )
             },
-            dismissButton = {
-                TextButton(onClick = { showDeactivateDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { showDeactivateDialog = false }
         )
     }
 
     errorMessage?.let { error ->
-        AlertDialog(
+        com.smartsolarmicrogrid.prosumer.ui.components.HelioDialog(
             onDismissRequest = { errorMessage = null },
-            title = { Text("Cannot Deactivate") },
-            text = { Text(error) },
-            confirmButton = {
-                TextButton(onClick = { errorMessage = null }) {
-                    Text("OK")
-                }
-            }
+            title = "Cannot Deactivate",
+            message = error,
+            type = com.smartsolarmicrogrid.prosumer.ui.components.HelioDialogType.DANGER,
+            confirmText = "OK",
+            dismissText = null,
+            onConfirm = { errorMessage = null }
         )
     }
 
@@ -128,15 +115,14 @@ fun ProfileScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                     Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        Icons.Filled.WbSunny,
-                        contentDescription = "Sun",
-                        tint = Color(0xFFFFB300),
-                        modifier = Modifier.size(28.dp)
+                    Image(
+                        painter = androidx.compose.ui.res.painterResource(id = com.smartsolarmicrogrid.prosumer.R.drawable.heliogrid_logo),
+                        contentDescription = "HelioGrid Logo",
+                        modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("Smart Solar Microgrid", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("HelioGrid", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Text("Prosumer Portal", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                     }
                 }

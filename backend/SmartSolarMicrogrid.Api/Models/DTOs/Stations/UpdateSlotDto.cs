@@ -2,9 +2,9 @@
  * File Name: UpdateSlotDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for updating a slot.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of UpdateSlotDto.cs
+ * Date: 2026-09-19
  */
 
 using System.ComponentModel.DataAnnotations;

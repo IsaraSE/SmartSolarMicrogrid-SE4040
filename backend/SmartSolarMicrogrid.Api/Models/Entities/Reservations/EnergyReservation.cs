@@ -1,3 +1,12 @@
+/*
+ * File Name: EnergyReservation.cs
+ * Project: Smart Solar Microgrid Trading System
+ * Module: SE4040 Enterprise Application Development
+ * Author: IT22194862
+ * Description: Implementation of EnergyReservation.cs
+ * Date: 2026-09-17
+ */
+
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using SmartSolarMicrogrid.Api.Models.Enums;

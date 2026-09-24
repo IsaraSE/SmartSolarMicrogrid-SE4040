@@ -2,9 +2,9 @@
  * File Name: SlotService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for slot management logic.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of SlotService.cs
+ * Date: 2026-09-19
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;
@@ -39,12 +39,14 @@ public class SlotService : ISlotService
 
     public async Task<IEnumerable<SlotDto>> GetSlotsByStationIdAsync(string stationId)
     {
+        // Retrieves slots by station id data from the system.
         var slots = await _slotRepository.GetByStationIdAsync(stationId);
         return slots.Select(MapToDto);
     }
 
     public async Task<IEnumerable<SlotDto>> GetAvailableSlotsByStationIdAsync(string stationId)
     {
+        // Retrieves available slots by station id data from the system.
         var slots = await _slotRepository.GetByStationIdAsync(stationId);
         
         // Fetch all active reservations for this station
@@ -62,6 +64,7 @@ public class SlotService : ISlotService
 
     public async Task<SlotDto> CreateSlotAsync(CreateSlotDto request)
     {
+        // Handles the creation of slot.
         var station = await _stationRepository.GetByIdAsync(request.StationId);
         if (station == null)
             throw new InvalidOperationException("Station not found.");
@@ -99,6 +102,7 @@ public class SlotService : ISlotService
 
     public async Task<SlotDto?> UpdateSlotAsync(string id, UpdateSlotDto request)
     {
+        // Updates existing slot records.
         var slot = await _slotRepository.GetByIdAsync(id);
         if (slot == null) return null;
 
@@ -114,6 +118,7 @@ public class SlotService : ISlotService
 
     public async Task<bool> DeleteSlotAsync(string id)
     {
+        // Safely removes slot from the database.
         var slot = await _slotRepository.GetByIdAsync(id);
         if (slot == null) return false;
 
@@ -128,6 +133,7 @@ public class SlotService : ISlotService
 
     private static SlotDto MapToDto(EnergyBookingSlot slot)
     {
+        // Maps to dto to the corresponding DTO.
         return new SlotDto
         {
             SlotId = slot.SlotId!,

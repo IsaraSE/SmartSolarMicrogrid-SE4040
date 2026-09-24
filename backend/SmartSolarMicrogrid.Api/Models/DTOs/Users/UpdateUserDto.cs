@@ -2,9 +2,9 @@
  * File Name: UpdateUserDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for updating a user.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of UpdateUserDto.cs
+ * Date: 2026-09-23
  */
 
 using System.ComponentModel.DataAnnotations;

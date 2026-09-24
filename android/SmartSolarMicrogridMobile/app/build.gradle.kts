@@ -65,5 +65,6 @@ dependencies {
     implementation(libs.zxing.android.embedded)   // QR scanning (camera)
     implementation(libs.maps.compose)             // Google Maps for Compose
     implementation(libs.play.services.maps)       // Google Maps SDK
+    implementation("com.google.android.gms:play-services-location:21.1.0")
 
 }

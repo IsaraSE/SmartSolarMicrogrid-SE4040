@@ -2,9 +2,9 @@
  * File Name: ReservationDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for reservation response.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of ReservationDto.cs
+ * Date: 2026-09-23
  */
 
 using SmartSolarMicrogrid.Api.Models.Enums;

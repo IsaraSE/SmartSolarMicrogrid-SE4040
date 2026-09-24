@@ -2,9 +2,9 @@
  * File Name: ExceptionHandlingMiddleware.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Global exception handling middleware to catch unhandled errors and format them as ApiResponse.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of ExceptionHandlingMiddleware.cs
+ * Date: 2026-09-23
  */
 
 using System.Net;
@@ -31,6 +31,7 @@ public class ExceptionHandlingMiddleware
 
     public async Task InvokeAsync(HttpContext httpContext)
     {
+        // Executes logic to invoke .
         try
         {
             await _next(httpContext);
@@ -44,6 +45,7 @@ public class ExceptionHandlingMiddleware
 
     private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
+        // Executes logic to handle exception.
         context.Response.ContentType = "application/json";
         
         // Default to Internal Server Error
@@ -83,6 +85,7 @@ public static class ExceptionHandlingMiddlewareExtensions
 {
     public static IApplicationBuilder UseGlobalExceptionHandling(this IApplicationBuilder builder)
     {
+        // Executes logic to use global exception handling.
         return builder.UseMiddleware<ExceptionHandlingMiddleware>();
     }
 }

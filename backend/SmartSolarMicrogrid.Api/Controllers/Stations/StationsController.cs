@@ -2,9 +2,9 @@
  * File Name: StationsController.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Controller for solar station operations.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of StationsController.cs
+ * Date: 2026-09-21
  */
 
 using Microsoft.AspNetCore.Authorization;
@@ -35,6 +35,7 @@ public class StationsController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetAllStations()
     {
+        // Retrieves all stations data from the system.
         var stations = await _stationService.GetAllStationsAsync();
         return Ok(ApiResponse<IEnumerable<StationDto>>.SuccessResponse("Stations retrieved successfully.", stations));
     }
@@ -45,6 +46,7 @@ public class StationsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetStationById(string id)
     {
+        // Retrieves station by id data from the system.
         var station = await _stationService.GetStationByIdAsync(id);
         if (station == null)
         {
@@ -60,6 +62,7 @@ public class StationsController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetAvailableSlots(string id)
     {
+        // Retrieves available slots data from the system.
         var slots = await _slotService.GetAvailableSlotsByStationIdAsync(id);
         return Ok(ApiResponse<IEnumerable<SlotDto>>.SuccessResponse("Available slots retrieved successfully.", slots));
     }
@@ -71,6 +74,7 @@ public class StationsController : ControllerBase
     [Authorize(Roles = "BACKOFFICE")]
     public async Task<IActionResult> CreateStation([FromBody] CreateStationDto request)
     {
+        // Handles the creation of station.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
@@ -87,6 +91,7 @@ public class StationsController : ControllerBase
     [Authorize(Roles = "BACKOFFICE")]
     public async Task<IActionResult> UpdateStation(string id, [FromBody] UpdateStationDto request)
     {
+        // Updates existing station records.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
@@ -107,6 +112,7 @@ public class StationsController : ControllerBase
     [Authorize(Roles = "BACKOFFICE")]
     public async Task<IActionResult> DeactivateStation(string id)
     {
+        // Deactivates the specified station.
         var (success, message, station) = await _stationService.DeactivateStationAsync(id);
         if (!success)
         {

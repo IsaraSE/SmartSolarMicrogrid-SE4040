@@ -2,9 +2,9 @@
  * File Name: IReservationService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service interface for reservation logic including business rules.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of IReservationService.cs
+ * Date: 2026-09-15
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;
@@ -23,4 +23,5 @@ public interface IReservationService
     Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationAsync(string id, string prosumerNic, string role, UpdateReservationDto request);
     Task<(bool Success, string Message)> CancelReservationAsync(string id, string prosumerNic, string role);
     Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationStatusAsync(string id, ReservationStatus newStatus);
+    Task<ReservationDto?> GetReservationByQrAsync(string qrReference);
 }

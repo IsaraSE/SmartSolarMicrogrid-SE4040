@@ -46,3 +46,20 @@ data class Slot(
         }
     }
 }
+
+data class UpdateSlotRequest(
+    val startDateTime: String,
+    val endDateTime: String,
+    val status: Int,
+    val capacity: Double,
+    val notes: String? = null
+)
+
+data class CreateSlotRequest(
+    val stationId: String,
+    val slotName: String,
+    val startDateTime: String,
+    val endDateTime: String,
+    val capacity: Double,
+    val notes: String? = null
+)

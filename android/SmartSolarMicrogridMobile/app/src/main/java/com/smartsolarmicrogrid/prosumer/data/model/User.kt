@@ -23,6 +23,13 @@ data class RegisterRequest(
     val password: String
 )
 
+data class UpdateProfileRequest(
+    val fullName: String,
+    val email: String,
+    val phone: String,
+    val address: String
+)
+
 data class ChangePasswordRequest(
     val currentPassword: String,
     val newPassword: String
@@ -36,4 +43,17 @@ data class Prosumer(
     val address: String,
     val accountStatus: String,
     val createdAt: String? = null
+)
+
+data class UserDto(
+    val userId: String,
+    val nic: String?,
+    val fullName: String,
+    val email: String,
+    val phone: String,
+    val role: String,
+    val accountStatus: String,
+    val address: String,
+    val additionalInfo: String?,
+    val createdAt: String
 )
