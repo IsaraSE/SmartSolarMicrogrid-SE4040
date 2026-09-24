@@ -1,5 +1,6 @@
 package com.smartsolarmicrogrid.prosumer.ui.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -113,13 +114,13 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(44.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(SolarAmber.copy(alpha = 0.25f)),
+                            .background(Color.White.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Filled.WbSunny,
-                            contentDescription = null,
-                            tint = SolarAmber
+                        Image(
+                            painter = androidx.compose.ui.res.painterResource(id = com.smartsolarmicrogrid.prosumer.R.drawable.heliogrid_logo),
+                            contentDescription = "HelioGrid Logo",
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
