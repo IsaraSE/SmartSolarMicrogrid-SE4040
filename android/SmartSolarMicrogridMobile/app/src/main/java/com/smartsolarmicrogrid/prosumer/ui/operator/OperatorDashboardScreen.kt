@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,8 +27,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun OperatorDashboardScreen(
     onScanQr: () -> Unit,
     onViewReservations: () -> Unit,
+    onViewAllActivity: () -> Unit,
     onViewMap: () -> Unit,
     onLogout: () -> Unit,
+    onNavigateToDetails: (com.smartsolarmicrogrid.prosumer.data.model.Reservation) -> Unit,
     operatorViewModel: OperatorViewModel = viewModel()
 ) {
     val greenBg = Color(0xFF0C8A44)
@@ -177,13 +180,12 @@ fun OperatorDashboardScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Filled.CalendarToday, contentDescription = null, tint = Color(0xFF2196F3), modifier = Modifier.size(24.dp))
-                                    Icon(Icons.Filled.FlashOn, contentDescription = null, tint = Color(0xFF2196F3), modifier = Modifier.size(12.dp).offset(y = 2.dp))
+                                    Icon(Icons.Filled.BatteryChargingFull, contentDescription = null, tint = Color(0xFF2196F3), modifier = Modifier.size(24.dp))
                                 }
                             }
                         },
-                        value = operatorViewModel.completedCount.toString(),
-                        label = "Today's Sessions",
+                        value = operatorViewModel.availableSlotCount.toString(),
+                        label = "Available Slots",
                         modifier = Modifier.weight(1f)
                     )
                     StatTile(
@@ -195,14 +197,52 @@ fun OperatorDashboardScreen(
                                     .background(Color(0xFFFFEBEE)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Filled.Warning, contentDescription = null, tint = Color(0xFFF44336), modifier = Modifier.size(28.dp))
+                                Icon(Icons.Filled.BatterySaver, contentDescription = null, tint = Color(0xFFF44336), modifier = Modifier.size(28.dp))
                             }
                         },
-                        value = "2", // Mock data
-                        label = "Alerts",
+                        value = operatorViewModel.reservedSlotCount.toString(),
+                        label = "Reserved Slots",
                         modifier = Modifier.weight(1f)
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Quick Actions Header
+            Text(
+                "Quick Actions",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1B1B1B),
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Quick Actions
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                QuickActionButton(
+                    icon = Icons.Filled.Map,
+                    text = "Station Map",
+                    color = Color(0xFF2196F3),
+                    bgColor = Color(0xFFE3F2FD),
+                    onClick = onViewMap,
+                    modifier = Modifier.weight(1f)
+                )
+                QuickActionButton(
+                    icon = Icons.Filled.PendingActions,
+                    text = "Pending Reservations",
+                    color = Color(0xFFFF9800),
+                    bgColor = Color(0xFFFFF3E0),
+                    onClick = onViewReservations,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -225,7 +265,8 @@ fun OperatorDashboardScreen(
                     "View All",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = greenBg
+                    color = greenBg,
+                    modifier = Modifier.clickable { onViewAllActivity() }
                 )
             }
 
@@ -235,34 +276,18 @@ fun OperatorDashboardScreen(
             Column(
                 modifier = Modifier.padding(horizontal = 20.dp)
             ) {
-                ActivityItem(
-                    icon = Icons.Filled.Person,
-                    iconBgColor = Color(0xFFE3F2FD),
-                    iconColor = Color(0xFF2196F3),
-                    title = "New reservation request",
-                    subtitle = "Kandy Solar Hub",
-                    time = "10:24 AM"
-                )
-                HorizontalDivider(color = Color(0xFFF0F0F0), modifier = Modifier.padding(vertical = 4.dp, horizontal = 12.dp))
+                operatorViewModel.recentActivity.forEachIndexed { index, item ->
+                    OperatorActivityRow(item) {
+                        onNavigateToDetails(item.reservation)
+                    }
+                    if (index < operatorViewModel.recentActivity.size - 1) {
+                        HorizontalDivider(color = Color(0xFFF0F0F0), modifier = Modifier.padding(vertical = 4.dp, horizontal = 12.dp))
+                    }
+                }
                 
-                ActivityItem(
-                    icon = Icons.Filled.CheckCircle,
-                    iconBgColor = Color(0xFFE8F5E9),
-                    iconColor = Color(0xFF4CAF50),
-                    title = "Reservation approved",
-                    subtitle = "Colombo Solar Hub",
-                    time = "09:15 AM"
-                )
-                HorizontalDivider(color = Color(0xFFF0F0F0), modifier = Modifier.padding(vertical = 4.dp, horizontal = 12.dp))
-                
-                ActivityItem(
-                    icon = Icons.Filled.Notifications,
-                    iconBgColor = Color(0xFFFFEBEE),
-                    iconColor = Color(0xFFF44336),
-                    title = "Station offline",
-                    subtitle = "Galle Solar Hub",
-                    time = "08:50 AM"
-                )
+                if (operatorViewModel.recentActivity.isEmpty()) {
+                    Text("No recent activity.", color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp), fontSize = 14.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -300,20 +325,28 @@ private fun StatTile(
 }
 
 @Composable
-private fun ActivityItem(
-    icon: ImageVector,
-    iconBgColor: Color,
-    iconColor: Color,
-    title: String,
-    subtitle: String,
-    time: String
-) {
+private fun OperatorActivityRow(item: OperatorActivityItem, onClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val (iconColor, iconBgColor) = when (item.status.uppercase()) {
+            "PENDING", "0" -> Pair(Color(0xFFFF9800), Color(0xFFFFF3E0)) // Amber
+            "CANCELLED" -> Pair(Color(0xFFE53935), Color(0xFFFFEBEE)) // Red
+            "COMPLETED", "2" -> Pair(Color(0xFF2196F3), Color(0xFFE3F2FD)) // Blue
+            else -> Pair(Color(0xFF4CAF50), Color(0xFFE8F5E9)) // Green
+        }
+        
+        val icon = when (item.status.uppercase()) {
+            "PENDING", "0" -> Icons.Filled.AccessTime
+            "CANCELLED" -> Icons.Filled.Close
+            "COMPLETED", "2" -> Icons.Filled.CheckCircle
+            else -> Icons.Filled.Check
+        }
+
         Box(
             modifier = Modifier
                 .size(48.dp)
@@ -325,9 +358,53 @@ private fun ActivityItem(
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
-            Text(subtitle, fontSize = 14.sp, color = Color(0xFF6B7280))
+            Text(item.title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
+            Text(item.subtitle, fontSize = 14.sp, color = Color(0xFF6B7280))
         }
-        Text(time, fontSize = 13.sp, color = Color(0xFF6B7280))
+        Text(item.date, fontSize = 13.sp, color = Color(0xFF6B7280))
+    }
+}
+
+@Composable
+private fun QuickActionButton(
+    icon: ImageVector,
+    text: String,
+    color: Color,
+    bgColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = modifier
+            .height(110.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = text, 
+                fontSize = 13.sp, 
+                fontWeight = FontWeight.SemiBold, 
+                color = Color(0xFF374151),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                lineHeight = 16.sp
+            )
+        }
     }
 }

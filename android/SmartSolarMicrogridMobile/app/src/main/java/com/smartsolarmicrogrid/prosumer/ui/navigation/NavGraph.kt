@@ -370,15 +370,43 @@ fun NavGraph(
 
         composable(Screen.OperatorHome.route) { backStackEntry ->
             val operatorViewModel: OperatorViewModel = viewModel(backStackEntry)
+            val bookingListViewModel: BookingListViewModel = sharedActivityViewModel()
+            val stationViewModel: StationViewModel = sharedActivityViewModel()
             WithOperatorBottomBar(navController, Screen.OperatorHome.route) {
                 OperatorDashboardScreen(
                     onScanQr = { navController.navigate(Screen.OperatorScan.route) },
-                    onViewReservations = { navController.navigate(Screen.OperatorReservations.route) },
-                    onViewMap = { navController.navigate(Screen.OperatorStations.route) },
+                    onViewReservations = { 
+                        bookingListViewModel.onTabSelected(com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingTab.PENDING)
+                        navController.navigate(Screen.OperatorReservations.route) {
+                            popUpTo(Screen.OperatorHome.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onViewAllActivity = {
+                        bookingListViewModel.onTabSelected(com.smartsolarmicrogrid.prosumer.ui.bookinglist.BookingTab.ALL)
+                        navController.navigate(Screen.OperatorReservations.route) {
+                            popUpTo(Screen.OperatorHome.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onViewMap = { 
+                        stationViewModel.isMapView = true
+                        navController.navigate(Screen.OperatorStations.route) {
+                            popUpTo(Screen.OperatorHome.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onLogout = {
                         navController.navigate(Screen.RoleSelection.route) {
                             popUpTo(0) { inclusive = true }
                         }
+                    },
+                    onNavigateToDetails = { reservation ->
+                        bookingListViewModel.selectReservation(reservation)
+                        navController.navigate(Screen.OperatorReservationDetails.route)
                     },
                     operatorViewModel = operatorViewModel
                 )
