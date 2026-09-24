@@ -64,19 +64,19 @@ fun RoleSelectionScreen(
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Elegant Sun Icon
+            // HelioGrid Logo
             Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .background(Color.White, RoundedCornerShape(24.dp))
-                    .padding(16.dp),
+                    .size(120.dp)
+                    .background(Color.White, RoundedCornerShape(28.dp))
+                    .padding(14.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Filled.WbSunny,
-                    contentDescription = null,
-                    tint = SolarGreen,
-                    modifier = Modifier.fillMaxSize()
+                Image(
+                    painter = painterResource(id = R.drawable.heliogrid_logo),
+                    contentDescription = "HelioGrid Logo",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
                 )
             }
             
