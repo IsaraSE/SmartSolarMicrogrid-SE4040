@@ -136,7 +136,7 @@ fun ProfileScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("Smart Solar Microgrid", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("HelioGrid", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Text("Prosumer Portal", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
                     }
                 }

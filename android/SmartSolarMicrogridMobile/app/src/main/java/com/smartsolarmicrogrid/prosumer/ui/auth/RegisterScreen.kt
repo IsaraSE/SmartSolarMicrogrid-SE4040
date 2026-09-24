@@ -98,7 +98,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Join the Smart Solar Microgrid network",
+                text = "Join the HelioGrid network",
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 13.sp,
                 modifier = Modifier.padding(start = 40.dp)

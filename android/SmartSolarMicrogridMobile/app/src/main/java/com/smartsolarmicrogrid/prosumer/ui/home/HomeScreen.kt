@@ -98,7 +98,7 @@ fun HomeScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Smart Solar Microgrid",
+                            text = "HelioGrid",
                             color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold

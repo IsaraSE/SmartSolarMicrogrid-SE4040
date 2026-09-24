@@ -17,6 +17,11 @@ import androidx.compose.ui.unit.sp
 import com.smartsolarmicrogrid.prosumer.R
 import com.smartsolarmicrogrid.prosumer.ui.operator.SolarGreen
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+
 @Composable
 fun RoleSelectionScreen(
     onSelectRole: (String) -> Unit
@@ -24,39 +29,77 @@ fun RoleSelectionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFEEF6F0)), // Soft green background to match image
-        contentAlignment = Alignment.Center
+            .background(Color.White)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(24.dp)
+        // Top Image Header with Gradient Overlay
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.55f)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // Reusing launcher icon as placeholder if custom icon not found
-                contentDescription = "App Logo",
-                modifier = Modifier.size(140.dp)
+                painter = painterResource(id = R.drawable.station_colombo), // Using a high-quality station image as hero
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
+            // Gradient overlay to blend with the bottom white background
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.White),
+                            startY = 200f
+                        )
+                    )
+            )
+        }
+
+        // Bottom Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Elegant Sun Icon
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .background(Color.White, RoundedCornerShape(24.dp))
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.WbSunny,
+                    contentDescription = null,
+                    tint = SolarGreen,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Smart Solar Microgrid",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                text = "HelioGrid",
+                fontSize = 40.sp,
+                fontWeight = FontWeight.ExtraBold,
                 color = SolarGreen
             )
             
             Spacer(modifier = Modifier.height(12.dp))
             
             Text(
-                text = "Clean Energy\nStronger Communities",
+                text = "Clean Energy • Stronger Communities",
                 fontSize = 16.sp,
-                color = Color(0xFF6B7280),
-                textAlign = TextAlign.Center,
-                lineHeight = 22.sp
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF64748B),
+                textAlign = TextAlign.Center
             )
             
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(48.dp))
             
             Button(
                 onClick = { onSelectRole("PROSUMER") },
@@ -64,9 +107,13 @@ fun RoleSelectionScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SolarGreen),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 8.dp
+                )
             ) {
-                Text("Continue as Prosumer", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text("Continue as Prosumer", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -77,14 +124,17 @@ fun RoleSelectionScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
+                    containerColor = Color.White,
                     contentColor = SolarGreen
                 ),
                 border = androidx.compose.foundation.BorderStroke(2.dp, SolarGreen),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
-                Text("Continue as Grid Operator", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text("Continue as Grid Operator", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
+            
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

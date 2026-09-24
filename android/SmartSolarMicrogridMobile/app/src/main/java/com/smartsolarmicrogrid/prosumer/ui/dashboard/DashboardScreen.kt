@@ -64,7 +64,7 @@ fun DashboardScreen(
                     Icon(Icons.Filled.WbSunny, contentDescription = null, tint = SolarAmber, modifier = Modifier.size(28.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
-                        Text("Smart Solar Microgrid", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("HelioGrid", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         Text("Prosumer Portal", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
                     }
                 }

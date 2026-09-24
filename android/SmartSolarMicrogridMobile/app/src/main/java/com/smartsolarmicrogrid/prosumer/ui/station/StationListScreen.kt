@@ -75,7 +75,7 @@ fun StationListScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text("Find Stations", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        Text("Smart Solar Microgrid", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                        Text("HelioGrid", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
                     }
                 }
                 
