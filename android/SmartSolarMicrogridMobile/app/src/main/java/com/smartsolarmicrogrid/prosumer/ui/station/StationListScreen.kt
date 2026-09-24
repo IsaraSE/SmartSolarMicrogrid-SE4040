@@ -331,16 +331,7 @@ private fun StationCardV2(station: Station, onClick: () -> Unit) {
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color.LightGray)
             ) {
-                val idHash = kotlin.math.abs(station.stationId.hashCode()) % 7
-                val imgRes = when(idHash) {
-                    0 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_1
-                    1 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_2
-                    2 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_3
-                    3 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_4
-                    4 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_5
-                    5 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_6
-                    else -> com.smartsolarmicrogrid.prosumer.R.drawable.station_7
-                }
+                val imgRes = getStationImageRes(station)
                 Image(
                     painter = androidx.compose.ui.res.painterResource(id = imgRes),
                     contentDescription = null,

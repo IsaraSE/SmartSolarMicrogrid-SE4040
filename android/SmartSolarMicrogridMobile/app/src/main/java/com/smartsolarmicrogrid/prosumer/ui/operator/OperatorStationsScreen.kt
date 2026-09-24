@@ -2,6 +2,7 @@ package com.smartsolarmicrogrid.prosumer.ui.operator
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import com.smartsolarmicrogrid.prosumer.ui.station.getStationImageRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -262,16 +263,7 @@ private fun OperatorStationCard(station: Station, onClick: (() -> Unit)? = null)
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color.LightGray)
             ) {
-                val idHash = kotlin.math.abs(station.stationId.hashCode()) % 7
-                val imgRes = when(idHash) {
-                    0 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_1
-                    1 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_2
-                    2 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_3
-                    3 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_4
-                    4 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_5
-                    5 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_6
-                    else -> com.smartsolarmicrogrid.prosumer.R.drawable.station_7
-                }
+                val imgRes = getStationImageRes(station)
                 Image(
                     painter = painterResource(id = imgRes),
                     contentDescription = null,

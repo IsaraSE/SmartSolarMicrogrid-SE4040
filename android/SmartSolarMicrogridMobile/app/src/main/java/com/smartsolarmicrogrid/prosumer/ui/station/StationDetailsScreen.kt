@@ -84,16 +84,8 @@ fun StationDetailsScreen(
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
             ) {
-                // Determine station image based on ID
-                val imageRes = when (abs(station.stationId.hashCode()) % 7) {
-                    0 -> R.drawable.station_1
-                    1 -> R.drawable.station_2
-                    2 -> R.drawable.station_3
-                    3 -> R.drawable.station_4
-                    4 -> R.drawable.station_5
-                    5 -> R.drawable.station_6
-                    else -> R.drawable.station_7
-                }
+                // Determine station image based on ID or name
+                val imageRes = getStationImageRes(station)
 
                 Image(
                     painter = painterResource(id = imageRes),
@@ -101,7 +93,7 @@ fun StationDetailsScreen(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp)
+                        .height(280.dp)
                         .padding(start = 16.dp, end = 16.dp, top = 16.dp)
                         .clip(RoundedCornerShape(16.dp))
                 )

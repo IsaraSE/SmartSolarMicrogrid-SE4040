@@ -3,6 +3,7 @@ package com.smartsolarmicrogrid.prosumer.ui.operator
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import com.smartsolarmicrogrid.prosumer.ui.station.getStationImageRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -97,22 +98,13 @@ fun OperatorStationDetailsScreen(
                     .padding(20.dp)
             ) {
                 // Station Image
-                val idHash = kotlin.math.abs(station.stationId.hashCode()) % 7
-                val imgRes = when(idHash) {
-                    0 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_1
-                    1 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_2
-                    2 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_3
-                    3 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_4
-                    4 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_5
-                    5 -> com.smartsolarmicrogrid.prosumer.R.drawable.station_6
-                    else -> com.smartsolarmicrogrid.prosumer.R.drawable.station_7
-                }
+                val imgRes = getStationImageRes(station)
                 Image(
                     painter = painterResource(id = imgRes),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp)
+                        .height(280.dp)
                         .clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Crop
                 )
