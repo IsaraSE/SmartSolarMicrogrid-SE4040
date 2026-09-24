@@ -265,40 +265,25 @@ private fun OperatorSlotCard(slot: Slot, onToggle: () -> Unit) {
     }
 
     if (showDialog && pendingStatusChange != null) {
-        AlertDialog(
+        com.smartsolarmicrogrid.prosumer.ui.components.HelioDialog(
             onDismissRequest = { 
                 showDialog = false
                 pendingStatusChange = null
             },
-            title = {
-                Text(text = "Change Slot Status", fontWeight = FontWeight.Bold)
+            title = "Change Slot Status",
+            message = "Are you sure you want to change this slot from $statusText to ${pendingStatusChange}?",
+            type = com.smartsolarmicrogrid.prosumer.ui.components.HelioDialogType.WARNING,
+            confirmText = "Yes, Change",
+            dismissText = "Cancel",
+            onConfirm = {
+                onToggle()
+                showDialog = false
+                pendingStatusChange = null
             },
-            text = {
-                Text(
-                    text = "Are you sure you want to change this slot from $statusText to ${pendingStatusChange}?",
-                    fontSize = 15.sp,
-                    color = Color.DarkGray
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    onToggle()
-                    showDialog = false
-                    pendingStatusChange = null
-                }) {
-                    Text("Yes, Change", color = Color(0xFF0C8A44), fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { 
-                    showDialog = false
-                    pendingStatusChange = null
-                }) {
-                    Text("Cancel", color = Color.Gray)
-                }
-            },
-            shape = RoundedCornerShape(16.dp),
-            containerColor = Color.White
+            onDismiss = {
+                showDialog = false
+                pendingStatusChange = null
+            }
         )
     }
 

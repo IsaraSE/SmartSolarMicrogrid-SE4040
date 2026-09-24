@@ -408,24 +408,30 @@ fun OperatorAddSlotScreen(
         )
         AlertDialog(
             onDismissRequest = { showStartTimePicker = false },
-            title = { Text("Select Start Time") },
+            title = { Text("Select Start Time", fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E)) },
             text = {
                 TimePicker(state = timePickerState)
             },
             confirmButton = {
-                TextButton(onClick = {
-                    selectedStartHour = timePickerState.hour
-                    selectedStartMinute = timePickerState.minute
-                    showStartTimePicker = false
-                }) {
-                    Text("OK", color = greenBg)
+                Button(
+                    onClick = {
+                        selectedStartHour = timePickerState.hour
+                        selectedStartMinute = timePickerState.minute
+                        showStartTimePicker = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = greenBg),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                ) {
+                    Text("Confirm", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showStartTimePicker = false }) {
-                    Text("Cancel", color = greenBg)
+                    Text("Cancel", color = Color(0xFF94A3B8), fontWeight = FontWeight.SemiBold)
                 }
-            }
+            },
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            containerColor = Color.White
         )
     }
 
@@ -437,24 +443,30 @@ fun OperatorAddSlotScreen(
         )
         AlertDialog(
             onDismissRequest = { showEndTimePicker = false },
-            title = { Text("Select End Time") },
+            title = { Text("Select End Time", fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E)) },
             text = {
                 TimePicker(state = timePickerState)
             },
             confirmButton = {
-                TextButton(onClick = {
-                    selectedEndHour = timePickerState.hour
-                    selectedEndMinute = timePickerState.minute
-                    showEndTimePicker = false
-                }) {
-                    Text("OK", color = greenBg)
+                Button(
+                    onClick = {
+                        selectedEndHour = timePickerState.hour
+                        selectedEndMinute = timePickerState.minute
+                        showEndTimePicker = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = greenBg),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                ) {
+                    Text("Confirm", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEndTimePicker = false }) {
-                    Text("Cancel", color = greenBg)
+                    Text("Cancel", color = Color(0xFF94A3B8), fontWeight = FontWeight.SemiBold)
                 }
-            }
+            },
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            containerColor = Color.White
         )
     }
 }

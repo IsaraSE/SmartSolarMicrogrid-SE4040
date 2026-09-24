@@ -293,16 +293,15 @@ fun QrScannerScreen(
                                             Spacer(modifier = Modifier.height(32.dp))
 
                                             if (operatorViewModel.completeState is CompleteState.Success) {
-                                                AlertDialog(
-                                                    onDismissRequest = { /* Do nothing, force user to click button */ },
-                                                    title = { Text("Session Completed", color = SolarGreen) },
-                                                    text = { Text("The reservation session has been successfully completed.") },
-                                                    confirmButton = {
-                                                        TextButton(onClick = onNavigateToDashboard) {
-                                                            Text("Go to Dashboard", color = SolarGreen, fontWeight = FontWeight.Bold)
-                                                        }
-                                                    },
-                                                    containerColor = Color.White
+                                                com.smartsolarmicrogrid.prosumer.ui.components.HelioDialog(
+                                                    onDismissRequest = { /* Force user to click button */ },
+                                                    title = "Session Completed",
+                                                    message = "The reservation session has been successfully completed.",
+                                                    type = com.smartsolarmicrogrid.prosumer.ui.components.HelioDialogType.SUCCESS,
+                                                    icon = androidx.compose.material.icons.Icons.Filled.CheckCircle,
+                                                    confirmText = "Go to Dashboard",
+                                                    dismissText = null,
+                                                    onConfirm = onNavigateToDashboard
                                                 )
                                             } else {
                                                 Button(
@@ -340,32 +339,34 @@ fun QrScannerScreen(
 
             // Manual Entry Dialog
             if (showManualEntry) {
-                AlertDialog(
+                com.smartsolarmicrogrid.prosumer.ui.components.HelioDialog(
                     onDismissRequest = { showManualEntry = false },
-                    title = { Text("Enter Reference") },
-                    text = {
+                    title = "Enter Reference",
+                    message = "Type the reservation reference code manually.",
+                    type = com.smartsolarmicrogrid.prosumer.ui.components.HelioDialogType.INFO,
+                    icon = androidx.compose.material.icons.Icons.Filled.Edit,
+                    confirmText = "Submit",
+                    dismissText = "Cancel",
+                    onConfirm = {
+                        showManualEntry = false
+                        if (manualId.isNotBlank()) {
+                            operatorViewModel.verifyQrReference(manualId)
+                            manualId = ""
+                        }
+                    },
+                    onDismiss = { showManualEntry = false },
+                    content = {
                         OutlinedTextField(
                             value = manualId,
                             onValueChange = { manualId = it },
                             placeholder = { Text("Enter reservation reference") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF1B8A4A),
+                                unfocusedBorderColor = Color(0xFFE2E8F0)
+                            )
                         )
-                    },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showManualEntry = false
-                            if (manualId.isNotBlank()) {
-                                operatorViewModel.verifyQrReference(manualId)
-                                manualId = ""
-                            }
-                        }) {
-                            Text("Submit", color = Color(0xFF0C8A44), fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showManualEntry = false }) {
-                            Text("Cancel", color = Color.Gray)
-                        }
                     }
                 )
             }

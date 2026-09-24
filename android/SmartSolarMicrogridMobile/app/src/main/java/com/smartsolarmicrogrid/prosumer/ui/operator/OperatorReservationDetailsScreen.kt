@@ -233,38 +233,36 @@ fun OperatorReservationDetailsScreen(
         }
 
         if (showApproveDialog) {
-            AlertDialog(
+            com.smartsolarmicrogrid.prosumer.ui.components.HelioDialog(
                 onDismissRequest = { showApproveDialog = false },
-                title = { Text("Approve Reservation") },
-                text = { Text("Are you sure you want to approve this reservation?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showApproveDialog = false
-                        operatorViewModel.approveReservation(reservation)
-                        onBack()
-                    }) { Text("Confirm", color = OpBrandGreen, fontWeight = FontWeight.Bold) }
+                title = "Approve Reservation",
+                message = "Are you sure you want to approve this reservation?",
+                type = com.smartsolarmicrogrid.prosumer.ui.components.HelioDialogType.SUCCESS,
+                confirmText = "Approve",
+                dismissText = "Cancel",
+                onConfirm = {
+                    showApproveDialog = false
+                    operatorViewModel.approveReservation(reservation)
+                    onBack()
                 },
-                dismissButton = {
-                    TextButton(onClick = { showApproveDialog = false }) { Text("Cancel", color = Color.Gray) }
-                }
+                onDismiss = { showApproveDialog = false }
             )
         }
 
         if (showCancelDialog) {
-            AlertDialog(
+            com.smartsolarmicrogrid.prosumer.ui.components.HelioDialog(
                 onDismissRequest = { showCancelDialog = false },
-                title = { Text("Cancel Reservation") },
-                text = { Text("Are you sure you want to cancel this reservation? This action cannot be undone.") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showCancelDialog = false
-                        operatorViewModel.cancelReservation(reservation.reservationId)
-                        onBack()
-                    }) { Text("Confirm", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold) }
+                title = "Cancel Reservation",
+                message = "Are you sure you want to cancel this reservation? This action cannot be undone.",
+                type = com.smartsolarmicrogrid.prosumer.ui.components.HelioDialogType.DANGER,
+                confirmText = "Cancel Reservation",
+                dismissText = "Go Back",
+                onConfirm = {
+                    showCancelDialog = false
+                    operatorViewModel.cancelReservation(reservation.reservationId)
+                    onBack()
                 },
-                dismissButton = {
-                    TextButton(onClick = { showCancelDialog = false }) { Text("Close", color = Color.Gray) }
-                }
+                onDismiss = { showCancelDialog = false }
             )
         }
     }
