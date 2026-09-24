@@ -174,7 +174,7 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
-                        label = { Text(if (role == "GRID_OPERATOR") "Email Address" else "Email or NIC") },
+                        label = { Text(if (role == "GRID_OPERATOR") "Email Address" else "NIC Number") },
                         leadingIcon = {
                             Icon(Icons.Filled.Person, contentDescription = null, tint = SolarGreen)
                         },
