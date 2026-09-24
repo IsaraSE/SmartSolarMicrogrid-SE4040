@@ -151,8 +151,10 @@ fun StationDetailsScreen(
                             Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(18.dp))
                         }
                         Spacer(modifier = Modifier.width(12.dp))
+                        val dist = stationViewModel.calculateDistance(station.latitude, station.longitude)
+                        val distStr = if (dist != null) String.format("%.1f km away", dist / 1000f) else "Unknown Distance"
                         Column {
-                            Text("2.5 km away", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
+                            Text(distStr, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
                             Text(station.address, fontSize = 13.sp, color = Color(0xFF94A3B8), lineHeight = 18.sp)
                         }
                     }
@@ -190,7 +192,7 @@ fun StationDetailsScreen(
                         StationInfoCard(
                             icon = Icons.Filled.Schedule,
                             label = "Hours",
-                            value = "${station.operatingStartTime}\n${station.operatingEndTime}",
+                            value = "${formatTime(station.operatingStartTime)}\n${formatTime(station.operatingEndTime)}",
                             iconTint = Color(0xFFFF9800),
                             iconBg = Color(0xFFFFF3E0),
                             modifier = Modifier.weight(1f)
@@ -265,5 +267,19 @@ private fun StationInfoCard(
             Spacer(modifier = Modifier.height(2.dp))
             Text(label, fontSize = 11.sp, color = Color(0xFF94A3B8), fontWeight = FontWeight.Medium)
         }
+    }
+}
+
+private fun formatTime(timeStr: String): String {
+    return try {
+        val parts = timeStr.split(":")
+        val hour = parts[0].toInt()
+        val minute = parts.getOrNull(1) ?: "00"
+        val amPm = if (hour >= 12) "PM" else "AM"
+        val displayHour = if (hour % 12 == 0) 12 else hour % 12
+        val formattedHour = if (displayHour < 10) "0$displayHour" else "$displayHour"
+        "$formattedHour:$minute $amPm"
+    } catch (e: Exception) {
+        timeStr
     }
 }

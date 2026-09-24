@@ -38,6 +38,14 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.smartsolarmicrogrid.prosumer.data.model.Station
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 
 private val GreenDark = Color(0xFF145A32)
 private val GreenPrimary = Color(0xFF1B8A4A)
@@ -54,7 +62,57 @@ fun StationListScreen(
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("All") }
+    var selectedMapStation by remember { mutableStateOf<Station?>(null) }
     val filterOptions = listOf("All", "Near Me", "Available")
+    
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissions ->
+            if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true || 
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true) {
+                try {
+                    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+                        .addOnSuccessListener { location ->
+                            if (location != null) {
+                                stationViewModel.updateUserLocation(LatLng(location.latitude, location.longitude))
+                            } else {
+                                stationViewModel.updateUserLocation(LatLng(6.9271, 79.8612)) // Fallback to Colombo
+                            }
+                        }
+                        .addOnFailureListener {
+                            stationViewModel.updateUserLocation(LatLng(6.9271, 79.8612)) // Fallback
+                        }
+                } catch (e: SecurityException) { }
+            }
+        }
+    )
+
+    LaunchedEffect(Unit) {
+        val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        
+        if (hasFine || hasCoarse) {
+            try {
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+                    .addOnSuccessListener { location ->
+                        if (location != null) {
+                            stationViewModel.updateUserLocation(LatLng(location.latitude, location.longitude))
+                        } else {
+                            stationViewModel.updateUserLocation(LatLng(6.9271, 79.8612)) // Fallback to Colombo
+                        }
+                    }
+                    .addOnFailureListener {
+                        stationViewModel.updateUserLocation(LatLng(6.9271, 79.8612)) // Fallback
+                    }
+            } catch (e: SecurityException) { }
+        } else {
+            locationPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -272,21 +330,32 @@ fun StationListScreen(
                         val availableSlots = it.batterySlotCount - mockReserved
                         
                         val matchesFilter = when (selectedFilter) {
-                            "Near Me" -> it.stationId == "ST001" || it.stationId == "ST002"
+                            "Near Me" -> {
+                                val dist = stationViewModel.calculateDistance(it.latitude, it.longitude)
+                                dist != null && dist < 25000f // 25 km
+                            }
                             "Available" -> availableSlots > 0 && isActive
                             else -> true
                         }
                         
                         matchesSearch && matchesFilter
-                    }.sortedByDescending { 
-                        it.status.uppercase() == "ACTIVE" || it.status.uppercase() == "AVAILABLE" || it.status == "0"
-                    }
+                    }.sortedWith(compareBy(
+                        { !(it.status.uppercase() == "ACTIVE" || it.status.uppercase() == "AVAILABLE" || it.status == "0") },
+                        { stationViewModel.calculateDistance(it.latitude, it.longitude) ?: Float.MAX_VALUE }
+                    ))
 
                     if (stationViewModel.isMapView) {
-                        val sriLanka = LatLng(7.8731, 80.7718)
+                        val mapCenter = stationViewModel.userLocation ?: LatLng(7.8731, 80.7718)
                         val cameraPositionState = rememberCameraPositionState {
-                            position = CameraPosition.fromLatLngZoom(sriLanka, 7f)
+                            position = CameraPosition.fromLatLngZoom(mapCenter, if (stationViewModel.userLocation != null) 12f else 7f)
                         }
+                        
+                        LaunchedEffect(selectedMapStation) {
+                            selectedMapStation?.let {
+                                cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(it.latitude, it.longitude), 14f)
+                            }
+                        }
+                        
                         val context = androidx.compose.ui.platform.LocalContext.current
                         Box(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp).padding(bottom = 24.dp).clip(RoundedCornerShape(20.dp))) {
                             GoogleMap(
@@ -307,14 +376,80 @@ fun StationListScreen(
                                             else com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_RED
                                         ),
                                         onClick = {
-                                            if (isAvailable) {
-                                                onStationSelected(station)
-                                            } else {
-                                                android.widget.Toast.makeText(context, "This station is currently under maintenance or inactive.", android.widget.Toast.LENGTH_SHORT).show()
-                                            }
-                                            true
+                                            selectedMapStation = station
+                                            false // Return false to allow default info window
                                         }
                                     )
+                                }
+                                
+                                // User Location Marker
+                                stationViewModel.userLocation?.let { uLoc ->
+                                    Marker(
+                                        state = MarkerState(position = uLoc),
+                                        title = "You are here",
+                                        icon = com.google.android.gms.maps.model.BitmapDescriptorFactory.defaultMarker(com.google.android.gms.maps.model.BitmapDescriptorFactory.HUE_AZURE)
+                                    )
+                                }
+                            }
+
+                            // Bottom Overlay for Map Stations
+                            Box(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(bottom = 16.dp)) {
+                                androidx.compose.foundation.lazy.LazyRow(
+                                    contentPadding = PaddingValues(horizontal = 16.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    items(stations) { station ->
+                                        val dist = stationViewModel.calculateDistance(station.latitude, station.longitude)
+                                        val distStr = if (dist != null) String.format("%.1f km", dist / 1000f) else "Unknown"
+                                        val isActive = station.status.uppercase() == "ACTIVE" || station.status.uppercase() == "AVAILABLE" || station.status == "0"
+                                        val isSelected = selectedMapStation?.stationId == station.stationId
+                                        
+                                        Card(
+                                            modifier = Modifier
+                                                .width(300.dp)
+                                                .padding(end = 12.dp)
+                                                .clickable { selectedMapStation = station },
+                                            shape = RoundedCornerShape(16.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                                            elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 12.dp else 4.dp),
+                                            border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, GreenPrimary) else null
+                                        ) {
+                                            Column(modifier = Modifier.padding(16.dp)) {
+                                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(station.stationName, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF1A1A2E), maxLines = 1, modifier = Modifier.weight(1f))
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Card(
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        colors = CardDefaults.cardColors(containerColor = if (isActive) Color(0xFFE8F5E9) else Color(0xFFF1F5F9))
+                                                    ) {
+                                                        Text(if (isActive) "Active" else "Inactive", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isActive) GreenPrimary else Color(0xFF64748B), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(station.address.split(",").firstOrNull() ?: station.address, fontSize = 12.sp, color = Color(0xFF94A3B8), maxLines = 1)
+                                                
+                                                Spacer(modifier = Modifier.height(12.dp))
+                                                
+                                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Icon(Icons.Filled.Navigation, contentDescription = null, tint = Color(0xFF475569), modifier = Modifier.size(12.dp))
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text(distStr, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF475569))
+                                                    }
+                                                    
+                                                    Button(
+                                                        onClick = { onStationSelected(station) },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                                        modifier = Modifier.height(32.dp)
+                                                    ) {
+                                                        Text("View Details", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -332,8 +467,28 @@ fun StationListScreen(
                                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
+                                if (selectedFilter == "Near Me" && stationViewModel.userLocation != null) {
+                                    item {
+                                        Card(
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                                        ) {
+                                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(Icons.Filled.LocationOn, contentDescription = null, tint = GreenPrimary, modifier = Modifier.size(20.dp))
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Column {
+                                                    Text("Showing stations near your current location", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = Color(0xFF145A32))
+                                                    Text("${stations.size} stations within 25 km", fontSize = 12.sp, color = Color(0xFF1B8A4A))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 items(stations) { station ->
-                                    StationCardV2(station = station, onClick = { onStationSelected(station) })
+                                    val dist = stationViewModel.calculateDistance(station.latitude, station.longitude)
+                                    val distStr = if (dist != null) String.format("%.1f km", dist / 1000f) else "Unknown"
+                                    StationCardV2(station = station, distanceString = distStr, onClick = { onStationSelected(station) })
                                 }
                                 item { Spacer(modifier = Modifier.height(80.dp)) }
                             }
@@ -346,7 +501,7 @@ fun StationListScreen(
 }
 
 @Composable
-private fun StationCardV2(station: Station, onClick: () -> Unit) {
+private fun StationCardV2(station: Station, distanceString: String, onClick: () -> Unit) {
     val isStationActive = station.status.uppercase() == "ACTIVE" || station.status.uppercase() == "AVAILABLE" || station.status == "0"
     
     Card(
@@ -409,17 +564,11 @@ private fun StationCardV2(station: Station, onClick: () -> Unit) {
                 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     // Distance chip
-                    val distance = when(station.stationId) {
-                        "ST001" -> "1.2 km"
-                        "ST002" -> "10.2 km"
-                        "ST003" -> "11.9 km"
-                        else -> "2.1 km"
-                    }
                     Card(
                         shape = RoundedCornerShape(8.dp),
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))
                     ) {
-                        Text(distance, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF475569), modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
+                        Text(distanceString, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF475569), modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
                     }
 
                     // Status chip
