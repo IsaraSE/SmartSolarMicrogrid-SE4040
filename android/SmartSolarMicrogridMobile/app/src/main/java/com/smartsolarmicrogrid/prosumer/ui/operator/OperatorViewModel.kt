@@ -21,6 +21,7 @@ import com.smartsolarmicrogrid.prosumer.data.model.QrVerifyRequest
 import com.smartsolarmicrogrid.prosumer.data.model.Reservation
 import com.smartsolarmicrogrid.prosumer.data.model.Station
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 /** Pending reservation list state. */
 sealed class PendingListState {
@@ -51,6 +52,14 @@ sealed class CompleteState {
     data class Success(val reservation: Reservation) : CompleteState()
     data class Error(val message: String) : CompleteState()
 }
+
+data class OperatorActivityItem(
+    val reservation: Reservation,
+    val title: String,
+    val subtitle: String,
+    val status: String,
+    val date: String
+)
 
 class OperatorViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -85,11 +94,23 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
 
     /** Live count of microgrid stations the operator covers. */
     val stationCount: Int
-        get() = (stationState as? StationMapState.Loaded)?.stations?.size ?: 0
+        get() = (stationState as? StationMapState.Loaded)?.stations?.filter {
+            it.status.uppercase() == "ACTIVE" || it.status.uppercase() == "AVAILABLE" || it.status == "0"
+        }?.size ?: 0
+
+    var availableSlotCount by mutableStateOf(0)
+        private set
+
+    var reservedSlotCount by mutableStateOf(0)
+        private set
+
+    var recentActivity by mutableStateOf<List<OperatorActivityItem>>(emptyList())
+        private set
 
     init {
         loadPendingReservations()
         loadStations()
+        loadSlots()
     }
 
     /** Loads every reservation waiting for operator action. */
@@ -97,15 +118,37 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
         pendingState = PendingListState.Loading
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.apiService.getOperatorPendingReservations()
+                val response = RetrofitClient.apiService.getAllReservations()
                 if (response.isSuccessful && response.body()?.data != null) {
-                    pendingState = PendingListState.Loaded(response.body()!!.data!!)
+                    val allRes = response.body()!!.data!!
+                    val pending = allRes.filter { it.status.uppercase() == "PENDING" || it.status == "0" }
+                    pendingState = PendingListState.Loaded(pending)
+                    
+                    val sortedRecent = allRes
+                        .sortedByDescending { it.updatedAt ?: it.createdAt ?: it.bookingDate }
+                        .take(5)
+                        
+                    recentActivity = sortedRecent.map { res ->
+                        val actionStr = when (res.status.uppercase()) {
+                            "PENDING", "0" -> "New reservation request"
+                            "APPROVED", "1" -> "Reservation approved"
+                            "CANCELLED" -> "Reservation cancelled"
+                            "COMPLETED", "2" -> "Reservation completed"
+                            else -> "Reservation updated"
+                        }
+                        val dateStr = res.updatedAt ?: res.createdAt ?: res.bookingDate
+                        OperatorActivityItem(
+                            reservation = res,
+                            title = actionStr,
+                            subtitle = "${res.stationName ?: "Unknown Station"} • ${formatActivityDate(res.bookingDate)}",
+                            status = res.status,
+                            date = formatActivityTime(dateStr)
+                        )
+                    }
                 } else {
-                    // TODO: remove mock fallback before submission
                     pendingState = PendingListState.Loaded(getMockPending())
                 }
             } catch (e: Exception) {
-                // TODO: remove mock fallback before submission
                 pendingState = PendingListState.Loaded(getMockPending())
             }
         }
@@ -130,10 +173,64 @@ class OperatorViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** Loads the microgrid slots to calculate available/reserved metrics. */
+    private fun loadSlots() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getAllSlots()
+                if (response.isSuccessful && response.body()?.data != null) {
+                    val slots = response.body()!!.data!!
+                    availableSlotCount = slots.count { it.status.uppercase() == "AVAILABLE" || it.status == "0" }
+                    reservedSlotCount = slots.count { it.status.uppercase() == "RESERVED" || it.status == "1" }
+                }
+            } catch (e: Exception) {
+                // Ignore error, just keep 0
+            }
+        }
+    }
+
+    private fun formatActivityDate(dateString: String?): String {
+        if (dateString.isNullOrEmpty()) return ""
+        return try {
+            val datePart = dateString.substringBefore("T")
+            val date = LocalDate.parse(datePart)
+            "${date.dayOfMonth} ${date.month.name.substring(0, 3).lowercase().replaceFirstChar { it.uppercase() }} ${date.year}"
+        } catch (e: Exception) {
+            dateString
+        }
+    }
+
+    private fun formatActivityTime(timestamp: String?): String {
+        if (timestamp.isNullOrEmpty()) return ""
+        return try {
+            // Check if it's a full timestamp (e.g., "2026-09-23T13:17:09.104Z")
+            if (timestamp.contains("T")) {
+                val datePart = timestamp.substringBefore("T")
+                val date = LocalDate.parse(datePart)
+                val day = date.dayOfMonth
+                val month = date.month.name.substring(0, 3).lowercase().replaceFirstChar { it.uppercase() }
+
+                val timePart = timestamp.substringAfter("T").substringBefore(".")
+                val parts = timePart.split(":")
+                val hour = parts[0].toInt()
+                val min = parts[1]
+                val amPm = if (hour >= 12) "PM" else "AM"
+                val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                
+                String.format("%d %s, %02d:%s %s", day, month, displayHour, min, amPm)
+            } else {
+                timestamp
+            }
+        } catch (e: Exception) {
+            timestamp
+        }
+    }
+
     /** Reloads everything the dashboard shows. */
     fun refreshAll() {
         loadPendingReservations()
         loadStations()
+        loadSlots()
     }
 
     /** Approves a pending reservation so the prosumer receives a transaction QR. */

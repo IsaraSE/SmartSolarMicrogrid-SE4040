@@ -46,6 +46,9 @@ interface ApiService {
     @GET("api/stations")
     suspend fun getStations(): Response<ApiResponse<List<Station>>>
 
+    @GET("api/slots")
+    suspend fun getAllSlots(): Response<ApiResponse<List<Slot>>>
+
     @GET("api/stations/{id}/available-slots")
     suspend fun getAvailableSlots(@Path("id") stationId: String): Response<ApiResponse<List<Slot>>>
 
@@ -94,9 +97,9 @@ interface ApiService {
 
     // ---------- Grid operator ----------
 
-    /** Reservations awaiting operator action across all prosumers. */
-    @GET("api/reservations/operator/pending")
-    suspend fun getOperatorPendingReservations(): Response<ApiResponse<List<Reservation>>>
+    /** All reservations for grid operator dashboard. */
+    @GET("api/reservations/search")
+    suspend fun getAllReservations(): Response<ApiResponse<List<Reservation>>>
 
     /** Operator approves a pending reservation, which issues its transaction QR. */
     @PUT("api/reservations/{id}/status")
