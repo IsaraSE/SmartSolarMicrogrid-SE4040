@@ -104,10 +104,10 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         "Booking date must be within 7 days. Please choose a different slot."
                     )
                 } else {
-                    createBookingState = CreateBookingState.Success(getMockReservation(stationId, slotId, bookingDate, startTime)) // TODO: remove before submission
+                    createBookingState = CreateBookingState.Error("An unexpected error occurred.")
                 }
             } catch (e: Exception) {
-                createBookingState = CreateBookingState.Success(getMockReservation(stationId, slotId, bookingDate, startTime)) // TODO: remove before submission
+                createBookingState = CreateBookingState.Error("Network error: ${e.message}")
             }
         }
     }
@@ -136,16 +136,10 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         "Updates require at least 12 hours' notice before the booking starts."
                     )
                 } else {
-                    // TODO: remove mock fallback before submission
-                    updateBookingState = UpdateBookingState.Success(
-                        getMockReservation(stationId, slotId, bookingDate, startTime).copy(reservationId = reservationId)
-                    )
+                    updateBookingState = UpdateBookingState.Error("An unexpected error occurred.")
                 }
             } catch (e: Exception) {
-                // TODO: remove mock fallback before submission
-                updateBookingState = UpdateBookingState.Success(
-                    getMockReservation(stationId, slotId, bookingDate, startTime).copy(reservationId = reservationId)
-                )
+                updateBookingState = UpdateBookingState.Error("Network error: ${e.message}")
             }
         }
     }
@@ -162,10 +156,10 @@ class BookingViewModel(application: Application) : AndroidViewModel(application)
                         "Cancellations require at least 12 hours' notice before the booking starts."
                     )
                 } else {
-                    cancelBookingState = CancelBookingState.Success // TODO: remove mock fallback before submission
+                    cancelBookingState = CancelBookingState.Error("An unexpected error occurred.")
                 }
             } catch (e: Exception) {
-                cancelBookingState = CancelBookingState.Success // TODO: remove mock fallback before submission
+                cancelBookingState = CancelBookingState.Error("Network error: ${e.message}")
             }
         }
     }
