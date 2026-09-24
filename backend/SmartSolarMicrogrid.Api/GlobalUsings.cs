@@ -1,3 +1,12 @@
+/*
+ * File Name: GlobalUsings.cs
+ * Project: Smart Solar Microgrid Trading System
+ * Module: SE4040 Enterprise Application Development
+ * Author: IT22154880
+ * Description: Implementation of GlobalUsings.cs
+ * Date: 2026-09-20
+ */
+
 global using SmartSolarMicrogrid.Api.Models.DTOs.Users;
 global using SmartSolarMicrogrid.Api.Models.DTOs.Stations;
 global using SmartSolarMicrogrid.Api.Models.DTOs.Reservations;

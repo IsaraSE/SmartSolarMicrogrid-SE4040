@@ -2,9 +2,9 @@
  * File Name: IDashboardService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service interface for dashboard metrics.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of IDashboardService.cs
+ * Date: 2026-09-18
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;

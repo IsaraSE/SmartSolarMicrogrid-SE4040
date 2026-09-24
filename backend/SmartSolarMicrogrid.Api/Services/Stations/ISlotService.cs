@@ -2,9 +2,9 @@
  * File Name: ISlotService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service interface for slot management logic.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of ISlotService.cs
+ * Date: 2026-09-15
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;

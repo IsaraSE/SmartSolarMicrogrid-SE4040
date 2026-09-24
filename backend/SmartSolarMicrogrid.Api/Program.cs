@@ -1,3 +1,12 @@
+/*
+ * File Name: Program.cs
+ * Project: Smart Solar Microgrid Trading System
+ * Module: SE4040 Enterprise Application Development
+ * Author: IT22154880
+ * Description: Implementation of Program.cs
+ * Date: 2026-09-21
+ */
+
 using MongoDB.Driver;
 using SmartSolarMicrogrid.Api.Models;
 using SmartSolarMicrogrid.Api.Middlewares;

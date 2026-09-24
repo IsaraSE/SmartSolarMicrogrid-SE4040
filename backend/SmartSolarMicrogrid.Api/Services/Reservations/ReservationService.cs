@@ -2,9 +2,9 @@
  * File Name: ReservationService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for reservation logic including business rules.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of ReservationService.cs
+ * Date: 2026-09-21
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;
@@ -30,6 +30,7 @@ public class ReservationService : IReservationService
 
     public async Task<IEnumerable<ReservationDto>> GetReservationsAsync(string? nic, string? stationId, string? status, DateTime? date)
     {
+        // Retrieves reservations data from the system.
         var all = await _reservationRepository.GetAllAsync();
         
         var filtered = all.AsEnumerable();
@@ -68,6 +69,7 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetCurrentReservationsByNicAsync(string nic)
     {
+        // Retrieves current reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         var now = DateTime.UtcNow;
         return reservations
@@ -81,6 +83,7 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetPendingReservationsByNicAsync(string nic)
     {
+        // Retrieves pending reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         return reservations
             .Where(r => r.Status == ReservationStatus.PENDING)
@@ -93,6 +96,7 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetHistoryReservationsByNicAsync(string nic)
     {
+        // Retrieves history reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         var now = DateTime.UtcNow;
         return reservations
@@ -105,6 +109,7 @@ public class ReservationService : IReservationService
 
     public async Task<ReservationDto?> GetReservationByIdAsync(string id)
     {
+        // Retrieves reservation by id data from the system.
         var reservation = await _reservationRepository.GetByIdAsync(id);
         if (reservation == null) return null;
         
@@ -388,6 +393,7 @@ public class ReservationService : IReservationService
 
     private static ReservationDto MapToDto(EnergyReservation reservation)
     {
+        // Maps to dto to the corresponding DTO.
         return new ReservationDto
         {
             ReservationId = reservation.ReservationId!,
@@ -408,6 +414,7 @@ public class ReservationService : IReservationService
 
     public async Task<ReservationDto?> GetReservationByQrAsync(string qrReference)
     {
+        // Retrieves reservation by qr data from the system.
         var reservation = await _reservationRepository.GetByQrReferenceAsync(qrReference);
         if (reservation == null) return null;
         

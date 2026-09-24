@@ -2,9 +2,9 @@
  * File Name: DashboardController.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Shared dashboard controller returning role-based metrics.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of DashboardController.cs
+ * Date: 2026-09-22
  */
 
 using System.Security.Claims;
@@ -33,6 +33,7 @@ public class DashboardController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetDashboardStats()
     {
+        // Retrieves dashboard stats data from the system.
         var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
         var userNic = User.FindFirstValue("nic");
 

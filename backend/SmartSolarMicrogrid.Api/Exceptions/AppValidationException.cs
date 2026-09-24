@@ -2,9 +2,9 @@
  * File Name: AppValidationException.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Custom exception for throwing field-specific validation errors.
- * Date: 2026-09-18
+ * Author: IT22154880
+ * Description: Implementation of AppValidationException.cs
+ * Date: 2026-09-17
  */
 
 namespace SmartSolarMicrogrid.Api.Exceptions;

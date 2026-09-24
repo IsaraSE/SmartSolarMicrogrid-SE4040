@@ -2,9 +2,9 @@
  * File Name: AuthController.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Controller for authentication operations.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of AuthController.cs
+ * Date: 2026-09-21
  */
 
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +36,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
+        // Executes logic to login .
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request format."));
@@ -58,6 +59,7 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetProfile()
     {
+        // Retrieves profile data from the system.
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
         {
@@ -80,6 +82,7 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto request)
     {
+        // Updates existing profile records.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request format."));
@@ -113,6 +116,7 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto request)
     {
+        // Executes logic to change password.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request format."));

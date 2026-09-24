@@ -2,9 +2,9 @@
  * File Name: EnergyBookingSlotRepository.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Repository implementation for EnergyBookingSlots collection with index setup.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of EnergyBookingSlotRepository.cs
+ * Date: 2026-09-20
  */
 
 using MongoDB.Driver;
@@ -23,6 +23,7 @@ public class EnergyBookingSlotRepository : BaseRepository<EnergyBookingSlot>, IE
 
     private void CreateIndexes()
     {
+        // Handles the creation of indexes.
         var stationIdIndex = new CreateIndexModel<EnergyBookingSlot>(
             Builders<EnergyBookingSlot>.IndexKeys.Ascending(s => s.StationId)
         );
@@ -32,6 +33,7 @@ public class EnergyBookingSlotRepository : BaseRepository<EnergyBookingSlot>, IE
 
     public async Task<IEnumerable<EnergyBookingSlot>> GetByStationIdAsync(string stationId)
     {
+        // Retrieves by station id data from the system.
         return await _collection.Find(s => s.StationId == stationId).ToListAsync();
     }
 }

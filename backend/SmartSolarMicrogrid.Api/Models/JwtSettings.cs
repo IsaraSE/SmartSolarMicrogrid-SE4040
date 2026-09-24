@@ -2,9 +2,9 @@
  * File Name: JwtSettings.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Configuration settings for JWT Authentication.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of JwtSettings.cs
+ * Date: 2026-09-20
  */
 
 namespace SmartSolarMicrogrid.Api.Models;

@@ -2,9 +2,9 @@
  * File Name: LoginResponseDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for login response containing JWT and user details.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of LoginResponseDto.cs
+ * Date: 2026-09-24
  */
 
 using SmartSolarMicrogrid.Api.Models.Enums;

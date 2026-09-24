@@ -2,9 +2,9 @@
  * File Name: IReservationService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service interface for reservation logic including business rules.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of IReservationService.cs
+ * Date: 2026-09-15
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;

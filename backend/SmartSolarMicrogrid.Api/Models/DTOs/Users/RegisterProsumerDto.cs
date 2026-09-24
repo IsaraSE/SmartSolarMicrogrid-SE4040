@@ -2,9 +2,9 @@
  * File Name: RegisterProsumerDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Sewmi
- * Description: Data transfer object for self-service prosumer registration from the mobile app.
- * Date: 2026-09-19
+ * Author: IT22194862
+ * Description: Implementation of RegisterProsumerDto.cs
+ * Date: 2026-09-21
  */
 
 using System.ComponentModel.DataAnnotations;

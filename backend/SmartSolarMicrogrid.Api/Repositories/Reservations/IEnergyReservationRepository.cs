@@ -2,9 +2,9 @@
  * File Name: IEnergyReservationRepository.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Repository interface for EnergyReservation collection.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of IEnergyReservationRepository.cs
+ * Date: 2026-09-19
  */
 
 using SmartSolarMicrogrid.Api.Models.Entities;

@@ -2,9 +2,9 @@
  * File Name: SlotDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for slot response.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of SlotDto.cs
+ * Date: 2026-09-18
  */
 
 using SmartSolarMicrogrid.Api.Models.Enums;

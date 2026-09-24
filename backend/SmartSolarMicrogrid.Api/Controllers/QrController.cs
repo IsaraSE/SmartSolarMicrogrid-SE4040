@@ -1,3 +1,12 @@
+/*
+ * File Name: QrController.cs
+ * Project: Smart Solar Microgrid Trading System
+ * Module: SE4040 Enterprise Application Development
+ * Author: IT22194862
+ * Description: Implementation of QrController.cs
+ * Date: 2026-09-19
+ */
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartSolarMicrogrid.Api.Models.DTOs;
@@ -22,6 +31,7 @@ public class QrController : ControllerBase
     [Authorize(Roles = "GRID_OPERATOR,BACKOFFICE")]
     public async Task<IActionResult> VerifyQr([FromBody] QrVerifyRequestDto request)
     {
+        // Performs verification for qr.
         if (string.IsNullOrWhiteSpace(request.QrReference))
         {
             return BadRequest(ApiResponse<QrVerificationResultDto>.ErrorResponse("QR reference is required."));

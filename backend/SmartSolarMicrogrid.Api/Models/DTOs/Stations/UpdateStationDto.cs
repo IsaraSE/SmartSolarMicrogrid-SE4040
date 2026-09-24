@@ -2,9 +2,9 @@
  * File Name: UpdateStationDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for updating a solar station.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of UpdateStationDto.cs
+ * Date: 2026-09-22
  */
 
 using System.ComponentModel.DataAnnotations;

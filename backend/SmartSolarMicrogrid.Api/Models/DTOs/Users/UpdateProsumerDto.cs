@@ -2,9 +2,9 @@
  * File Name: UpdateProsumerDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Sewmi
- * Description: Data transfer object for a prosumer updating their own editable profile fields.
- * Date: 2026-09-19
+ * Author: IT22194862
+ * Description: Implementation of UpdateProsumerDto.cs
+ * Date: 2026-09-15
  */
 
 using System.ComponentModel.DataAnnotations;

@@ -1,3 +1,12 @@
+/*
+ * File Name: QrVerificationResultDto.cs
+ * Project: Smart Solar Microgrid Trading System
+ * Module: SE4040 Enterprise Application Development
+ * Author: IT22194862
+ * Description: Implementation of QrVerificationResultDto.cs
+ * Date: 2026-09-15
+ */
+
 namespace SmartSolarMicrogrid.Api.Models.DTOs.Reservations;
 
 public class QrVerificationResultDto

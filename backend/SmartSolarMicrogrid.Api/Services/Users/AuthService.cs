@@ -2,9 +2,9 @@
  * File Name: AuthService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for authentication logic including JWT generation.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of AuthService.cs
+ * Date: 2026-09-22
  */
 
 using System;

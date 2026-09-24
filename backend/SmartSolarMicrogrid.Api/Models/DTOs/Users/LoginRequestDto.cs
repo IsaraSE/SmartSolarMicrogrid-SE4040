@@ -2,9 +2,9 @@
  * File Name: LoginRequestDto.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Data transfer object for login request.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of LoginRequestDto.cs
+ * Date: 2026-09-18
  */
 
 using System.ComponentModel.DataAnnotations;
