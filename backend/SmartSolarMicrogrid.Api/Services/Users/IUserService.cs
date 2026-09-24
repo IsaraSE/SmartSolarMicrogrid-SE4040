@@ -2,9 +2,9 @@
  * File Name: IUserService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service interface for user management logic.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of IUserService.cs
+ * Date: 2026-09-23
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;

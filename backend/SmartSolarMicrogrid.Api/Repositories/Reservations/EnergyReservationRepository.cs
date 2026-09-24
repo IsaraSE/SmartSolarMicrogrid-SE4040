@@ -2,9 +2,9 @@
  * File Name: EnergyReservationRepository.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Repository implementation for EnergyReservation collection with index setup.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of EnergyReservationRepository.cs
+ * Date: 2026-09-16
  */
 
 using MongoDB.Driver;
@@ -23,6 +23,7 @@ public class EnergyReservationRepository : BaseRepository<EnergyReservation>, IE
 
     private void CreateIndexes()
     {
+        // Handles the creation of indexes.
         var qrIndex = new CreateIndexModel<EnergyReservation>(
             Builders<EnergyReservation>.IndexKeys.Ascending(r => r.QrReference),
             new CreateIndexOptions { Unique = true, Sparse = true }
@@ -41,16 +42,19 @@ public class EnergyReservationRepository : BaseRepository<EnergyReservation>, IE
 
     public async Task<IEnumerable<EnergyReservation>> GetByProsumerNicAsync(string nic)
     {
+        // Retrieves by prosumer nic data from the system.
         return await _collection.Find(r => r.ProsumerNic == nic).ToListAsync();
     }
 
     public async Task<IEnumerable<EnergyReservation>> GetByStationIdAsync(string stationId)
     {
+        // Retrieves by station id data from the system.
         return await _collection.Find(x => x.StationId == stationId).ToListAsync();
     }
 
     public async Task<IEnumerable<EnergyReservation>> GetActiveReservationsByStationIdAsync(string stationId)
     {
+        // Retrieves active reservations by station id data from the system.
         return await _collection.Find(x => x.StationId == stationId && 
                                            (x.Status == ReservationStatus.PENDING || 
                                            x.Status == ReservationStatus.APPROVED))
@@ -59,6 +63,7 @@ public class EnergyReservationRepository : BaseRepository<EnergyReservation>, IE
 
     public async Task<EnergyReservation?> GetByQrReferenceAsync(string qrReference)
     {
+        // Retrieves by qr reference data from the system.
         return await _collection.Find(r => r.QrReference == qrReference).FirstOrDefaultAsync();
     }
 }

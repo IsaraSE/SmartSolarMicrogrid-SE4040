@@ -2,9 +2,9 @@
  * File Name: IUserDetailsRepository.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Repository interface for UserDetails collection.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of IUserDetailsRepository.cs
+ * Date: 2026-09-24
  */
 
 using SmartSolarMicrogrid.Api.Models.Entities;

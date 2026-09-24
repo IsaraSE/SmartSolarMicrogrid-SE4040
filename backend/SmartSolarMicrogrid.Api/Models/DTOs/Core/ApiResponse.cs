@@ -2,9 +2,9 @@
  * File Name: ApiResponse.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Common API response wrapper for consistent JSON formatting.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of ApiResponse.cs
+ * Date: 2026-09-19
  */
 
 namespace SmartSolarMicrogrid.Api.Models.DTOs.Core;
@@ -23,6 +23,7 @@ public class ApiResponse<T>
     /// </summary>
     public static ApiResponse<T> SuccessResponse(string message, T? data = default)
     {
+        // Executes logic to success response.
         return new ApiResponse<T>
         {
             Success = true,
@@ -36,6 +37,7 @@ public class ApiResponse<T>
     /// </summary>
     public static ApiResponse<T> ErrorResponse(string message)
     {
+        // Executes logic to error response.
         return new ApiResponse<T>
         {
             Success = false,

@@ -2,9 +2,9 @@
  * File Name: IBaseRepository.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Generic base repository interface for standard CRUD operations.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of IBaseRepository.cs
+ * Date: 2026-09-19
  */
 
 using System.Linq.Expressions;

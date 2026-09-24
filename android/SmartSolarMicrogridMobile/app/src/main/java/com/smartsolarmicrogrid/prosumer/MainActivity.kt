@@ -31,12 +31,12 @@ class MainActivity : ComponentActivity() {
 
         val initialRoute = if (session != null && session.token != null) {
             when {
-                session.accountStatus == "PENDING" -> Screen.PendingActivation.createRoute(session.nic)
-                session.role == "GRID_OPERATOR" -> Screen.OperatorHome.route
+                session.accountStatus.equals("PENDING", ignoreCase = true) -> Screen.PendingActivation.createRoute(session.nic)
+                session.role.equals("GRID_OPERATOR", ignoreCase = true) || session.role == "1" || session.role.equals("GridOperator", ignoreCase = true) -> Screen.OperatorHome.route
                 else -> Screen.Dashboard.route
             }
         } else {
-            Screen.Login.route
+            Screen.RoleSelection.route
         }
 
         enableEdgeToEdge()

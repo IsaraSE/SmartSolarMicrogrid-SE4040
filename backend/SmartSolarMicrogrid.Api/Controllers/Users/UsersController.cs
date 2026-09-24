@@ -2,9 +2,9 @@
  * File Name: UsersController.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Controller for Backoffice user management.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of UsersController.cs
+ * Date: 2026-09-24
  */
 
 using Microsoft.AspNetCore.Authorization;
@@ -32,6 +32,7 @@ public class UsersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllUsers()
     {
+        // Retrieves all users data from the system.
         var users = await _userService.GetAllNonProsumersAsync();
         return Ok(ApiResponse<IEnumerable<UserDto>>.SuccessResponse("Users retrieved successfully.", users));
     }
@@ -42,6 +43,7 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUserById(string id)
     {
+        // Retrieves user by id data from the system.
         var user = await _userService.GetUserByIdAsync(id);
         if (user == null)
         {
@@ -56,6 +58,7 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserDto request)
     {
+        // Handles the creation of user.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));
@@ -71,6 +74,7 @@ public class UsersController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDto request)
     {
+        // Updates existing user records.
         if (!ModelState.IsValid)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse("Invalid request data."));

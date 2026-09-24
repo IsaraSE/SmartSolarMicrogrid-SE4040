@@ -23,6 +23,12 @@ interface ApiService {
     @PUT("api/auth/password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ApiResponse<Any>>
 
+    @GET("api/auth/profile")
+    suspend fun getUserProfile(): Response<ApiResponse<UserDto>>
+
+    @PUT("api/auth/profile")
+    suspend fun updateUserProfile(@Body request: UpdateProfileRequest): Response<ApiResponse<UserDto>>
+
     // ---------- Prosumer account ----------
     @POST("api/prosumers/register")
     suspend fun registerProsumer(@Body request: RegisterRequest): Response<ApiResponse<Prosumer>>
@@ -40,12 +46,27 @@ interface ApiService {
     @GET("api/stations")
     suspend fun getStations(): Response<ApiResponse<List<Station>>>
 
+    @GET("api/slots")
+    suspend fun getAllSlots(): Response<ApiResponse<List<Slot>>>
+
     @GET("api/stations/{id}/available-slots")
     suspend fun getAvailableSlots(@Path("id") stationId: String): Response<ApiResponse<List<Slot>>>
+
+    @GET("api/slots/station/{stationId}")
+    suspend fun getAllSlotsByStationId(@Path("stationId") stationId: String): Response<ApiResponse<List<Slot>>>
+
+    @POST("api/slots")
+    suspend fun createSlot(@Body request: CreateSlotRequest): Response<ApiResponse<Slot>>
+
+    @PUT("api/slots/{id}")
+    suspend fun updateSlot(@Path("id") id: String, @Body request: UpdateSlotRequest): Response<ApiResponse<Slot>>
 
     // ---------- Reservations ----------
     @POST("api/reservations")
     suspend fun createReservation(@Body request: CreateReservationRequest): Response<ApiResponse<Reservation>>
+
+    @GET("api/reservations/search")
+    suspend fun getReservationsByStationId(@Query("stationId") stationId: String): Response<ApiResponse<List<Reservation>>>
 
     @PUT("api/reservations/{id}")
     suspend fun updateReservation(@Path("id") id: String, @Body request: CreateReservationRequest): Response<ApiResponse<Reservation>>
@@ -76,13 +97,16 @@ interface ApiService {
 
     // ---------- Grid operator ----------
 
-    /** Reservations awaiting operator action across all prosumers. */
-    @GET("api/reservations/operator/pending")
-    suspend fun getOperatorPendingReservations(): Response<ApiResponse<List<Reservation>>>
+    /** All reservations for grid operator dashboard. */
+    @GET("api/reservations/search")
+    suspend fun getAllReservations(): Response<ApiResponse<List<Reservation>>>
 
     /** Operator approves a pending reservation, which issues its transaction QR. */
-    @PUT("api/reservations/{id}/approve")
-    suspend fun approveReservation(@Path("id") id: String): Response<ApiResponse<Reservation>>
+    @PUT("api/reservations/{id}/status")
+    suspend fun approveReservation(
+        @Path("id") id: String,
+        @Body request: com.smartsolarmicrogrid.prosumer.data.model.UpdateReservationStatusRequest
+    ): Response<ApiResponse<Reservation>>
 
     /** Verifies a scanned QR reference against the server. */
     @POST("api/qr/verify")

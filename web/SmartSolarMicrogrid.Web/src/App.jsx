@@ -30,17 +30,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontFamily: 'Inter, sans-serif',
-        color: '#64748b',
-        background: '#f8fafc',
-        gap: '20px',
-      }}>
+      <div className="flex flex-col justify-center items-center h-screen font-sans text-slate-500 bg-slate-50 gap-5">
         <div style={{
           width: '44px',
           height: '44px',

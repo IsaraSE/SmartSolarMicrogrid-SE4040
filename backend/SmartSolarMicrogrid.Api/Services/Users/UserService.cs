@@ -2,9 +2,9 @@
  * File Name: UserService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for user management logic.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of UserService.cs
+ * Date: 2026-09-17
  */
 
 using SmartSolarMicrogrid.Api.Exceptions;
@@ -27,18 +27,21 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<UserDto>> GetAllNonProsumersAsync()
     {
+        // Retrieves all non prosumers data from the system.
         var users = await _userRepository.FindAsync(u => u.Role != UserRole.PROSUMER);
         return users.Select(MapToDto);
     }
 
     public async Task<UserDto?> GetUserByIdAsync(string userId)
     {
+        // Retrieves user by id data from the system.
         var user = await _userRepository.GetByIdAsync(userId);
         return user != null ? MapToDto(user) : null;
     }
 
     public async Task<UserDto> CreateUserAsync(CreateUserDto request)
     {
+        // Handles the creation of user.
         var errors = new Dictionary<string, string[]>();
 
         var existingUser = await _userRepository.GetByEmailAsync(request.Email);
@@ -78,6 +81,7 @@ public class UserService : IUserService
 
     public async Task<UserDto?> UpdateUserAsync(string userId, UpdateUserDto request)
     {
+        // Updates existing user records.
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)
         {
@@ -109,6 +113,7 @@ public class UserService : IUserService
 
     private UserDto MapToDto(UserDetail user)
     {
+        // Maps to dto to the corresponding DTO.
         return new UserDto
         {
             UserId = user.UserId,
@@ -126,6 +131,7 @@ public class UserService : IUserService
 
     public async Task<UserDto?> UpdateProfileAsync(string userId, UpdateProfileDto request)
     {
+        // Updates existing profile records.
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)
         {
@@ -162,6 +168,7 @@ public class UserService : IUserService
 
     public async Task<bool> ChangePasswordAsync(string userId, ChangePasswordDto request)
     {
+        // Executes logic to change password.
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)
         {

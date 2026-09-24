@@ -1,3 +1,6 @@
+@tailwind components;
+@tailwind utilities;
+
 /*
  * File Name: index.css
  * Project: Smart Solar Microgrid Trading System

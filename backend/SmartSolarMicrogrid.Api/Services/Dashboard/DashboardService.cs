@@ -2,9 +2,9 @@
  * File Name: DashboardService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for dashboard metrics based on role.
- * Date: 2026-09-14
+ * Author: IT22154880
+ * Description: Implementation of DashboardService.cs
+ * Date: 2026-09-19
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;
@@ -24,6 +24,7 @@ public class DashboardService : IDashboardService
 
     public async Task<DashboardStatsDto> GetStatsAsync(string role, string? userNic)
     {
+        // Retrieves stats data from the system.
         var allReservations = await _reservationRepository.GetAllAsync();
         
         var query = allReservations.AsEnumerable();

@@ -311,9 +311,9 @@ const Slots = () => {
               Reserved
             </button>
           </div>
-          <div className="table-actions-right" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <FiMapPin style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '18px' }} />
+          <div className="table-actions-right flex gap-4 items-center">
+            <div className="relative flex items-center">
+              <FiMapPin className="absolute left-4 text-slate-500 text-lg" />
               <select
                 value={selectedStation?.stationId || 'all'}
                 onChange={handleStationChange}

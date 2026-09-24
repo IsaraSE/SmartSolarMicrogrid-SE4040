@@ -2,9 +2,9 @@
  * File Name: ProsumerService.cs
  * Project: Smart Solar Microgrid Trading System
  * Module: SE4040 Enterprise Application Development
- * Author: Isara
- * Description: Service implementation for prosumer administration logic.
- * Date: 2026-09-14
+ * Author: IT22194862
+ * Description: Implementation of ProsumerService.cs
+ * Date: 2026-09-15
  */
 
 using SmartSolarMicrogrid.Api.Models.DTOs;
@@ -108,12 +108,14 @@ public class ProsumerService : IProsumerService
 
     public async Task<IEnumerable<UserDto>> GetAllProsumersAsync()
     {
+        // Retrieves all prosumers data from the system.
         var users = await _userRepository.FindAsync(u => u.Role == UserRole.PROSUMER);
         return users.Select(MapToDto);
     }
 
     public async Task<UserDto?> GetProsumerByNicAsync(string nic)
     {
+        // Retrieves prosumer by nic data from the system.
         var user = await _userRepository.GetByNicAsync(nic);
         if (user == null || user.Role != UserRole.PROSUMER) return null;
         return MapToDto(user);
@@ -121,12 +123,14 @@ public class ProsumerService : IProsumerService
 
     public async Task<IEnumerable<UserDto>> GetPendingProsumersAsync()
     {
+        // Retrieves pending prosumers data from the system.
         var users = await _userRepository.FindAsync(u => u.Role == UserRole.PROSUMER && u.AccountStatus == AccountStatus.PENDING);
         return users.Select(MapToDto);
     }
 
     public async Task<UserDto?> ActivateProsumerAsync(string nic)
     {
+        // Activates the specified prosumer.
         var user = await _userRepository.GetByNicAsync(nic);
         if (user == null || user.Role != UserRole.PROSUMER || user.AccountStatus != AccountStatus.PENDING)
         {
@@ -140,12 +144,14 @@ public class ProsumerService : IProsumerService
 
     public async Task<IEnumerable<UserDto>> GetDeactivatedProsumersAsync()
     {
+        // Retrieves deactivated prosumers data from the system.
         var users = await _userRepository.FindAsync(u => u.Role == UserRole.PROSUMER && u.AccountStatus == AccountStatus.DEACTIVATED);
         return users.Select(MapToDto);
     }
 
     public async Task<UserDto?> ReactivateProsumerAsync(string nic)
     {
+        // Executes logic to reactivate prosumer.
         var user = await _userRepository.GetByNicAsync(nic);
         if (user == null || user.Role != UserRole.PROSUMER || user.AccountStatus != AccountStatus.DEACTIVATED)
         {
@@ -180,6 +186,7 @@ public class ProsumerService : IProsumerService
 
     private static UserDto MapToDto(UserDetail user)
     {
+        // Maps to dto to the corresponding DTO.
         return new UserDto
         {
             UserId = user.UserId!,

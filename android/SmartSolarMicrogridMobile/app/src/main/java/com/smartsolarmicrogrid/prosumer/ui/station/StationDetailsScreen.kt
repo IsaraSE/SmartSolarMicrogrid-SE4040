@@ -2,8 +2,10 @@ package com.smartsolarmicrogrid.prosumer.ui.station
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -17,6 +19,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -25,13 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smartsolarmicrogrid.prosumer.R
-import kotlin.math.abs
 
-private val SolarGreen = Color(0xFF1B6A27) // Darker green to match UI
-private val TextDark = Color(0xFF1A1A1A)
-private val TextGrey = Color(0xFF6B7280)
+private val GreenDark = Color(0xFF145A32)
+private val GreenPrimary = Color(0xFF1B8A4A)
+private val GreenLight = Color(0xFF2ECC71)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StationDetailsScreen(
     onNavigateToSlots: () -> Unit,
@@ -40,177 +42,244 @@ fun StationDetailsScreen(
 ) {
     val station = stationViewModel.selectedStation
 
-    Scaffold(
-        containerColor = Color.White,
-        topBar = {
-            TopAppBar(
-                title = { Text("Station Details", fontWeight = FontWeight.SemiBold, fontSize = 20.sp) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SolarGreen,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
-            )
-        },
-        bottomBar = {
-            Surface(
+    if (station == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Station details not available", color = Color(0xFF94A3B8))
+        }
+        return
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF8FAFC))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Hero Image with overlay
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                color = Color.White
+                    .height(300.dp)
             ) {
-                Button(
-                    onClick = onNavigateToSlots,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SolarGreen),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("View Available Slots", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
-    ) { paddingValues ->
-        if (station != null) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                // Determine station image based on ID
-                val imageRes = when (abs(station.stationId.hashCode()) % 7) {
-                    0 -> R.drawable.station_1
-                    1 -> R.drawable.station_2
-                    2 -> R.drawable.station_3
-                    3 -> R.drawable.station_4
-                    4 -> R.drawable.station_5
-                    5 -> R.drawable.station_6
-                    else -> R.drawable.station_7
-                }
-
+                val imageRes = getStationImageRes(station)
                 Image(
                     painter = painterResource(id = imageRes),
                     contentDescription = "Station Image",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                        .padding(start = 16.dp, end = 16.dp, top = 16.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                    modifier = Modifier.fillMaxSize()
                 )
 
-                Column(modifier = Modifier.padding(16.dp)) {
+                // Gradient overlay at top for back button
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color.Black.copy(alpha = 0.5f), Color.Transparent)
+                            )
+                        )
+                )
+
+                // Back button
+                Box(
+                    modifier = Modifier
+                        .padding(top = 48.dp, start = 20.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.25f))
+                        .clickable { onBack() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = Color.White, modifier = Modifier.size(22.dp))
+                }
+
+                // Station status badge
+                val isActive = station.status.uppercase() == "ACTIVE" || station.status.uppercase() == "AVAILABLE" || station.status == "0"
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isActive) Color(0xFF43A047) else Color(0xFFE53935)
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 20.dp, bottom = 20.dp)
+                ) {
                     Text(
-                        text = station.stationName,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextDark
+                        if (isActive) "● Active" else "● Inactive",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                     )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    // Location Distance
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.LocationOn,
-                            contentDescription = "Distance",
-                            tint = TextGrey,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "2.5 km away",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextGrey
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Address
-                    Row(verticalAlignment = Alignment.Top) {
-                        Icon(
-                            imageVector = Icons.Filled.LocationOn,
-                            contentDescription = "Address",
-                            tint = TextGrey,
-                            modifier = Modifier.size(18.dp).padding(top = 2.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = station.address,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextGrey
-                        )
-                    }
-
-                    HorizontalDivider(
-                        color = Color.LightGray.copy(alpha = 0.5f),
-                        thickness = 1.dp,
-                        modifier = Modifier.padding(vertical = 20.dp)
-                    )
-
-                    // Details section
-                    DetailRow(
-                        icon = Icons.Filled.BatteryChargingFull,
-                        label = "Total Capacity",
-                        value = "${station.capacity} kWh"
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    val slotState = stationViewModel.slotListState
-                    val availableSlotsCount = when (slotState) {
-                        is SlotListState.Loaded -> slotState.slots.count { it.status.uppercase() == "AVAILABLE" }.toString()
-                        is SlotListState.Loading -> "..."
-                        else -> "-"
-                    }
-
-                    DetailRow(
-                        icon = Icons.Filled.CheckCircle,
-                        label = "Available Slots",
-                        value = availableSlotsCount
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    DetailRow(
-                        icon = Icons.Filled.Schedule,
-                        label = "Operating Hours",
-                        value = "${station.operatingStartTime} - ${station.operatingEndTime}"
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Station details not available")
+
+            // Content Card overlapping image
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = (-20).dp),
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    // Station Name
+                    Text(
+                        text = station.stationName,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF1A1A2E)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Location Row
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFF1F5F9)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(18.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        val dist = stationViewModel.calculateDistance(station.latitude, station.longitude)
+                        val distStr = if (dist != null) String.format("%.1f km away", dist / 1000f) else "Unknown Distance"
+                        Column {
+                            Text(distStr, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A1A2E))
+                            Text(station.address, fontSize = 13.sp, color = Color(0xFF94A3B8), lineHeight = 18.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Stats Row - 3 cards
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        val slotState = stationViewModel.slotListState
+                        val availableSlotsCount = when (slotState) {
+                            is SlotListState.Loaded -> slotState.slots.count { it.status.uppercase() == "AVAILABLE" }.toString()
+                            is SlotListState.Loading -> "..."
+                            else -> "-"
+                        }
+
+                        StationInfoCard(
+                            icon = Icons.Filled.BatteryChargingFull,
+                            label = "Capacity",
+                            value = "${station.capacity} kWh",
+                            iconTint = Color(0xFF1E88E5),
+                            iconBg = Color(0xFFE3F2FD),
+                            modifier = Modifier.weight(1f)
+                        )
+                        StationInfoCard(
+                            icon = Icons.Filled.CheckCircle,
+                            label = "Available",
+                            value = availableSlotsCount,
+                            iconTint = Color(0xFF43A047),
+                            iconBg = Color(0xFFE8F5E9),
+                            modifier = Modifier.weight(1f)
+                        )
+                        StationInfoCard(
+                            icon = Icons.Filled.Schedule,
+                            label = "Hours",
+                            value = "${formatTime(station.operatingStartTime)}\n${formatTime(station.operatingEndTime)}",
+                            iconTint = Color(0xFFFF9800),
+                            iconBg = Color(0xFFFFF3E0),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // CTA Button
+                    Button(
+                        onClick = onNavigateToSlots,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .shadow(6.dp, RoundedCornerShape(16.dp))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.horizontalGradient(listOf(GreenDark, GreenPrimary)),
+                                    RoundedCornerShape(16.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("View Available Slots", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }
 }
 
 @Composable
-private fun DetailRow(
+private fun StationInfoCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
-    value: String
+    value: String,
+    iconTint: Color,
+    iconBg: Color,
+    modifier: Modifier = Modifier
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = TextGrey,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(text = label, fontSize = 13.sp, color = TextGrey, fontWeight = FontWeight.Medium)
-            Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextDark)
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(iconBg),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A2E), textAlign = androidx.compose.ui.text.style.TextAlign.Center, lineHeight = 18.sp)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(label, fontSize = 11.sp, color = Color(0xFF94A3B8), fontWeight = FontWeight.Medium)
         }
+    }
+}
+
+private fun formatTime(timeStr: String): String {
+    return try {
+        val parts = timeStr.split(":")
+        val hour = parts[0].toInt()
+        val minute = parts.getOrNull(1) ?: "00"
+        val amPm = if (hour >= 12) "PM" else "AM"
+        val displayHour = if (hour % 12 == 0) 12 else hour % 12
+        val formattedHour = if (displayHour < 10) "0$displayHour" else "$displayHour"
+        "$formattedHour:$minute $amPm"
+    } catch (e: Exception) {
+        timeStr
     }
 }

@@ -17,11 +17,14 @@ data class QrVerificationResult(
     val valid: Boolean,
     val message: String? = null,
     val reservationId: String? = null,
+    val reservationNumber: String? = null,
     val prosumerNic: String? = null,
     val prosumerName: String? = null,
     val stationId: String? = null,
+    val stationName: String? = null,
     val slotId: String? = null,
     val bookingDate: String? = null,
     val startTime: String? = null,
+    val endTime: String? = null,
     val status: String? = null
 )
