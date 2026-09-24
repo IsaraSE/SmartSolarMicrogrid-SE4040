@@ -132,11 +132,11 @@ public class ReservationService : IReservationService
             return (false, "Selected slot is not available.", null);
         }
 
-        // Rule: Booking must be scheduled within 7 days from today.
+        // Rule: Booking must be in the future and within 7 days from today.
         var maxDate = DateTime.UtcNow.Date.AddDays(7);
-        if (slot.StartDateTime.Date < DateTime.UtcNow.Date || slot.StartDateTime.Date > maxDate)
+        if (slot.StartDateTime < DateTime.UtcNow || slot.StartDateTime.Date > maxDate)
         {
-            return (false, "Reservation date must be within the next 7 days.", null);
+            return (false, "Reservation must be in the future and within the next 7 days.", null);
         }
 
         // Check if the slot is already booked by another active reservation (PENDING or APPROVED)
