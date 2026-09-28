@@ -15,7 +15,7 @@ POST {{host}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "john@example.com",
+  "email": "demo320964@example.com",
   "password": "password123"
 }
 
@@ -34,39 +34,39 @@ Content-Type: application/json
 ### Get all stations (also captures the first station's id for the calls below)
 # @name stations
 GET {{host}}/api/stations
-Authorization: Bearer {{login.response.body.$.data.token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2YWFiNzljZjI3NzMyMGNiMGIzMTMxMjMiLCJlbWFpbCI6ImJhY2tvZmZpY2VAc21hcnRzb2xhci5jb20iLCJyb2xlIjoiQkFDS09GRklDRSIsIm5iZiI6MTc4OTgxMjkxMiwiZXhwIjoxNzg5ODIwMTEyLCJpYXQiOjE3ODk4MTI5MTIsImlzcyI6IlNtYXJ0U29sYXJNaWNyb2dyaWRBcGkiLCJhdWQiOiJTbWFydFNvbGFyTWljcm9ncmlkQ2xpZW50cyJ9.-IJAl7zxghMgT0yEWUtisVXtSDqwmfnbXKKthzYTPlA
 
 
 ### Get available slots for the first station
 # @name slots
 GET {{host}}/api/stations/{{stations.response.body.$.data[0].stationId}}/available-slots
-Authorization: Bearer {{login.response.body.$.data.token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2YWFlNjM2Y2I1MzIzNDJlNDc4ZjljNzkiLCJlbWFpbCI6ImRlbW8zMjA5NjRAZXhhbXBsZS5jb20iLCJyb2xlIjoiUFJPU1VNRVIiLCJuaWMiOiJERU1PMzIwOTY0ViIsIm5iZiI6MTc4OTgxMzY5NSwiZXhwIjoxNzg5ODIwODk1LCJpYXQiOjE3ODk4MTM2OTUsImlzcyI6IlNtYXJ0U29sYXJNaWNyb2dyaWRBcGkiLCJhdWQiOiJTbWFydFNvbGFyTWljcm9ncmlkQ2xpZW50cyJ9.gC9CPWOb1yc-D6gOAJFqn-ffS-25BdgYKIIERtHzmfU
 
 
 ### Get this prosumer's profile
 GET {{host}}/api/prosumers/123456789V
-Authorization: Bearer {{login.response.body.$.data.token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2YWFlNjM2Y2I1MzIzNDJlNDc4ZjljNzkiLCJlbWFpbCI6ImRlbW8zMjA5NjRAZXhhbXBsZS5jb20iLCJyb2xlIjoiUFJPU1VNRVIiLCJuaWMiOiJERU1PMzIwOTY0ViIsIm5iZiI6MTc4OTgxMzY5NSwiZXhwIjoxNzg5ODIwODk1LCJpYXQiOjE3ODk4MTM2OTUsImlzcyI6IlNtYXJ0U29sYXJNaWNyb2dyaWRBcGkiLCJhdWQiOiJTbWFydFNvbGFyTWljcm9ncmlkQ2xpZW50cyJ9.gC9CPWOb1yc-D6gOAJFqn-ffS-25BdgYKIIERtHzmfU
 
 
 ### Current bookings (APPROVED, upcoming)
 GET {{host}}/api/reservations/current/123456789V
-Authorization: Bearer {{login.response.body.$.data.token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2YWFlNjM2Y2I1MzIzNDJlNDc4ZjljNzkiLCJlbWFpbCI6ImRlbW8zMjA5NjRAZXhhbXBsZS5jb20iLCJyb2xlIjoiUFJPU1VNRVIiLCJuaWMiOiJERU1PMzIwOTY0ViIsIm5iZiI6MTc4OTgxMzY5NSwiZXhwIjoxNzg5ODIwODk1LCJpYXQiOjE3ODk4MTM2OTUsImlzcyI6IlNtYXJ0U29sYXJNaWNyb2dyaWRBcGkiLCJhdWQiOiJTbWFydFNvbGFyTWljcm9ncmlkQ2xpZW50cyJ9.gC9CPWOb1yc-D6gOAJFqn-ffS-25BdgYKIIERtHzmfU
 
 
 ### Pending bookings
 GET {{host}}/api/reservations/pending/123456789V
-Authorization: Bearer {{login.response.body.$.data.token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2YWFlNjM2Y2I1MzIzNDJlNDc4ZjljNzkiLCJlbWFpbCI6ImRlbW8zMjA5NjRAZXhhbXBsZS5jb20iLCJyb2xlIjoiUFJPU1VNRVIiLCJuaWMiOiJERU1PMzIwOTY0ViIsIm5iZiI6MTc4OTgxMzY5NSwiZXhwIjoxNzg5ODIwODk1LCJpYXQiOjE3ODk4MTM2OTUsImlzcyI6IlNtYXJ0U29sYXJNaWNyb2dyaWRBcGkiLCJhdWQiOiJTbWFydFNvbGFyTWljcm9ncmlkQ2xpZW50cyJ9.gC9CPWOb1yc-D6gOAJFqn-ffS-25BdgYKIIERtHzmfU
 
 
 ### Booking history (completed / cancelled / past)
 GET {{host}}/api/reservations/history/123456789V
-Authorization: Bearer {{login.response.body.$.data.token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2YWFlNjM2Y2I1MzIzNDJlNDc4ZjljNzkiLCJlbWFpbCI6ImRlbW8zMjA5NjRAZXhhbXBsZS5jb20iLCJyb2xlIjoiUFJPU1VNRVIiLCJuaWMiOiJERU1PMzIwOTY0ViIsIm5iZiI6MTc4OTgxMzY5NSwiZXhwIjoxNzg5ODIwODk1LCJpYXQiOjE3ODk4MTM2OTUsImlzcyI6IlNtYXJ0U29sYXJNaWNyb2dyaWRBcGkiLCJhdWQiOiJTbWFydFNvbGFyTWljcm9ncmlkQ2xpZW50cyJ9.gC9CPWOb1yc-D6gOAJFqn-ffS-25BdgYKIIERtHzmfU
 
 
 ### Create a booking (uses the first available slot from the "slots" request above)
 POST {{host}}/api/reservations
 Content-Type: application/json
-Authorization: Bearer {{login.response.body.$.data.token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2YWFlNjM2Y2I1MzIzNDJlNDc4ZjljNzkiLCJlbWFpbCI6ImRlbW8zMjA5NjRAZXhhbXBsZS5jb20iLCJyb2xlIjoiUFJPU1VNRVIiLCJuaWMiOiJERU1PMzIwOTY0ViIsIm5iZiI6MTc4OTgxMzY5NSwiZXhwIjoxNzg5ODIwODk1LCJpYXQiOjE3ODk4MTM2OTUsImlzcyI6IlNtYXJ0U29sYXJNaWNyb2dyaWRBcGkiLCJhdWQiOiJTbWFydFNvbGFyTWljcm9ncmlkQ2xpZW50cyJ9.gC9CPWOb1yc-D6gOAJFqn-ffS-25BdgYKIIERtHzmfU
 
 {
   "prosumerNic": "123456789V",
@@ -94,7 +94,7 @@ Content-Type: application/json
 ### Update this prosumer's profile
 PUT {{host}}/api/prosumers/123456789V
 Content-Type: application/json
-Authorization: Bearer {{login.response.body.$.data.token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2YWFlNjM2Y2I1MzIzNDJlNDc4ZjljNzkiLCJlbWFpbCI6ImRlbW8zMjA5NjRAZXhhbXBsZS5jb20iLCJyb2xlIjoiUFJPU1VNRVIiLCJuaWMiOiJERU1PMzIwOTY0ViIsIm5iZiI6MTc4OTgxMzY5NSwiZXhwIjoxNzg5ODIwODk1LCJpYXQiOjE3ODk4MTM2OTUsImlzcyI6IlNtYXJ0U29sYXJNaWNyb2dyaWRBcGkiLCJhdWQiOiJTbWFydFNvbGFyTWljcm9ncmlkQ2xpZW50cyJ9.gC9CPWOb1yc-D6gOAJFqn-ffS-25BdgYKIIERtHzmfU
 
 {
   "fullName": "John Doe Updated",
