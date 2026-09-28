@@ -45,7 +45,7 @@ fun ProfileScreen(
                 Brush.verticalGradient(
                     colors = listOf(SolarGreenDark, SolarGreen, SurfaceGray),
                     startY = 0f,
-                    endY = 480f
+                    endY = 680f
                 )
             )
     ) {

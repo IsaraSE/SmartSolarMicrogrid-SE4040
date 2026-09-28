@@ -23,23 +23,36 @@ public class UserDetailsRepository : BaseRepository<UserDetail>, IUserDetailsRep
 
     private void CreateIndexes()
     {
-        // Unique index for Email
-        var emailIndex = new CreateIndexModel<UserDetail>(
-            Builders<UserDetail>.IndexKeys.Ascending(u => u.Email),
-            new CreateIndexOptions { Unique = true }
-        );
+        try
+        {
+            // Unique index for Email
+            var emailIndex = new CreateIndexModel<UserDetail>(
+                Builders<UserDetail>.IndexKeys.Ascending(u => u.Email),
+                new CreateIndexOptions { Unique = true }
+            );
 
-        // Unique sparse/partial index for NIC (only enforces uniqueness for Prosumers where NIC is not null)
-        var nicIndex = new CreateIndexModel<UserDetail>(
-            Builders<UserDetail>.IndexKeys.Ascending(u => u.Nic),
-            new CreateIndexOptions 
-            { 
-                Unique = true, 
-                Sparse = true
-            }
-        );
+            // Unique sparse/partial index for NIC (only enforces uniqueness for Prosumers where NIC is not null)
+            var nicIndex = new CreateIndexModel<UserDetail>(
+                Builders<UserDetail>.IndexKeys.Ascending(u => u.Nic),
+                new CreateIndexOptions 
+                { 
+                    Unique = true, 
+                    Sparse = true
+                }
+            );
 
-        _collection.Indexes.CreateMany(new[] { emailIndex, nicIndex });
+            // Unique index for Phone
+            var phoneIndex = new CreateIndexModel<UserDetail>(
+                Builders<UserDetail>.IndexKeys.Ascending(u => u.Phone),
+                new CreateIndexOptions { Unique = true, Sparse = true }
+            );
+
+            _collection.Indexes.CreateMany(new[] { emailIndex, nicIndex, phoneIndex });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Warning] Failed to create MongoDB indexes. This is usually due to existing duplicate data: {ex.Message}");
+        }
     }
 
     public async Task<UserDetail?> GetByEmailAsync(string email)
@@ -50,5 +63,10 @@ public class UserDetailsRepository : BaseRepository<UserDetail>, IUserDetailsRep
     public async Task<UserDetail?> GetByNicAsync(string nic)
     {
         return await _collection.Find(u => u.Nic == nic).FirstOrDefaultAsync();
+    }
+
+    public async Task<UserDetail?> GetByPhoneAsync(string phone)
+    {
+        return await _collection.Find(u => u.Phone == phone).FirstOrDefaultAsync();
     }
 }

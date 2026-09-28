@@ -61,4 +61,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.material.icons.extended)
 
+    // Grid operator features
+    implementation(libs.zxing.android.embedded)   // QR scanning (camera)
+    implementation(libs.maps.compose)             // Google Maps for Compose
+    implementation(libs.play.services.maps)       // Google Maps SDK
+
 }

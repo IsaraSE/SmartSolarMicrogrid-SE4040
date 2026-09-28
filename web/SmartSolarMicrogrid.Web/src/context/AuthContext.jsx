@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     if (response.success) {
       const userData = {
         fullName: response.data.fullName,
-        email: response.data.email,
+        email: email, // Get from login args since backend doesn't return it
         role: response.data.role,
       };
       localStorage.setItem('token', response.data.token);
@@ -44,8 +44,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (newData) => {
+    const updated = { ...user, ...newData };
+    setUser(updated);
+    localStorage.setItem('user', JSON.stringify(updated));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

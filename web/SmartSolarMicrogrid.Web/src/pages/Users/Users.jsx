@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiSearch, FiRefreshCw, FiPlus, FiEdit2, FiChevronDown } from 'react-icons/fi';
+import { FiSearch, FiRefreshCw, FiPlus, FiEdit2, FiChevronDown, FiUser, FiMail, FiPhone, FiShield, FiActivity, FiMapPin, FiFileText, FiCalendar, FiUserCheck, FiUserX, FiHash, FiMoreVertical, FiX } from 'react-icons/fi';
 import userService from '../../services/userService';
 import './Users.css';
 
@@ -22,6 +22,7 @@ const Users = () => {
   // Modals state
   const [viewUser, setViewUser] = useState(null);
   const [statusConfirm, setStatusConfirm] = useState(null); // { user, newStatus }
+  const [actionMenuOpen, setActionMenuOpen] = useState(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,6 +35,10 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
+    
+    const handleClickOutside = () => setActionMenuOpen(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
   }, []);
 
   const fetchUsers = async () => {
@@ -168,8 +173,7 @@ const Users = () => {
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="All Status">All Status</option>
               <option value="ACTIVE">ACTIVE</option>
-              <option value="PENDING">PENDING</option>
-              <option value="INACTIVE">INACTIVE</option>
+              <option value="DEACTIVATED">DEACTIVATED</option>
             </select>
           </div>
 
@@ -198,8 +202,8 @@ const Users = () => {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Role</th>
-                <th>Account Status</th>
-                <th className="th-actions">Actions</th>
+                <th style={{ textAlign: 'center' }}>Status</th>
+                <th className="th-actions" style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -216,12 +220,6 @@ const Users = () => {
                   <tr key={user.userId}>
                     <td>
                       <div className="cell-user">
-                        <div 
-                          className="user-avatar" 
-                          style={{ backgroundColor: `${getAvatarColor(user.fullName)}20`, color: getAvatarColor(user.fullName) }}
-                        >
-                          {getInitials(user.fullName)}
-                        </div>
                         <span className="user-name">
                           {user.fullName ? user.fullName.split(' ').slice(0, 2).join(' ') : 'Unknown'}
                         </span>
@@ -236,21 +234,50 @@ const Users = () => {
                         {user.role}
                       </span>
                     </td>
-                    <td>
-                      <button 
-                        className={`status-badge-btn status-${user.accountStatus?.toLowerCase() || 'unknown'}`}
-                        onClick={() => handleStatusClick(user)}
-                      >
-                        <div className="status-badge-content">
-                          <span className="status-dot"></span>
-                          <span>{user.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</span>
-                        </div>
-                        <FiChevronDown className="status-chevron" />
-                      </button>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`status-badge-btn static-badge status-${user.accountStatus?.toLowerCase() || 'unknown'}`} style={{ display: 'inline-flex', padding: '6px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '500', border: 'none', cursor: 'default', backgroundColor: user.accountStatus === 'ACTIVE' ? '#dcfce7' : '#fee2e2', color: user.accountStatus === 'ACTIVE' ? '#166534' : '#991b1b' }}>
+                        {user.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}
+                      </span>
                     </td>
-                    <td className="cell-actions">
-                      <button className="btn-action btn-view-text" onClick={() => setViewUser(user)}>View</button>
-                      <button className="btn-action btn-edit-text" onClick={() => navigate(`/users/edit/${user.userId}`)}>Edit</button>
+                    <td className="cell-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', position: 'relative', whiteSpace: 'nowrap', minWidth: 'max-content' }}>
+                      <button className="review-btn" onClick={() => setViewUser(user)}>Review</button>
+                      
+                      {user.accountStatus === 'ACTIVE' ? (
+                        <button className="deactivate-btn" onClick={() => handleStatusClick(user)}>Deactivate</button>
+                      ) : (
+                        <button className="activate-btn" onClick={() => handleStatusClick(user)}>Activate</button>
+                      )}
+                      
+                      <div className="dropdown-container" style={{ marginLeft: 'auto' }}>
+                        <button 
+                          className="review-btn" 
+                          style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActionMenuOpen(actionMenuOpen === user.userId ? null : user.userId);
+                          }}
+                        >
+                          <FiMoreVertical />
+                        </button>
+                        {actionMenuOpen === user.userId && (
+                          <div 
+                            className="action-dropdown-menu" 
+                            style={{ position: 'absolute', right: '0', top: '100%', zIndex: 10, background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #e2e8f0', minWidth: '100px', padding: '4px 0', marginTop: '4px' }}
+                          >
+                            <button 
+                              style={{ display: 'block', width: '100%', padding: '6px 14px', background: 'transparent', border: 'none', color: '#475569', fontSize: '0.8rem', cursor: 'pointer', textAlign: 'center', fontWeight: '600' }}
+                              onClick={() => {
+                                setActionMenuOpen(null);
+                                navigate(`/users/edit/${user.userId}`);
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -303,56 +330,104 @@ const Users = () => {
         </div>
       </div>
 
-      {/* View User Modal */}
+      {/* View User Modal (Premium Design) */}
       {viewUser && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in">
-            <div className="user-modal-header">
-              <h2>User Details</h2>
-              <button className="user-modal-close" onClick={() => setViewUser(null)}>&times;</button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <FiUser />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>User Details</h2>
+                <p>View detailed information about this user.</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setViewUser(null)}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body">
-              <div className="detail-group">
-                <label>Full Name</label>
-                <div className="detail-value">{viewUser.fullName}</div>
-              </div>
-              <div className="detail-group">
-                <label>Email Address</label>
-                <div className="detail-value">{viewUser.email}</div>
-              </div>
-              <div className="detail-group">
-                <label>Phone Number</label>
-                <div className="detail-value">{viewUser.phone}</div>
-              </div>
-              <div className="detail-group">
-                <label>Role</label>
-                <div className="detail-value">{viewUser.role}</div>
-              </div>
-              <div className="detail-group">
-                <label>Account Status</label>
-                <div className="detail-value">{viewUser.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</div>
-              </div>
-              <div className="detail-group">
-                <label>Address</label>
-                <div className="detail-value">{viewUser.address || 'None'}</div>
-              </div>
-              <div className="detail-group">
-                <label>Additional Information</label>
-                <div className="detail-value">{viewUser.additionalInfo || 'None'}</div>
-              </div>
-              <div className="detail-group">
-                <label>Created At</label>
-                <div className="detail-value">
-                  {viewUser.createdAt ? new Date(viewUser.createdAt).toLocaleString() : 'N/A'}
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiUser /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Full Name</span>
+                  <span className="premium-info-value">{viewUser.fullName}</span>
                 </div>
               </div>
-              <div className="detail-group">
-                <label>User ID</label>
-                <div className="detail-value text-muted">{viewUser.userId}</div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiMail /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Email Address</span>
+                  <span className="premium-info-value">{viewUser.email}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiPhone /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Phone Number</span>
+                  <span className="premium-info-value">{viewUser.phone}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiShield /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Role</span>
+                  <span className="premium-info-value">{viewUser.role}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    <span className={`status-badge-btn static-badge status-${viewUser.accountStatus?.toLowerCase() || 'unknown'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: viewUser.accountStatus === 'ACTIVE' ? '#dcfce7' : '#fee2e2', color: viewUser.accountStatus === 'ACTIVE' ? '#166534' : '#991b1b' }}>
+                      <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
+                      {viewUser.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiHash /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">User ID</span>
+                  <span className="premium-info-value text-muted">{viewUser.userId}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Address</span>
+                  <span className="premium-info-value">{viewUser.address || 'System'}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiFileText /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Additional Information</span>
+                  <span className="premium-info-value">{viewUser.additionalInfo || 'None'}</span>
+                </div>
+              </div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Created At</span>
+                  <span className="premium-info-value">{viewUser.createdAt ? new Date(viewUser.createdAt).toLocaleString() : 'N/A'}</span>
+                </div>
               </div>
             </div>
-            <div className="user-modal-footer">
-              <button className="btn-modal-close" onClick={() => setViewUser(null)}>Close</button>
+            
+            <div className="premium-modal-footer">
+              <button className="btn-premium-close" onClick={() => setViewUser(null)}>Close</button>
             </div>
           </div>
         </div>
@@ -367,11 +442,41 @@ const Users = () => {
               <button className="user-modal-close" onClick={() => setStatusConfirm(null)}>&times;</button>
             </div>
             <div className="user-modal-body">
-              <p>Are you sure you want to change the status of <strong>{statusConfirm.user.fullName}</strong> from <strong className={`text-${statusConfirm.user.accountStatus.toLowerCase()}`}>{statusConfirm.user.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</strong> to <strong className={`text-${statusConfirm.newStatus.toLowerCase()}`}>{statusConfirm.newStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</strong>?</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                <div className="user-avatar" style={{ width: '48px', height: '48px', fontSize: '1.2rem', backgroundColor: `${getAvatarColor(statusConfirm.user.fullName)}20`, color: getAvatarColor(statusConfirm.user.fullName), display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}>
+                  {getInitials(statusConfirm.user.fullName)}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{statusConfirm.user.fullName}</h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Role: {statusConfirm.user.role}</p>
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  {statusConfirm.newStatus === 'ACTIVE' ? (
+                    <FiUserCheck style={{ color: '#10b981', fontSize: '1.5rem' }} />
+                  ) : (
+                    <FiUserX style={{ color: '#ef4444', fontSize: '1.5rem' }} />
+                  )}
+                  <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                    {statusConfirm.newStatus === 'ACTIVE' ? 'Activate Account' : 'Deactivate Account'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Are you sure you want to change the status of this user to <strong>{statusConfirm.newStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}</strong>?
+                  {statusConfirm.newStatus === 'DEACTIVATED' && ' They will lose access to the system.'}
+                </p>
+              </div>
             </div>
             <div className="user-modal-footer">
               <button className="btn-modal-cancel" onClick={() => setStatusConfirm(null)}>Cancel</button>
-              <button className="btn-modal-confirm" onClick={confirmStatusChange}>Confirm Change</button>
+              <button 
+                className="btn-modal-confirm" 
+                style={{ backgroundColor: statusConfirm.newStatus === 'DEACTIVATED' ? '#ef4444' : '#10b981' }}
+                onClick={confirmStatusChange}
+              >
+                Confirm Change
+              </button>
             </div>
           </div>
         </div>

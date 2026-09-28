@@ -1,6 +1,17 @@
 import api from './api';
 
 export const slotService = {
+  // Get all slots across all stations
+  getAllSlots: async () => {
+    try {
+      const response = await api.get('/Slots');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all slots:', error);
+      throw error;
+    }
+  },
+
   // Get all slots for a station
   getSlotsByStationId: async (stationId) => {
     try {

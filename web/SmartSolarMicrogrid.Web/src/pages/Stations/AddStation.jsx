@@ -9,43 +9,25 @@ import {
   FiTrash2,
   FiSave
 } from 'react-icons/fi';
-import { MapContainer, TileLayer, Marker, useMapEvents, ZoomControl } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { useJsApiLoader, GoogleMap, MarkerF } from '@react-google-maps/api';
 import { stationService } from '../../services/stationService';
 import './AddStation.css';
 
-// Fix for default marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-const defaultIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-// Component to handle map clicks and update marker
-const LocationSelector = ({ position, setPosition }) => {
-  useMapEvents({
-    click(e) {
-      setPosition([e.latlng.lat, e.latlng.lng]);
-    },
-  });
-  return position ? <Marker position={position} icon={defaultIcon} /> : null;
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+  borderRadius: '12px'
 };
 
 const AddStation = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  });
 
   // Form State
   const [formData, setFormData] = useState({
@@ -310,23 +292,11 @@ const AddStation = () => {
                     required 
                   />
                 </div>
-                <div className="duration-widget">
-                  <span className="sun-icon">☀️</span>
-                  <div>
-                    <div className="dur-label">Operating Duration</div>
-                    <div className="dur-val">16 hours per day <span className="info-icon">i</span></div>
-                  </div>
-                </div>
               </div>
             </div>
             
             {/* Footer Form */}
-            <div className="form-footer-inline">
-              <button type="button" className="btn-danger-outline">
-                <FiTrash2 /> Deactivate Station
-              </button>
-              <span className="footer-note">Deactivate this station to remove it from active operations.</span>
-              
+            <div className="form-footer-inline" style={{ justifyContent: 'flex-end' }}>
               <div className="action-buttons">
                 <button type="button" className="btn-secondary" onClick={() => navigate('/stations')}>Cancel</button>
                 <button type="submit" form="stationForm" className="btn-primary" disabled={loading}>
@@ -350,19 +320,25 @@ const AddStation = () => {
               </div>
             </div>
             <div className="map-preview-container">
-              <MapContainer 
-                center={mapPosition} 
-                zoom={11} 
-                scrollWheelZoom={true}
-                zoomControl={false}
-                style={{ height: '100%', width: '100%' }}
-              >
-                <ZoomControl position="bottomright" />
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <LocationSelector position={mapPosition} setPosition={setMapPosition} />
-              </MapContainer>
+              {isLoaded ? (
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={{ lat: mapPosition[0], lng: mapPosition[1] }}
+                  zoom={11}
+                  onClick={(e) => {
+                    const lat = e.latLng.lat();
+                    const lng = e.latLng.lng();
+                    setMapPosition([lat, lng]);
+                  }}
+                  options={{ mapTypeControl: false, streetViewControl: false }}
+                >
+                  <MarkerF position={{ lat: mapPosition[0], lng: mapPosition[1] }} />
+                </GoogleMap>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  Loading Map...
+                </div>
+              )}
             </div>
             <div className="location-set-bar">
               <div className="loc-info">

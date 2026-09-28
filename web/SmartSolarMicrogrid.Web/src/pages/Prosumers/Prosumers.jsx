@@ -12,7 +12,14 @@ import {
   FiPlay,
   FiSlash,
   FiEye,
-  FiX
+  FiX,
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiCreditCard,
+  FiActivity,
+  FiCalendar
 } from 'react-icons/fi';
 import { PiSunLight } from 'react-icons/pi';
 import { prosumerService } from '../../services/prosumerService';
@@ -169,89 +176,18 @@ const Prosumers = () => {
   return (
     <div className="prosumers-container fade-in">
       <div className="prosumers-header">
-        <div className="header-left">
+        <div className="prosumers-title">
           <h1>Prosumer Management</h1>
           <p>Manage solar prosumers in the microgrid network. View, activate or deactivate prosumer accounts.</p>
         </div>
-        <div className="header-right">
-          <div className="date-widget">
-            <FiClock className="widget-icon" />
-            <div className="widget-content">
-              <span className="widget-title">{formattedToday}</span>
-              <span className="widget-subtitle">Good to see you today.</span>
-            </div>
-          </div>
-          <div className="weather-widget">
-            <PiSunLight className="widget-icon text-yellow" />
-            <div className="widget-content">
-              <span className="widget-title">A cleaner</span>
-              <span className="widget-subtitle">tomorrow is possible.</span>
-            </div>
-          </div>
+        <div className="prosumers-breadcrumbs">
+          <span>Users</span>
+          <span className="separator">›</span>
+          <span className="current">Prosumer Management</span>
         </div>
       </div>
 
-      <div className="summary-cards">
-        <div className="summary-card total-card">
-          <div className="card-top">
-            <div className="card-icon-wrapper green-bg"><FiUsers className="card-icon green-text" /></div>
-            <span className="card-title">Total Prosumers</span>
-          </div>
-          <div className="card-bottom">
-            <div className="card-value">{totalProsumers}</div>
-            <div className="card-trend green-text">
-              <FiTrendingUp /> 12% 
-              <span className="trend-text">vs. last month</span>
-            </div>
-            <div className="sparkline green-line"></div>
-          </div>
-        </div>
 
-        <div className="summary-card pending-card">
-          <div className="card-top">
-            <div className="card-icon-wrapper orange-bg"><FiClock className="card-icon orange-text" /></div>
-            <span className="card-title">Pending Activation</span>
-          </div>
-          <div className="card-bottom">
-            <div className="card-value">{pendingCount}</div>
-            <div className="card-trend red-text">
-              <FiTrendingDown /> 25%
-              <span className="trend-text">vs. last month</span>
-            </div>
-            <div className="sparkline yellow-line"></div>
-          </div>
-        </div>
-
-        <div className="summary-card active-card">
-          <div className="card-top">
-            <div className="card-icon-wrapper blue-bg"><FiUserCheck className="card-icon blue-text" /></div>
-            <span className="card-title">Active Prosumers</span>
-          </div>
-          <div className="card-bottom">
-            <div className="card-value">{activeCount}</div>
-            <div className="card-trend green-text">
-              <FiTrendingUp /> 18%
-              <span className="trend-text">vs. last month</span>
-            </div>
-            <div className="sparkline blue-line"></div>
-          </div>
-        </div>
-
-        <div className="summary-card deactivated-card">
-          <div className="card-top">
-            <div className="card-icon-wrapper red-bg"><FiUserX className="card-icon red-text" /></div>
-            <span className="card-title">Deactivated</span>
-          </div>
-          <div className="card-bottom">
-            <div className="card-value">{deactivatedCount}</div>
-            <div className="card-trend red-text">
-              <FiTrendingDown /> 6%
-              <span className="trend-text">vs. last month</span>
-            </div>
-            <div className="sparkline red-line"></div>
-          </div>
-        </div>
-      </div>
 
       <div className="prosumers-content-card">
         <div className="prosumers-toolbar">
@@ -280,12 +216,8 @@ const Prosumers = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <button className="btn-filter">
-              <FiFilter /> Filters
-            </button>
           </div>
         </div>
-
         <div className="table-responsive">
           <table className="prosumers-table users-table">
             <thead>
@@ -294,8 +226,8 @@ const Prosumers = () => {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Account Status</th>
-                <th className="th-actions">Actions</th>
+                <th style={{ textAlign: 'center' }}>Status</th>
+                <th className="th-actions" style={{ textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -311,12 +243,6 @@ const Prosumers = () => {
                     <td className="cell-nic">{prosumer.nic || '-'}</td>
                     <td>
                       <div className="cell-user">
-                        <div 
-                          className="user-avatar" 
-                          style={{ backgroundColor: `${getAvatarColor(prosumer.fullName)}20`, color: getAvatarColor(prosumer.fullName) }}
-                        >
-                          {getInitials(prosumer.fullName)}
-                        </div>
                         <span className="user-name">
                           {prosumer.fullName ? prosumer.fullName.split(' ').slice(0, 2).join(' ') : 'Unknown'}
                         </span>
@@ -326,31 +252,41 @@ const Prosumers = () => {
                       <div className="email-text" title={prosumer.email}>{prosumer.email}</div>
                     </td>
                     <td className="cell-phone">{prosumer.phone}</td>
-                    <td>
-                      <span className={`status-badge-btn static-badge status-${prosumer.accountStatus?.toLowerCase() || 'unknown'}`}>
-                        <div className="status-badge-content">
-                          <span className="status-dot"></span>
-                          <span>{prosumer.accountStatus === 'ACTIVE' ? 'Active' : prosumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}</span>
-                        </div>
+                    <td style={{ textAlign: 'center' }}>
+                      <span 
+                        className={`status-badge-btn static-badge status-${prosumer.accountStatus?.toLowerCase() || 'unknown'}`} 
+                        style={{ 
+                          display: 'inline-flex', 
+                          padding: '6px 12px', 
+                          borderRadius: '20px', 
+                          fontSize: '0.85rem', 
+                          fontWeight: '500', 
+                          border: 'none', 
+                          cursor: 'default', 
+                          backgroundColor: prosumer.accountStatus === 'ACTIVE' ? '#dcfce7' : prosumer.accountStatus === 'PENDING' ? '#fef3c7' : '#fee2e2', 
+                          color: prosumer.accountStatus === 'ACTIVE' ? '#166534' : prosumer.accountStatus === 'PENDING' ? '#b45309' : '#991b1b' 
+                        }}
+                      >
+                        {prosumer.accountStatus === 'ACTIVE' ? 'Active' : prosumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}
                       </span>
                     </td>
-                    <td className="cell-actions">
-                      <button className="btn-action btn-view-text" onClick={() => setSelectedProsumer(prosumer)}>
-                        <FiEye style={{ marginRight: '4px' }} /> View
+                    <td className="cell-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
+                      <button className="review-btn" onClick={() => setSelectedProsumer(prosumer)}>
+                        Review
                       </button>
                       {activeTab === 'Pending' && (
-                        <button className="btn-action btn-activate" onClick={() => setStatusConfirm({ action: 'ACTIVATE', actionText: 'Activate', nic: prosumer.nic, name: prosumer.fullName })}>
-                          <FiPlay style={{ marginRight: '4px' }} /> Activate
+                        <button className="activate-btn" onClick={() => setStatusConfirm({ action: 'ACTIVATE', actionText: 'Activate', nic: prosumer.nic, name: prosumer.fullName })}>
+                          Activate
                         </button>
                       )}
                       {activeTab === 'Active' && (
-                        <button className="btn-action btn-deactivate" onClick={() => setStatusConfirm({ action: 'DEACTIVATE', actionText: 'Deactivate', nic: prosumer.nic, name: prosumer.fullName })}>
-                          <FiSlash style={{ marginRight: '4px' }} /> Deactivate
+                        <button className="deactivate-btn" onClick={() => setStatusConfirm({ action: 'DEACTIVATE', actionText: 'Deactivate', nic: prosumer.nic, name: prosumer.fullName })}>
+                          Deactivate
                         </button>
                       )}
                       {activeTab === 'Deactivated' && (
-                        <button className="btn-action btn-reactivate" onClick={() => setStatusConfirm({ action: 'REACTIVATE', actionText: 'Reactivate', nic: prosumer.nic, name: prosumer.fullName })}>
-                          <FiPlay style={{ marginRight: '4px' }} /> Reactivate
+                        <button className="reactivate-btn" onClick={() => setStatusConfirm({ action: 'REACTIVATE', actionText: 'Reactivate', nic: prosumer.nic, name: prosumer.fullName })}>
+                          Reactivate
                         </button>
                       )}
                     </td>
@@ -391,48 +327,88 @@ const Prosumers = () => {
         </div>
       </div>
 
-      {/* View Prosumer Modal */}
+      {/* View Prosumer Modal (Premium Design) */}
       {selectedProsumer && (
-        <div className="user-modal-overlay">
-          <div className="user-modal-content fade-in">
-            <div className="user-modal-header">
-              <h2>Prosumer Details</h2>
-              <button className="user-modal-close" onClick={() => setSelectedProsumer(null)}>&times;</button>
+        <div className="premium-modal-overlay">
+          <div className="premium-modal-content fade-in">
+            <div className="premium-modal-header">
+              <div className="premium-modal-icon-container">
+                <FiUsers />
+              </div>
+              <div className="premium-modal-title-group">
+                <h2>Prosumer Details</h2>
+                <p>View detailed information about this prosumer.</p>
+              </div>
+              <button className="premium-modal-close-btn" onClick={() => setSelectedProsumer(null)}>
+                <FiX />
+              </button>
             </div>
-            <div className="user-modal-body">
-              <div className="detail-group">
-                <label>Full Name</label>
-                <div className="detail-value">{selectedProsumer.fullName}</div>
+            
+            <div className="premium-modal-body">
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiUser /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Full Name</span>
+                  <span className="premium-info-value">{selectedProsumer.fullName}</span>
+                </div>
               </div>
-              <div className="detail-group">
-                <label>Email Address</label>
-                <div className="detail-value">{selectedProsumer.email}</div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCreditCard /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">NIC Number</span>
+                  <span className="premium-info-value">{selectedProsumer.nic}</span>
+                </div>
               </div>
-              <div className="detail-group">
-                <label>Phone Number</label>
-                <div className="detail-value">{selectedProsumer.phone}</div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiMail /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Email Address</span>
+                  <span className="premium-info-value">{selectedProsumer.email}</span>
+                </div>
               </div>
-              <div className="detail-group">
-                <label>NIC Number</label>
-                <div className="detail-value">{selectedProsumer.nic}</div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiPhone /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Phone Number</span>
+                  <span className="premium-info-value">{selectedProsumer.phone}</span>
+                </div>
               </div>
-              <div className="detail-group">
-                <label>Account Status</label>
-                <div className="detail-value">{selectedProsumer.accountStatus === 'ACTIVE' ? 'Active' : selectedProsumer.accountStatus === 'PENDING' ? 'Pending' : 'Deactivated'}</div>
+              
+              <div className="premium-info-card full-width">
+                <div className="premium-info-icon"><FiMapPin /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Address</span>
+                  <span className="premium-info-value">{selectedProsumer.address || 'Colombo'}</span>
+                </div>
               </div>
-              <div className="detail-group">
-                <label>Address</label>
-                <div className="detail-value">{selectedProsumer.address || 'None'}</div>
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiActivity /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Status</span>
+                  <div className="premium-info-value">
+                    <span className={`status-badge-btn static-badge status-${selectedProsumer.accountStatus?.toLowerCase() || 'unknown'}`} style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600', backgroundColor: (selectedProsumer.accountStatus === 'ACTIVE' || selectedProsumer.accountStatus === 1) ? '#dcfce7' : (selectedProsumer.accountStatus === 'PENDING' || selectedProsumer.accountStatus === 0) ? '#fef3c7' : '#fee2e2', color: (selectedProsumer.accountStatus === 'ACTIVE' || selectedProsumer.accountStatus === 1) ? '#166534' : (selectedProsumer.accountStatus === 'PENDING' || selectedProsumer.accountStatus === 0) ? '#b45309' : '#991b1b' }}>
+                      <span className="status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'currentColor', marginRight: '6px' }}></span>
+                      {(selectedProsumer.accountStatus === 'ACTIVE' || selectedProsumer.accountStatus === 1) ? 'Active' : (selectedProsumer.accountStatus === 'PENDING' || selectedProsumer.accountStatus === 0) ? 'Pending' : 'Deactivated'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="detail-group">
-                <label>Created At</label>
-                <div className="detail-value">
-                  {selectedProsumer.createdAt ? new Date(selectedProsumer.createdAt).toLocaleString() : 'N/A'}
+              
+              <div className="premium-info-card">
+                <div className="premium-info-icon"><FiCalendar /></div>
+                <div className="premium-info-content">
+                  <span className="premium-info-label">Created At</span>
+                  <span className="premium-info-value">{selectedProsumer.createdAt ? new Date(selectedProsumer.createdAt).toLocaleString() : 'N/A'}</span>
                 </div>
               </div>
             </div>
-            <div className="user-modal-footer">
-              <button className="btn-modal-close" onClick={() => setSelectedProsumer(null)}>Close</button>
+            
+            <div className="premium-modal-footer">
+              <button className="btn-premium-close" onClick={() => setSelectedProsumer(null)}>Close</button>
             </div>
           </div>
         </div>
@@ -443,17 +419,45 @@ const Prosumers = () => {
         <div className="user-modal-overlay">
           <div className="user-modal-content status-confirm-modal fade-in">
             <div className="user-modal-header">
-              <h2>Confirm Status Change</h2>
+              <h2>Confirm {statusConfirm.actionText}</h2>
               <button className="user-modal-close" onClick={() => setStatusConfirm(null)}>&times;</button>
             </div>
             <div className="user-modal-body">
-              <p>
-                Are you sure you want to <strong>{statusConfirm.actionText.toLowerCase()}</strong> the prosumer account for <strong>{statusConfirm.name}</strong>?
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                <div className="user-avatar" style={{ width: '48px', height: '48px', fontSize: '1.2rem', backgroundColor: `${getAvatarColor(statusConfirm.name)}20`, color: getAvatarColor(statusConfirm.name), display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}>
+                  {getInitials(statusConfirm.name)}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#0f172a' }}>{statusConfirm.name}</h3>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>NIC: {statusConfirm.nic}</p>
+                </div>
+              </div>
+              <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  {statusConfirm.action === 'ACTIVATE' || statusConfirm.action === 'REACTIVATE' ? (
+                    <FiUserCheck style={{ color: '#10b981', fontSize: '1.5rem' }} />
+                  ) : (
+                    <FiUserX style={{ color: '#ef4444', fontSize: '1.5rem' }} />
+                  )}
+                  <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                    {statusConfirm.action === 'ACTIVATE' || statusConfirm.action === 'REACTIVATE' ? 'Activate Account' : 'Deactivate Account'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Are you sure you want to {statusConfirm.actionText.toLowerCase()} this account?
+                  {statusConfirm.action === 'DEACTIVATE' && ' They will lose access to the system.'}
+                </p>
+              </div>
             </div>
             <div className="user-modal-footer">
               <button className="btn-modal-cancel" onClick={() => setStatusConfirm(null)}>Cancel</button>
-              <button className="btn-modal-confirm" onClick={confirmStatusChange}>{statusConfirm.actionText}</button>
+              <button 
+                className="btn-modal-confirm" 
+                style={{ backgroundColor: statusConfirm.action === 'DEACTIVATE' ? '#ef4444' : '#10b981' }} 
+                onClick={confirmStatusChange}
+              >
+                {statusConfirm.actionText}
+              </button>
             </div>
           </div>
         </div>

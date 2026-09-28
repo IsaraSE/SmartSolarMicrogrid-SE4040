@@ -27,6 +27,17 @@ public class SlotsController : ControllerBase
     }
 
     /// <summary>
+    /// Gets all slots across all stations.
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR")]
+    public async Task<IActionResult> GetAllSlots()
+    {
+        var slots = await _slotService.GetAllSlotsAsync();
+        return Ok(ApiResponse<IEnumerable<SlotDto>>.SuccessResponse("All slots retrieved successfully.", slots));
+    }
+
+    /// <summary>
     /// Gets all slots for a station.
     /// </summary>
     [HttpGet("station/{stationId}")]
@@ -49,10 +60,10 @@ public class SlotsController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new slot (Operator/Backoffice).
+    /// Creates a new slot (Operator).
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR")]
+    [Authorize(Roles = "GRID_OPERATOR")]
     public async Task<IActionResult> CreateSlot([FromBody] CreateSlotDto request)
     {
         if (!ModelState.IsValid)
@@ -65,10 +76,10 @@ public class SlotsController : ControllerBase
     }
 
     /// <summary>
-    /// Updates a slot (Operator/Backoffice).
+    /// Updates a slot (Operator).
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR")]
+    [Authorize(Roles = "GRID_OPERATOR")]
     public async Task<IActionResult> UpdateSlot(string id, [FromBody] UpdateSlotDto request)
     {
         if (!ModelState.IsValid)
@@ -89,7 +100,7 @@ public class SlotsController : ControllerBase
     /// Deletes a slot safely.
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "BACKOFFICE,GRID_OPERATOR")]
+    [Authorize(Roles = "GRID_OPERATOR")]
     public async Task<IActionResult> DeleteSlot(string id)
     {
         try

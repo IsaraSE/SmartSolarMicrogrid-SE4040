@@ -117,6 +117,10 @@
   background-size: 14px;
   outline: none;
   transition: all 0.2s;
+  width: 160px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .filter-dropdown select:focus {

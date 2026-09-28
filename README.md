@@ -123,8 +123,7 @@ npm run dev
 
 ## 🎥 Demonstration
 
-- **Repository Link:** [Insert GitHub Repository Link Here]
-- **Demo Video:** [Insert <=5 Minute Demo Video Link Here]
+- **Repository Link:** https://github.com/IsaraSE/SmartSolarMicrogrid-SE4040.git
 
 ---
 <div align="center">

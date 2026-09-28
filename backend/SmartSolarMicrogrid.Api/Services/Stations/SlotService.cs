@@ -18,11 +18,23 @@ public class SlotService : ISlotService
 {
     private readonly IEnergyBookingSlotRepository _slotRepository;
     private readonly ISolarStationInfoRepository _stationRepository;
+    private readonly SmartSolarMicrogrid.Api.Repositories.Reservations.IEnergyReservationRepository _reservationRepository;
 
-    public SlotService(IEnergyBookingSlotRepository slotRepository, ISolarStationInfoRepository stationRepository)
+    public SlotService(
+        IEnergyBookingSlotRepository slotRepository, 
+        ISolarStationInfoRepository stationRepository,
+        SmartSolarMicrogrid.Api.Repositories.Reservations.IEnergyReservationRepository reservationRepository)
     {
         _slotRepository = slotRepository;
         _stationRepository = stationRepository;
+        _reservationRepository = reservationRepository;
+    }
+
+    public async Task<IEnumerable<SlotDto>> GetAllSlotsAsync()
+    {
+        // IBaseRepository provides GetAllAsync
+        var slots = await _slotRepository.GetAllAsync();
+        return slots.Select(MapToDto);
     }
 
     public async Task<IEnumerable<SlotDto>> GetSlotsByStationIdAsync(string stationId)
@@ -34,7 +46,20 @@ public class SlotService : ISlotService
     public async Task<IEnumerable<SlotDto>> GetAvailableSlotsByStationIdAsync(string stationId)
     {
         var slots = await _slotRepository.GetByStationIdAsync(stationId);
-        var availableSlots = slots.Where(s => s.Status == SlotStatus.AVAILABLE);
+        
+        // Fetch all active reservations for this station
+        var activeReservations = await _reservationRepository.GetActiveReservationsByStationIdAsync(stationId);
+        var bookedSlotIds = activeReservations
+            .Where(r => r.Status == ReservationStatus.PENDING || r.Status == ReservationStatus.APPROVED)
+            .Select(r => r.SlotId)
+            .ToHashSet();
+
+        // A slot is available if its status is AVAILABLE and it is not currently booked/pending
+        var availableSlots = slots.Where(s => 
+            s.Status == SlotStatus.AVAILABLE && 
+            !bookedSlotIds.Contains(s.SlotId) &&
+            s.StartDateTime > DateTime.UtcNow); // Also ensure we don't show past slots
+
         return availableSlots.Select(MapToDto);
     }
 
