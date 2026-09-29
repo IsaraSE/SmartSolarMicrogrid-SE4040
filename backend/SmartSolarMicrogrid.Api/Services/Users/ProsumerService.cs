@@ -106,31 +106,45 @@ public class ProsumerService : IProsumerService
         return (true, "Profile updated successfully.", MapToDto(user));
     }
 
+    /// <summary>
+    /// Retrieves all users with the PROSUMER role, regardless of account status.
+    /// </summary>
+    /// <returns>The prosumer users mapped to DTOs.</returns>
     public async Task<IEnumerable<UserDto>> GetAllProsumersAsync()
     {
-        // Retrieves all prosumers data from the system.
         var users = await _userRepository.FindAsync(u => u.Role == UserRole.PROSUMER);
         return users.Select(MapToDto);
     }
 
+    /// <summary>
+    /// Retrieves a single prosumer by their NIC.
+    /// </summary>
+    /// <param name="nic">The prosumer's NIC.</param>
+    /// <returns>The matching prosumer DTO, or null if no prosumer exists with that NIC.</returns>
     public async Task<UserDto?> GetProsumerByNicAsync(string nic)
     {
-        // Retrieves prosumer by nic data from the system.
         var user = await _userRepository.GetByNicAsync(nic);
         if (user == null || user.Role != UserRole.PROSUMER) return null;
         return MapToDto(user);
     }
 
+    /// <summary>
+    /// Retrieves prosumers whose registration is still awaiting Backoffice activation.
+    /// </summary>
+    /// <returns>The pending prosumer users mapped to DTOs.</returns>
     public async Task<IEnumerable<UserDto>> GetPendingProsumersAsync()
     {
-        // Retrieves pending prosumers data from the system.
         var users = await _userRepository.FindAsync(u => u.Role == UserRole.PROSUMER && u.AccountStatus == AccountStatus.PENDING);
         return users.Select(MapToDto);
     }
 
+    /// <summary>
+    /// Activates a PENDING prosumer account (Backoffice approval).
+    /// </summary>
+    /// <param name="nic">The NIC of the prosumer to activate.</param>
+    /// <returns>The activated prosumer DTO, or null if no matching PENDING prosumer was found.</returns>
     public async Task<UserDto?> ActivateProsumerAsync(string nic)
     {
-        // Activates the specified prosumer.
         var user = await _userRepository.GetByNicAsync(nic);
         if (user == null || user.Role != UserRole.PROSUMER || user.AccountStatus != AccountStatus.PENDING)
         {
@@ -142,16 +156,23 @@ public class ProsumerService : IProsumerService
         return MapToDto(user);
     }
 
+    /// <summary>
+    /// Retrieves prosumers whose accounts have been deactivated.
+    /// </summary>
+    /// <returns>The deactivated prosumer users mapped to DTOs.</returns>
     public async Task<IEnumerable<UserDto>> GetDeactivatedProsumersAsync()
     {
-        // Retrieves deactivated prosumers data from the system.
         var users = await _userRepository.FindAsync(u => u.Role == UserRole.PROSUMER && u.AccountStatus == AccountStatus.DEACTIVATED);
         return users.Select(MapToDto);
     }
 
+    /// <summary>
+    /// Reactivates a previously deactivated prosumer account (Backoffice action).
+    /// </summary>
+    /// <param name="nic">The NIC of the prosumer to reactivate.</param>
+    /// <returns>The reactivated prosumer DTO, or null if no matching DEACTIVATED prosumer was found.</returns>
     public async Task<UserDto?> ReactivateProsumerAsync(string nic)
     {
-        // Executes logic to reactivate prosumer.
         var user = await _userRepository.GetByNicAsync(nic);
         if (user == null || user.Role != UserRole.PROSUMER || user.AccountStatus != AccountStatus.DEACTIVATED)
         {
@@ -163,6 +184,12 @@ public class ProsumerService : IProsumerService
         return MapToDto(user);
     }
 
+    /// <summary>
+    /// Deactivates an active prosumer's own account, refusing the operation while the
+    /// prosumer has ongoing (pending or approved) bookings.
+    /// </summary>
+    /// <param name="nic">The NIC of the prosumer to deactivate.</param>
+    /// <returns>A tuple indicating success, a status message, and the updated prosumer DTO (null on failure).</returns>
     public async Task<(bool Success, string Message, UserDto? Prosumer)> DeactivateProsumerAsync(string nic)
     {
         var user = await _userRepository.GetByNicAsync(nic);
@@ -184,9 +211,11 @@ public class ProsumerService : IProsumerService
         return (true, "Prosumer deactivated successfully.", MapToDto(user));
     }
 
+    /// <summary>
+    /// Maps a user entity to its corresponding DTO representation.
+    /// </summary>
     private static UserDto MapToDto(UserDetail user)
     {
-        // Maps to dto to the corresponding DTO.
         return new UserDto
         {
             UserId = user.UserId!,

@@ -28,9 +28,17 @@ public class ReservationService : IReservationService
         _stationRepository = stationRepository;
     }
 
+    /// <summary>
+    /// Retrieves reservations, optionally filtered by prosumer NIC, station, status and date,
+    /// enriched with the associated slot name/capacity and station name.
+    /// </summary>
+    /// <param name="nic">Optional prosumer NIC to filter by.</param>
+    /// <param name="stationId">Optional station identifier to filter by.</param>
+    /// <param name="status">Optional reservation status (as a string) to filter by.</param>
+    /// <param name="date">Optional scheduled start date to filter by.</param>
+    /// <returns>The matching reservations mapped to DTOs.</returns>
     public async Task<IEnumerable<ReservationDto>> GetReservationsAsync(string? nic, string? stationId, string? status, DateTime? date)
     {
-        // Retrieves reservations data from the system.
         var all = await _reservationRepository.GetAllAsync();
         
         var filtered = all.AsEnumerable();
@@ -69,7 +77,6 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetCurrentReservationsByNicAsync(string nic)
     {
-        // Retrieves current reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         var now = DateTime.UtcNow;
         return reservations
@@ -83,7 +90,6 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetPendingReservationsByNicAsync(string nic)
     {
-        // Retrieves pending reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         return reservations
             .Where(r => r.Status == ReservationStatus.PENDING)
@@ -96,7 +102,6 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetHistoryReservationsByNicAsync(string nic)
     {
-        // Retrieves history reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         var now = DateTime.UtcNow;
         return reservations
@@ -107,9 +112,13 @@ public class ReservationService : IReservationService
             .ToList();
     }
 
+    /// <summary>
+    /// Retrieves a single reservation by its identifier, enriched with slot and station details.
+    /// </summary>
+    /// <param name="id">The reservation identifier.</param>
+    /// <returns>The matching reservation DTO, or null if no reservation exists with the given id.</returns>
     public async Task<ReservationDto?> GetReservationByIdAsync(string id)
     {
-        // Retrieves reservation by id data from the system.
         var reservation = await _reservationRepository.GetByIdAsync(id);
         if (reservation == null) return null;
         
@@ -124,6 +133,14 @@ public class ReservationService : IReservationService
         return dto;
     }
 
+    /// <summary>
+    /// Creates a new PENDING reservation for a prosumer against a specific slot, enforcing that
+    /// the slot is available, the booking falls within the next 7 days, and the slot is not
+    /// already pending/approved for another prosumer. Marks the slot PENDING on success.
+    /// </summary>
+    /// <param name="prosumerNic">The NIC of the prosumer making the booking.</param>
+    /// <param name="request">The slot/station to book and any notes.</param>
+    /// <returns>A tuple indicating success, a status message, and the created reservation DTO (null on failure).</returns>
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> CreateReservationAsync(string prosumerNic, CreateReservationDto request)
     {
         var slot = await _slotRepository.GetByIdAsync(request.SlotId);
@@ -189,6 +206,17 @@ public class ReservationService : IReservationService
         return (true, "Reservation created successfully.", dto);
     }
 
+    /// <summary>
+    /// Updates a reservation's slot and/or notes. Only the owning prosumer (or an operator/backoffice
+    /// user) may update it, only PENDING or APPROVED reservations are eligible, and updates are
+    /// blocked within 12 hours of the scheduled start time. Changing the slot reverts an APPROVED
+    /// reservation back to PENDING pending re-approval.
+    /// </summary>
+    /// <param name="id">The identifier of the reservation to update.</param>
+    /// <param name="prosumerNic">The NIC of the requesting user, used for ownership checks.</param>
+    /// <param name="role">The role of the requesting user (e.g. GRID_OPERATOR, BACKOFFICE, or prosumer).</param>
+    /// <param name="request">The requested slot and notes changes.</param>
+    /// <returns>A tuple indicating success, a status message, and the updated reservation DTO (null on failure).</returns>
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationAsync(string id, string prosumerNic, string role, UpdateReservationDto request)
     {
         var reservation = await _reservationRepository.GetByIdAsync(id);
@@ -299,6 +327,15 @@ public class ReservationService : IReservationService
         return (true, "Reservation updated successfully.", dto);
     }
 
+    /// <summary>
+    /// Cancels a PENDING or APPROVED reservation and returns its slot to AVAILABLE. Only the
+    /// owning prosumer (or an operator/backoffice user) may cancel it, and cancellations are
+    /// blocked within 12 hours of the scheduled start time.
+    /// </summary>
+    /// <param name="id">The identifier of the reservation to cancel.</param>
+    /// <param name="prosumerNic">The NIC of the requesting user, used for ownership checks.</param>
+    /// <param name="role">The role of the requesting user (e.g. GRID_OPERATOR, BACKOFFICE, or prosumer).</param>
+    /// <returns>A tuple indicating success and a status message.</returns>
     public async Task<(bool Success, string Message)> CancelReservationAsync(string id, string prosumerNic, string role)
     {
         var reservation = await _reservationRepository.GetByIdAsync(id);
@@ -339,6 +376,14 @@ public class ReservationService : IReservationService
         return (true, "Reservation cancelled successfully.");
     }
 
+    /// <summary>
+    /// Transitions a reservation to a new status (operator/backoffice workflow). Moving to
+    /// APPROVED physically reserves the slot; moving to COMPLETED releases it back to AVAILABLE.
+    /// Cancellation must go through <see cref="CancelReservationAsync"/> instead.
+    /// </summary>
+    /// <param name="id">The identifier of the reservation to update.</param>
+    /// <param name="newStatus">The status to transition the reservation to.</param>
+    /// <returns>A tuple indicating success, a status message, and the updated reservation DTO (null on failure).</returns>
     public async Task<(bool Success, string Message, ReservationDto? Reservation)> UpdateReservationStatusAsync(string id, ReservationStatus newStatus)
     {
         if (newStatus == ReservationStatus.CANCELLED)
@@ -391,9 +436,11 @@ public class ReservationService : IReservationService
         return (true, "Reservation status updated successfully.", dto);
     }
 
+    /// <summary>
+    /// Maps a reservation entity to its corresponding DTO representation.
+    /// </summary>
     private static ReservationDto MapToDto(EnergyReservation reservation)
     {
-        // Maps to dto to the corresponding DTO.
         return new ReservationDto
         {
             ReservationId = reservation.ReservationId!,
@@ -412,9 +459,13 @@ public class ReservationService : IReservationService
         };
     }
 
+    /// <summary>
+    /// Retrieves a reservation by its QR code reference (used when an operator scans a prosumer's QR).
+    /// </summary>
+    /// <param name="qrReference">The unique QR reference associated with the reservation.</param>
+    /// <returns>The matching reservation DTO, or null if no reservation has that QR reference.</returns>
     public async Task<ReservationDto?> GetReservationByQrAsync(string qrReference)
     {
-        // Retrieves reservation by qr data from the system.
         var reservation = await _reservationRepository.GetByQrReferenceAsync(qrReference);
         if (reservation == null) return null;
         
