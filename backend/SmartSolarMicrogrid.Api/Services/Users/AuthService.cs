@@ -33,6 +33,13 @@ public class AuthService : IAuthService
         _jwtSettings = jwtSettings.Value;
     }
 
+    /// <summary>
+    /// Authenticates a user by email (staff) or NIC (prosumers) and password, issuing a signed
+    /// JWT on success. Prosumers attempting to log in with an email are rejected, and deactivated
+    /// accounts are blocked regardless of credentials.
+    /// </summary>
+    /// <param name="request">The login credentials (email or NIC, and password).</param>
+    /// <returns>A tuple indicating success, a status message, and the login response containing the JWT (null on failure).</returns>
     public async Task<(bool Success, string Message, LoginResponseDto? Data)> LoginAsync(LoginRequestDto request)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
