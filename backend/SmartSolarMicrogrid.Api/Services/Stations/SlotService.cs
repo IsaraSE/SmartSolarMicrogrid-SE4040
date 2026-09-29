@@ -30,23 +30,35 @@ public class SlotService : ISlotService
         _reservationRepository = reservationRepository;
     }
 
+    /// <summary>
+    /// Retrieves every booking slot across all stations.
+    /// </summary>
+    /// <returns>A collection of all slots mapped to DTOs.</returns>
     public async Task<IEnumerable<SlotDto>> GetAllSlotsAsync()
     {
-        // IBaseRepository provides GetAllAsync
         var slots = await _slotRepository.GetAllAsync();
         return slots.Select(MapToDto);
     }
 
+    /// <summary>
+    /// Retrieves every booking slot belonging to a specific station, regardless of availability.
+    /// </summary>
+    /// <param name="stationId">The station identifier.</param>
+    /// <returns>A collection of the station's slots mapped to DTOs.</returns>
     public async Task<IEnumerable<SlotDto>> GetSlotsByStationIdAsync(string stationId)
     {
-        // Retrieves slots by station id data from the system.
         var slots = await _slotRepository.GetByStationIdAsync(stationId);
         return slots.Select(MapToDto);
     }
 
+    /// <summary>
+    /// Retrieves the slots for a station that are currently free to book: their status
+    /// is AVAILABLE and they are not tied to a pending or approved reservation.
+    /// </summary>
+    /// <param name="stationId">The station identifier.</param>
+    /// <returns>A collection of bookable slots mapped to DTOs.</returns>
     public async Task<IEnumerable<SlotDto>> GetAvailableSlotsByStationIdAsync(string stationId)
     {
-        // Retrieves available slots by station id data from the system.
         var slots = await _slotRepository.GetByStationIdAsync(stationId);
         
         // Fetch all active reservations for this station
@@ -62,9 +74,18 @@ public class SlotService : ISlotService
         return availableSlots.Select(MapToDto);
     }
 
+    /// <summary>
+    /// Creates a new booking slot for a station, enforcing a unique slot name per
+    /// station and the station's overall battery slot capacity.
+    /// </summary>
+    /// <param name="request">The slot details to create.</param>
+    /// <returns>The newly created slot as a DTO.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the station does not exist, the slot name is already taken for
+    /// the station, or the station's slot capacity has been reached.
+    /// </exception>
     public async Task<SlotDto> CreateSlotAsync(CreateSlotDto request)
     {
-        // Handles the creation of slot.
         var station = await _stationRepository.GetByIdAsync(request.StationId);
         if (station == null)
             throw new InvalidOperationException("Station not found.");
@@ -100,9 +121,14 @@ public class SlotService : ISlotService
         return MapToDto(slot);
     }
 
+    /// <summary>
+    /// Updates the schedule, capacity, status and notes of an existing slot.
+    /// </summary>
+    /// <param name="id">The identifier of the slot to update.</param>
+    /// <param name="request">The updated slot details.</param>
+    /// <returns>The updated slot DTO, or null if no slot exists with the given id.</returns>
     public async Task<SlotDto?> UpdateSlotAsync(string id, UpdateSlotDto request)
     {
-        // Updates existing slot records.
         var slot = await _slotRepository.GetByIdAsync(id);
         if (slot == null) return null;
 
@@ -116,9 +142,15 @@ public class SlotService : ISlotService
         return MapToDto(slot);
     }
 
+    /// <summary>
+    /// Permanently removes a booking slot, refusing the operation if the slot is
+    /// currently reserved.
+    /// </summary>
+    /// <param name="id">The identifier of the slot to delete.</param>
+    /// <returns>True if the slot was deleted; false if no slot was found with the given id.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the slot is currently reserved.</exception>
     public async Task<bool> DeleteSlotAsync(string id)
     {
-        // Safely removes slot from the database.
         var slot = await _slotRepository.GetByIdAsync(id);
         if (slot == null) return false;
 
@@ -131,9 +163,11 @@ public class SlotService : ISlotService
         return true;
     }
 
+    /// <summary>
+    /// Maps a slot entity to its corresponding DTO representation.
+    /// </summary>
     private static SlotDto MapToDto(EnergyBookingSlot slot)
     {
-        // Maps to dto to the corresponding DTO.
         return new SlotDto
         {
             SlotId = slot.SlotId!,

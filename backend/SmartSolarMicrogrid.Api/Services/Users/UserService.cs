@@ -25,23 +25,36 @@ public class UserService : IUserService
         _userRepository = userRepository;
     }
 
+    /// <summary>
+    /// Retrieves all staff users (BACKOFFICE and GRID_OPERATOR), excluding prosumers who are
+    /// managed separately.
+    /// </summary>
+    /// <returns>The non-prosumer users mapped to DTOs.</returns>
     public async Task<IEnumerable<UserDto>> GetAllNonProsumersAsync()
     {
-        // Retrieves all non prosumers data from the system.
         var users = await _userRepository.FindAsync(u => u.Role != UserRole.PROSUMER);
         return users.Select(MapToDto);
     }
 
+    /// <summary>
+    /// Retrieves a single user by their identifier.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <returns>The matching user DTO, or null if no user exists with the given id.</returns>
     public async Task<UserDto?> GetUserByIdAsync(string userId)
     {
-        // Retrieves user by id data from the system.
         var user = await _userRepository.GetByIdAsync(userId);
         return user != null ? MapToDto(user) : null;
     }
 
+    /// <summary>
+    /// Creates a new staff user, ensuring the email and phone number are not already in use.
+    /// </summary>
+    /// <param name="request">The details of the user to create.</param>
+    /// <returns>The newly created user as a DTO.</returns>
+    /// <exception cref="AppValidationException">Thrown when the email and/or phone is already taken.</exception>
     public async Task<UserDto> CreateUserAsync(CreateUserDto request)
     {
-        // Handles the creation of user.
         var errors = new Dictionary<string, string[]>();
 
         var existingUser = await _userRepository.GetByEmailAsync(request.Email);
@@ -79,9 +92,16 @@ public class UserService : IUserService
         return MapToDto(user);
     }
 
+    /// <summary>
+    /// Updates a staff user's profile fields and account status, ensuring the phone number
+    /// is not already used by a different account.
+    /// </summary>
+    /// <param name="userId">The identifier of the user to update.</param>
+    /// <param name="request">The updated user details.</param>
+    /// <returns>The updated user DTO, or null if no user exists with the given id.</returns>
+    /// <exception cref="AppValidationException">Thrown when the phone number is already taken.</exception>
     public async Task<UserDto?> UpdateUserAsync(string userId, UpdateUserDto request)
     {
-        // Updates existing user records.
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)
         {
@@ -111,9 +131,11 @@ public class UserService : IUserService
         return MapToDto(user);
     }
 
+    /// <summary>
+    /// Maps a user entity to its corresponding DTO representation.
+    /// </summary>
     private UserDto MapToDto(UserDetail user)
     {
-        // Maps to dto to the corresponding DTO.
         return new UserDto
         {
             UserId = user.UserId,
@@ -129,9 +151,16 @@ public class UserService : IUserService
         };
     }
 
+    /// <summary>
+    /// Updates the current user's own profile fields, ensuring the new email and phone number
+    /// are not already used by a different account.
+    /// </summary>
+    /// <param name="userId">The identifier of the user updating their profile.</param>
+    /// <param name="request">The updated profile details.</param>
+    /// <returns>The updated user DTO, or null if no user exists with the given id.</returns>
+    /// <exception cref="AppValidationException">Thrown when the email and/or phone is already taken by another account.</exception>
     public async Task<UserDto?> UpdateProfileAsync(string userId, UpdateProfileDto request)
     {
-        // Updates existing profile records.
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)
         {
@@ -166,9 +195,15 @@ public class UserService : IUserService
         return MapToDto(user);
     }
 
+    /// <summary>
+    /// Changes a user's password after verifying their current password.
+    /// </summary>
+    /// <param name="userId">The identifier of the user changing their password.</param>
+    /// <param name="request">The current and new password values.</param>
+    /// <returns>True if the password was changed; false if no user exists with the given id.</returns>
+    /// <exception cref="AppValidationException">Thrown when the current password is incorrect.</exception>
     public async Task<bool> ChangePasswordAsync(string userId, ChangePasswordDto request)
     {
-        // Executes logic to change password.
         var user = await _userRepository.GetByIdAsync(userId);
         if (user == null)
         {
