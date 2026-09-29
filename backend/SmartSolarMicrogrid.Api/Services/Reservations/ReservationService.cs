@@ -28,9 +28,17 @@ public class ReservationService : IReservationService
         _stationRepository = stationRepository;
     }
 
+    /// <summary>
+    /// Retrieves reservations, optionally filtered by prosumer NIC, station, status and date,
+    /// enriched with the associated slot name/capacity and station name.
+    /// </summary>
+    /// <param name="nic">Optional prosumer NIC to filter by.</param>
+    /// <param name="stationId">Optional station identifier to filter by.</param>
+    /// <param name="status">Optional reservation status (as a string) to filter by.</param>
+    /// <param name="date">Optional scheduled start date to filter by.</param>
+    /// <returns>The matching reservations mapped to DTOs.</returns>
     public async Task<IEnumerable<ReservationDto>> GetReservationsAsync(string? nic, string? stationId, string? status, DateTime? date)
     {
-        // Retrieves reservations data from the system.
         var all = await _reservationRepository.GetAllAsync();
         
         var filtered = all.AsEnumerable();
@@ -69,7 +77,6 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetCurrentReservationsByNicAsync(string nic)
     {
-        // Retrieves current reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         var now = DateTime.UtcNow;
         return reservations
@@ -83,7 +90,6 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetPendingReservationsByNicAsync(string nic)
     {
-        // Retrieves pending reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         return reservations
             .Where(r => r.Status == ReservationStatus.PENDING)
@@ -96,7 +102,6 @@ public class ReservationService : IReservationService
     /// </summary>
     public async Task<IEnumerable<ReservationDto>> GetHistoryReservationsByNicAsync(string nic)
     {
-        // Retrieves history reservations by nic data from the system.
         var reservations = await GetReservationsAsync(nic, null, null, null);
         var now = DateTime.UtcNow;
         return reservations
@@ -107,9 +112,13 @@ public class ReservationService : IReservationService
             .ToList();
     }
 
+    /// <summary>
+    /// Retrieves a single reservation by its identifier, enriched with slot and station details.
+    /// </summary>
+    /// <param name="id">The reservation identifier.</param>
+    /// <returns>The matching reservation DTO, or null if no reservation exists with the given id.</returns>
     public async Task<ReservationDto?> GetReservationByIdAsync(string id)
     {
-        // Retrieves reservation by id data from the system.
         var reservation = await _reservationRepository.GetByIdAsync(id);
         if (reservation == null) return null;
         
@@ -412,9 +421,13 @@ public class ReservationService : IReservationService
         };
     }
 
+    /// <summary>
+    /// Retrieves a reservation by its QR code reference (used when an operator scans a prosumer's QR).
+    /// </summary>
+    /// <param name="qrReference">The unique QR reference associated with the reservation.</param>
+    /// <returns>The matching reservation DTO, or null if no reservation has that QR reference.</returns>
     public async Task<ReservationDto?> GetReservationByQrAsync(string qrReference)
     {
-        // Retrieves reservation by qr data from the system.
         var reservation = await _reservationRepository.GetByQrReferenceAsync(qrReference);
         if (reservation == null) return null;
         
