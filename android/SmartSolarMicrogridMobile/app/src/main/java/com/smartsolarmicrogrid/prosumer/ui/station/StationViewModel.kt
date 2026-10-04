@@ -48,11 +48,6 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
 
     fun updateUserLocation(latLng: LatLng) {
         userLocation = latLng
-        // Re-evaluate list if we just got location to inject nearby stations if needed
-        val currentState = stationListState
-        if (currentState is StationListState.Loaded) {
-            injectNearbyStationsIfNeeded(currentState.stations)
-        }
     }
 
     // Helper to calculate distance in meters
@@ -61,50 +56,6 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
         val results = FloatArray(1)
         Location.distanceBetween(uLoc.latitude, uLoc.longitude, stationLat, stationLng, results)
         return results[0]
-    }
-
-    private fun injectNearbyStationsIfNeeded(currentStations: List<Station>) {
-        val uLoc = userLocation ?: return
-        
-        // Count how many are within ~25km
-        val nearbyCount = currentStations.count { 
-            (calculateDistance(it.latitude, it.longitude) ?: Float.MAX_VALUE) < 25000f 
-        }
-
-        if (nearbyCount < 2) {
-            // Inject a couple of dummy stations near the user
-            val dummy1 = Station(
-                stationId = "DUMMY_NEAR_1",
-                stationName = "Local Grid Hub Alpha",
-                address = "Nearby Location 1",
-                latitude = uLoc.latitude + 0.015,
-                longitude = uLoc.longitude + 0.015,
-                capacity = 50.0,
-                batterySlotCount = 10,
-                operatingStartTime = "06:00",
-                operatingEndTime = "22:00",
-                status = "ACTIVE"
-            )
-            val dummy2 = Station(
-                stationId = "DUMMY_NEAR_2",
-                stationName = "Local Grid Hub Beta",
-                address = "Nearby Location 2",
-                latitude = uLoc.latitude - 0.02,
-                longitude = uLoc.longitude + 0.01,
-                capacity = 100.0,
-                batterySlotCount = 20,
-                operatingStartTime = "00:00",
-                operatingEndTime = "23:59",
-                status = "ACTIVE"
-            )
-            
-            val updatedList = currentStations.toMutableList()
-            if (updatedList.none { it.stationId == "DUMMY_NEAR_1" }) {
-                updatedList.add(dummy1)
-                updatedList.add(dummy2)
-                stationListState = StationListState.Loaded(updatedList)
-            }
-        }
     }
 
     var selectedSlot by mutableStateOf<Slot?>(null)
@@ -122,9 +73,6 @@ class StationViewModel(application: Application) : AndroidViewModel(application)
                 val stations = response.body()?.data
                 if (response.isSuccessful && stations != null) {
                     stationListState = StationListState.Loaded(stations)
-                    if (userLocation != null) {
-                        injectNearbyStationsIfNeeded(stations)
-                    }
                 } else {
                     stationListState = StationListState.Error("Could not load stations")
                 }

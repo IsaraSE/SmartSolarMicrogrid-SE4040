@@ -1,0 +1,21 @@
+# Ignore Node modules
+node_modules/
+**/node_modules/
+
+# Ignore Android build folders
+build/
+**/build/
+.gradle/
+
+# Ignore C# build folders
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Ignore IDE files
+.idea/
+.vscode/
+*.suo
+*.sln
+.DS_Store
