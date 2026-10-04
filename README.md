@@ -93,39 +93,35 @@ The **Smart Solar Microgrid Trading System** connects three distinct operational
 ## 🚀 Setup & Installation
 
 ### Prerequisites
-- .NET 8.0 SDK or higher
+- Windows 10/11 with **IIS** enabled
+- **ASP.NET Core Runtime 10.x – Windows Hosting Bundle**
+- .NET 10 SDK (to publish the API)
 - Node.js (v18+)
 - Android Studio
-- MongoDB URI (configured via environment variables)
+- MongoDB Atlas connection string
 
-### 1. Backend Setup (API)
+### 1. Backend (Web API) – hosted on IIS
+The API is deployed to **IIS** and runs at **`http://localhost:5235`**.
+
 ```bash
 cd backend/SmartSolarMicrogrid.Api
-dotnet restore
-dotnet run
+dotnet publish -c Release -o C:\inetpub\SmartSolarApi
 ```
-*The API will start at `https://localhost:5001` or `http://localhost:5000`.*
+Then create the IIS site `SmartSolarApi` (port **5235**, app pool **No Managed Code**) and add `appsettings.Production.json` with the MongoDB connection string on the server.
 
-### 2. Web Application Setup
+📄 **Full step-by-step IIS guide:** [`deployment/iis/README.md`](deployment/iis/README.md)
+
+✅ Verify: open `http://localhost:5235/api/stations`. It should return the station list.
+
+### 2. Web Application
 ```bash
 cd web/SmartSolarMicrogrid.Web
 npm install
 npm run dev
 ```
-*The React app will start at `http://localhost:5174`.*
+*The React app starts at `http://localhost:5173` and calls the IIS-hosted API at `http://127.0.0.1:5235/api`.*
 
-### 3. Mobile Application Setup
-- Open the `android/SmartSolarMicrogridMobile` directory in **Android Studio**.
-- Sync Gradle projects.
-- Run on an Emulator or physical Android device.
-
----
-
-## 🎥 Demonstration
-
-- **Repository Link:** https://github.com/IsaraSE/SmartSolarMicrogrid-SE4040.git
-
----
-<div align="center">
-  <i>Developed for SE4040</i>
-</div>
+### 3. Mobile Application
+- Open `android/SmartSolarMicrogridMobile` in **Android Studio** and sync Gradle.
+- Run on an emulator (Pixel 7, API 35). The app calls the API at `http://10.0.2.2:5235/`.
+- For a physical device, change `BASE_URL` in `RetrofitClient.kt` to the host PC's IP (e.g. `http://192.168.1.5:5235/`).
